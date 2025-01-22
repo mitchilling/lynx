@@ -98,8 +98,8 @@
   if (_enableLayoutRefactor) {
     __block CGFloat usedBaselinePosition = *baselineOffset;
     __block CGFloat usedLineRectHeight = lineFragmentRect->size.height;
-    NSRange character_range = [layoutManager characterRangeForGlyphRange:glyphRange
-                                                        actualGlyphRange:nil];
+    NSRange characterRange = [layoutManager characterRangeForGlyphRange:glyphRange
+                                                       actualGlyphRange:nil];
 
     __block bool hasInlineElement = NO;
 
@@ -107,8 +107,20 @@
     // if baseline is out of visual line rect, move the baseline
     if (_lineHeight != 0) {
       // center text in line
-      usedBaselinePosition = _maxLineAscender + _halfLeading;
-      if (_halfLeading < 0) {
+      __block CGFloat maxAscent = CGFLOAT_MIN;
+      __block CGFloat minDescent = CGFLOAT_MAX;
+      [textStorage enumerateAttribute:NSFontAttributeName
+                              inRange:characterRange
+                              options:NSAttributedStringEnumerationLongestEffectiveRangeNotRequired
+                           usingBlock:^(UIFont *font, NSRange range, __unused BOOL *stop) {
+                             if (font) {
+                               maxAscent = MAX(maxAscent, font.ascender);
+                               minDescent = MIN(minDescent, font.descender);
+                             }
+                           }];
+      CGFloat lineHalfLeading = (_lineHeight - maxAscent + minDescent) * 0.5;
+      usedBaselinePosition = maxAscent + lineHalfLeading;
+      if (lineHalfLeading < 0) {
         // baseline will be up if descender > 0
         if (_lineHeight - usedBaselinePosition < 0) {
           usedBaselinePosition = _lineHeight;
@@ -122,7 +134,7 @@
       // if inline-view or inline-image is lager than line-height, line-height will increase.
       [textStorage
           enumerateAttribute:NSAttachmentAttributeName
-                     inRange:character_range
+                     inRange:characterRange
                      options:NSAttributedStringEnumerationLongestEffectiveRangeNotRequired
                   usingBlock:^(NSTextAttachment *attachment, NSRange range, __unused BOOL *stop) {
                     if (attachment == nil) {
