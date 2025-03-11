@@ -21,6 +21,8 @@ import {
   URLSearchParamsPolyfill,
   AbortController,
   AbortSignal,
+  TextEncoder,
+  TextDecoder,
 } from './modules/fetch';
 
 export { loadCard, destroyCard, callDestroyLifetimeFun, loadDynamicComponent };
@@ -45,4 +47,6 @@ nativeGlobal.Headers = Headers;
 nativeGlobal.AbortController = AbortController;
 nativeGlobal.AbortSignal = AbortSignal;
 nativeGlobal.URL = URL;
+nativeGlobal.TextEncoder = TextDecoder;
+nativeGlobal.TextEncoder = TextEncoder;
 URLSearchParamsPolyfill(nativeGlobal);

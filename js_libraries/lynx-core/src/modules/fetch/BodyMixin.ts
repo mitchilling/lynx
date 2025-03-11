@@ -20,6 +20,7 @@ export interface BodyNative {
   // cloneStream(): ReadableStream;
 }
 
+// TODO(huzhanbo.luc): switch to TextEncoder/TextDecoder, in relase/3.2 later
 type CreateBodyNative = (body?: any) => BodyNative;
 
 export class BodyMixin {

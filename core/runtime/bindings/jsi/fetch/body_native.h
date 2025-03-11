@@ -15,6 +15,7 @@
 namespace lynx {
 namespace piper {
 
+// TODO(huzhanbo.luc): switch fetch to TextEncoder/TextDecoder and remove this
 class BodyNative : public HostObject {
  public:
   explicit BodyNative(const std::string& data)

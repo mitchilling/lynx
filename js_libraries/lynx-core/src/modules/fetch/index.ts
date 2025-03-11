@@ -9,3 +9,5 @@ export * from './Response';
 export * from './URL';
 export * from './UrlSearchParamsPolyfill';
 export * from './AbortController';
+export * from './TextDecoder';
+export * from './TextEncoder';

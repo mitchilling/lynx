@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.2.4
+
+### Patch Changes
+
+- partially support TextEncoder/TextDecoder
 
 ## 3.2.3
 

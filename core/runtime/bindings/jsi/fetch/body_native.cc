@@ -64,39 +64,37 @@ Value BodyNative::get(Runtime* rt, const PropNameID& name) {
 
 void BodyNative::RegisterBodyNative(Runtime& rt) {
   auto global = rt.global();
-  if (!global.hasProperty(rt, "CreateBodyNative")) {
-    global.setProperty(
-        rt, "CreateBodyNative",
-        Function::createFromHostFunction(
-            rt, PropNameID::forAscii(rt, "CreateBodyNative"), 1,
-            [](Runtime& rt, const Value& thisVal, const Value* args,
-               size_t count) -> base::expected<Value, JSINativeException> {
-              const auto& body_init = args[0].asObject(rt);
-              const auto& body_init_obj = *body_init;
-              const auto& body_data = body_init_obj.getProperty(rt, "bodyData");
+  global.setProperty(
+      rt, "CreateBodyNative",
+      Function::createFromHostFunction(
+          rt, PropNameID::forAscii(rt, "CreateBodyNative"), 1,
+          [](Runtime& rt, const Value& thisVal, const Value* args,
+             size_t count) -> base::expected<Value, JSINativeException> {
+            const auto& body_init = args[0].asObject(rt);
+            const auto& body_init_obj = *body_init;
+            const auto& body_data = body_init_obj.getProperty(rt, "bodyData");
 
-              auto is_array_buffer =
-                  body_init_obj.getProperty(rt, "isArrayBuffer");
+            auto is_array_buffer =
+                body_init_obj.getProperty(rt, "isArrayBuffer");
 
-              if (is_array_buffer && is_array_buffer->getBool()) {
-                const auto& body_data_buffer =
-                    body_data->asObject(rt)->getArrayBuffer(rt);
-                auto size = body_data_buffer.size(rt);
-                auto data = body_data_buffer.data(rt);
+            if (is_array_buffer && is_array_buffer->getBool()) {
+              const auto& body_data_buffer =
+                  body_data->asObject(rt)->getArrayBuffer(rt);
+              auto size = body_data_buffer.size(rt);
+              auto data = body_data_buffer.data(rt);
 
-                auto body_native = std::make_shared<BodyNative>(
-                    std::vector<uint8_t>(data, data + size));
-                return Object::createFromHostObject(rt, std::move(body_native));
-              } else if (body_data && !body_data->isUndefined()) {
-                const auto& body_data_str = body_data->toString(rt)->utf8(rt);
-                auto body_native = std::make_shared<BodyNative>(body_data_str);
-                return Object::createFromHostObject(rt, std::move(body_native));
-              } else {
-                auto body_native = std::make_shared<BodyNative>("");
-                return Object::createFromHostObject(rt, std::move(body_native));
-              }
-            }));
-  }
+              auto body_native = std::make_shared<BodyNative>(
+                  std::vector<uint8_t>(data, data + size));
+              return Object::createFromHostObject(rt, std::move(body_native));
+            } else if (body_data && !body_data->isUndefined()) {
+              const auto& body_data_str = body_data->toString(rt)->utf8(rt);
+              auto body_native = std::make_shared<BodyNative>(body_data_str);
+              return Object::createFromHostObject(rt, std::move(body_native));
+            } else {
+              auto body_native = std::make_shared<BodyNative>("");
+              return Object::createFromHostObject(rt, std::move(body_native));
+            }
+          }));
 }
 
 }  // namespace piper
