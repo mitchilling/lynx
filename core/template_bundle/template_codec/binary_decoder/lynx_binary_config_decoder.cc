@@ -162,6 +162,8 @@ static constexpr const char* kEnableCSSLazyImport = "enableCSSLazyImport";
 static constexpr const char* kEnableNewAnimator = "enableNewAnimator";
 static constexpr const char* kDisableQuickTracingGC = "disableQuickTracingGC";
 
+static constexpr const char* kFixCSSImportRuleOrder = "fixCSSImportRuleOrder";
+
 /// Upload global feature switches in PageConfig with common data about lynx
 /// view. If you add a new  global feature switch, you should add it to report
 /// event.
@@ -1086,6 +1088,13 @@ bool LynxBinaryConfigDecoder::DecodePageConfig(
       doc[kDisableQuickTracingGC].IsBool()) {
     page_config->SetDisableQuickTracingGC(
         doc[kDisableQuickTracingGC].GetBool());
+  }
+
+  // fix css import rule order issue
+  if (doc.HasMember(kFixCSSImportRuleOrder) &&
+      doc[kFixCSSImportRuleOrder].IsBool()) {
+    page_config->SetFixCSSImportRuleOrder(
+        doc[kFixCSSImportRuleOrder].GetBool());
   }
 
   // enableSignalAPI

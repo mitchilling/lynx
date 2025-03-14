@@ -1039,6 +1039,12 @@ class PageConfig final : public EntryConfig {
 
   bool GetDisableQuickTracingGC() const { return disable_quick_tracing_gc_; }
 
+  void SetFixCSSImportRuleOrder(bool enable) {
+    fix_css_import_rule_order_ = enable;
+  }
+
+  bool GetFixCSSImportRuleOrder() const { return fix_css_import_rule_order_; }
+
   void SetEnableReloadLifecycle(bool enable) {
     enable_reload_lifecycle_ = enable;
   }
@@ -1404,6 +1410,8 @@ class PageConfig final : public EntryConfig {
 
   // disable tracing gc mode in quick context
   bool disable_quick_tracing_gc_{false};
+
+  bool fix_css_import_rule_order_{true};
 
   TernaryBool enable_signal_api_{TernaryBool::UNDEFINE_VALUE};
 

@@ -49,6 +49,12 @@ bool TemplateBinaryReader::DecodeCSSDescriptor() {
   bool enable_css_lazy_decode = enable_css_async_decode || GetCSSLazyDecode();
 
   auto& manager = template_bundle().GetCSSStyleManager();
+
+  if (page_configs_) {
+    manager->SetFixCSSImportRuleOrder(
+        page_configs_->GetFixCSSImportRuleOrder());
+  }
+
   auto& target_fragments_map = *manager->GetCSSFragmentMap();
 
   if (!enable_css_lazy_decode) {
