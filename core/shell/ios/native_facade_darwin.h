@@ -75,6 +75,12 @@ class NativeFacadeDarwin : public NativeFacade {
 
   virtual void OnReceiveMessageEvent(runtime::MessageEvent event) override;
 
+  void OnEventCapture(long target_id, bool is_catch, int64_t event_id) override;
+
+  void OnEventBubble(long target_id, bool is_catch, int64_t event_id) override;
+
+  void OnEventFire(long target_id, bool is_stop, int64_t event_id) override;
+
  private:
   __weak id<TemplateRenderCallbackProtocol> _render;
 };

@@ -2500,4 +2500,15 @@ LYNX_NOT_IMPLEMENTED(-(instancetype)initWithCoder : (NSCoder*)aDecoder)
   return _lynxUIRenderer;
 }
 
+- (void)onEventCapture:(NSInteger)targetID
+        withEventCatch:(BOOL)isCatch
+            andEventID:(int64_t)eventID {
+}
+
+- (void)onEventBubble:(NSInteger)targetID withEventCatch:(BOOL)isCatch andEventID:(int64_t)eventID {
+}
+
+- (void)onEventFire:(NSInteger)targetID withEventStop:(BOOL)isStop andEventID:(int64_t)eventID {
+}
+
 @end

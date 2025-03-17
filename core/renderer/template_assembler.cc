@@ -1876,6 +1876,90 @@ void TemplateAssembler::SendTouchEvent(const std::string& name,
 #endif
 }
 
+void TemplateAssembler::StartEventGenerate(const lepus::Value& event_params) {
+  if (!template_loaded_) {
+    LOGI("Lynx StartEventGenerate failed, template_loaded_=false"
+         << " this:" << this);
+    return;
+  }
+  if (destroyed()) {
+    LOGI("Lynx StartEventGenerate failed, destroyed=true"
+         << " this:" << this);
+    return;
+  }
+  if (!EnableLynxAir()) {
+    EnsureTouchEventHandler();
+    touch_event_handler_->StartEventGenerate(
+        this, FindEntry(DEFAULT_ENTRY_NAME)->GetName(), event_params);
+  }
+}
+
+void TemplateAssembler::StartEventCapture(int64_t event_id) {
+  if (!template_loaded_) {
+    LOGI("Lynx StartEventCapture failed, template_loaded_=false"
+         << " this:" << this);
+    return;
+  }
+  if (destroyed()) {
+    LOGI("Lynx StartEventCapture failed, destroyed=true"
+         << " this:" << this);
+    return;
+  }
+  if (!EnableLynxAir()) {
+    EnsureTouchEventHandler();
+    touch_event_handler_->StartEventCapture(this, event_id);
+  }
+}
+
+void TemplateAssembler::StartEventBubble(int64_t event_id) {
+  if (!template_loaded_) {
+    LOGI("Lynx StartEventBubble failed, template_loaded_=false"
+         << " this:" << this);
+    return;
+  }
+  if (destroyed()) {
+    LOGI("Lynx StartEventBubble failed, destroyed=true"
+         << " this:" << this);
+    return;
+  }
+  if (!EnableLynxAir()) {
+    EnsureTouchEventHandler();
+    touch_event_handler_->StartEventBubble(this, event_id);
+  }
+}
+
+void TemplateAssembler::StartEventFire(bool is_stop, int64_t event_id) {
+  if (!template_loaded_) {
+    LOGI("Lynx StartEventFire failed, template_loaded_=false"
+         << " this:" << this);
+    return;
+  }
+  if (destroyed()) {
+    LOGI("Lynx StartEventFire failed, destroyed=true"
+         << " this:" << this);
+    return;
+  }
+  if (!EnableLynxAir()) {
+    EnsureTouchEventHandler();
+    touch_event_handler_->StartEventFire(this, is_stop, event_id);
+  }
+}
+
+void TemplateAssembler::OnEventCapture(long target_id, bool is_catch,
+                                       int64_t event_id) {
+  delegate_.OnEventCapture(target_id, is_catch, event_id);
+}
+
+void TemplateAssembler::OnEventBubble(long target_id, bool is_catch,
+                                      int64_t event_id) {
+  delegate_.OnEventBubble(target_id, is_catch, event_id);
+}
+
+void TemplateAssembler::OnEventFire(long target_id, bool is_stop,
+                                    int64_t event_id) {
+  delegate_.OnEventFire(target_id, is_stop, event_id);
+}
+
 TemplateData TemplateAssembler::GenerateTemplateDataPostedToJs(
     const TemplateData& value) {
   TRACE_EVENT(LYNX_TRACE_CATEGORY, "ConvertValueWithReadOnly");

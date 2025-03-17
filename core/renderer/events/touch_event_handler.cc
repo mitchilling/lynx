@@ -1383,5 +1383,18 @@ EventResult TouchEventHandler::FireElementWorklet(
   return result;
 }
 
+void TouchEventHandler::StartEventGenerate(TemplateAssembler *tasm,
+                                           const std::string &page_name,
+                                           const lepus::Value &event_params) {}
+
+void TouchEventHandler::StartEventCapture(TemplateAssembler *tasm,
+                                          int64_t event_id) {}
+
+void TouchEventHandler::StartEventBubble(TemplateAssembler *tasm,
+                                         int64_t event_id) {}
+
+void TouchEventHandler::StartEventFire(TemplateAssembler *tasm, bool is_stop,
+                                       int64_t event_id) {}
+
 }  // namespace tasm
 }  // namespace lynx

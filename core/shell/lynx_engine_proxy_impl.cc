@@ -104,6 +104,53 @@ void LynxEngineProxyImpl::OnPseudoStatusChanged(int32_t id, int32_t pre_status,
   });
 }
 
+void LynxEngineProxyImpl::StartEventGenerate(const pub::Value& event_params) {
+  if (engine_actor_ == nullptr) {
+    LOGE(
+        "LynxEngineProxy::StartEventGenerate failed since engine_actor_ is "
+        "nullptr");
+    return;
+  }
+  auto params_value = pub::ValueUtils::ConvertValueToLepusValue(event_params);
+  engine_actor_->Act([params_value](auto& engine) {
+    engine->StartEventGenerate(params_value);
+  });
+}
+
+void LynxEngineProxyImpl::StartEventCapture(int64_t event_id) {
+  if (engine_actor_ == nullptr) {
+    LOGE(
+        "LynxEngineProxy::StartEventCapture failed since engine_actor_ is "
+        "nullptr");
+    return;
+  }
+  engine_actor_->Act(
+      [event_id](auto& engine) { engine->StartEventCapture(event_id); });
+}
+
+void LynxEngineProxyImpl::StartEventBubble(int64_t event_id) {
+  if (engine_actor_ == nullptr) {
+    LOGE(
+        "LynxEngineProxy::StartEventBubble failed since engine_actor_ is "
+        "nullptr");
+    return;
+  }
+  engine_actor_->Act(
+      [event_id](auto& engine) { engine->StartEventBubble(event_id); });
+}
+
+void LynxEngineProxyImpl::StartEventFire(bool is_stop, int64_t event_id) {
+  if (engine_actor_ == nullptr) {
+    LOGE(
+        "LynxEngineProxy::StartEventFire failed since engine_actor_ is "
+        "nullptr");
+    return;
+  }
+  engine_actor_->Act([is_stop, event_id](auto& engine) {
+    engine->StartEventFire(is_stop, event_id);
+  });
+}
+
 void LynxEngineProxyImpl::SendBubbleEvent(const std::string& name, int32_t tag,
                                           const pub::Value& params) {
   if (engine_actor_ == nullptr) {

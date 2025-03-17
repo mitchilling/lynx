@@ -578,5 +578,25 @@ void TasmMediator::OnGlobalPropsUpdated(const lepus::Value& props) {
       });
 }
 
+void TasmMediator::OnEventCapture(long target_id, bool is_catch,
+                                  int64_t event_id) {
+  facade_actor_->Act([target_id, is_catch, event_id](auto& facade) {
+    facade->OnEventCapture(target_id, is_catch, event_id);
+  });
+}
+
+void TasmMediator::OnEventBubble(long target_id, bool is_catch,
+                                 int64_t event_id) {
+  facade_actor_->Act([target_id, is_catch, event_id](auto& facade) {
+    facade->OnEventBubble(target_id, is_catch, event_id);
+  });
+}
+
+void TasmMediator::OnEventFire(long target_id, bool is_stop, int64_t event_id) {
+  facade_actor_->Act([target_id, is_stop, event_id](auto& facade) {
+    facade->OnEventFire(target_id, is_stop, event_id);
+  });
+}
+
 }  // namespace shell
 }  // namespace lynx

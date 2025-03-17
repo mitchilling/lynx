@@ -219,5 +219,20 @@ void NativeFacadeDarwin::OnReceiveMessageEvent(runtime::MessageEvent event) {
   }
 }
 
+void NativeFacadeDarwin::OnEventCapture(long target_id, bool is_catch, int64_t event_id) {
+  __strong id<TemplateRenderCallbackProtocol> render = _render;
+  [render onEventCapture:target_id withEventCatch:is_catch andEventID:event_id];
+}
+
+void NativeFacadeDarwin::OnEventBubble(long target_id, bool is_catch, int64_t event_id) {
+  __strong id<TemplateRenderCallbackProtocol> render = _render;
+  [render onEventBubble:target_id withEventCatch:is_catch andEventID:event_id];
+}
+
+void NativeFacadeDarwin::OnEventFire(long target_id, bool is_stop, int64_t event_id) {
+  __strong id<TemplateRenderCallbackProtocol> render = _render;
+  [render onEventFire:target_id withEventStop:is_stop andEventID:event_id];
+}
+
 }  // namespace shell
 }  // namespace lynx

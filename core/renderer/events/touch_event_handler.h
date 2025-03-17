@@ -136,6 +136,15 @@ class TouchEventHandler {
   void HandleGestureEvent(TemplateAssembler *tasm, const base::String &name,
                           int tag, int gesture_id, const lepus::Value &params);
 
+  void StartEventGenerate(TemplateAssembler *tasm, const std::string &page_name,
+                          const lepus::Value &event_params);
+
+  void StartEventCapture(TemplateAssembler *tasm, int64_t event_id);
+
+  void StartEventBubble(TemplateAssembler *tasm, int64_t event_id);
+
+  void StartEventFire(TemplateAssembler *tasm, bool is_stop, int64_t event_id);
+
  private:
   struct EventContext {
     EventType event_type;

@@ -145,6 +145,12 @@ NS_ASSUME_NONNULL_BEGIN
                  withURL:(const std::string &)url
                 initData:(const std::shared_ptr<lynx::tasm::TemplateData> &)init_data;
 
+- (void)onEventCapture:(NSInteger)targetID withEventCatch:(BOOL)isCatch andEventID:(int64_t)eventID;
+
+- (void)onEventBubble:(NSInteger)targetID withEventCatch:(BOOL)isCatch andEventID:(int64_t)eventID;
+
+- (void)onEventFire:(NSInteger)targetID withEventStop:(BOOL)isStop andEventID:(int64_t)eventID;
+
 @end
 
 NS_ASSUME_NONNULL_END

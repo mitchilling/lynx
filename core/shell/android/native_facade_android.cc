@@ -313,5 +313,26 @@ void NativeFacadeAndroid::OnReceiveMessageEvent(runtime::MessageEvent event) {
   }
 }
 
+void NativeFacadeAndroid::OnEventCapture(long target_id, bool is_catch,
+                                         int64_t event_id) {
+  JNIEnv* env = AttachCurrentThread();
+  Java_NativeFacade_onEventCapture(env, jni_object_.Get(), target_id, is_catch,
+                                   event_id);
+}
+
+void NativeFacadeAndroid::OnEventBubble(long target_id, bool is_catch,
+                                        int64_t event_id) {
+  JNIEnv* env = AttachCurrentThread();
+  Java_NativeFacade_onEventBubble(env, jni_object_.Get(), target_id, is_catch,
+                                  event_id);
+}
+
+void NativeFacadeAndroid::OnEventFire(long target_id, bool is_stop,
+                                      int64_t event_id) {
+  JNIEnv* env = AttachCurrentThread();
+  Java_NativeFacade_onEventFire(env, jni_object_.Get(), target_id, is_stop,
+                                event_id);
+}
+
 }  // namespace shell
 }  // namespace lynx

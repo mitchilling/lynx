@@ -43,6 +43,14 @@ class LynxEngineProxy {
   virtual void OnPseudoStatusChanged(int32_t id, int32_t pre_status,
                                      int32_t current_status) = 0;
 
+  virtual void StartEventGenerate(const pub::Value& event_params) = 0;
+
+  virtual void StartEventCapture(int64_t event_id) = 0;
+
+  virtual void StartEventBubble(int64_t event_id) = 0;
+
+  virtual void StartEventFire(bool is_stop, int64_t event_id) = 0;
+
   // List
   // TODO(chenyouhui): Split the list interface into its own public API.
   virtual void ScrollByListContainer(int32_t tag, float x, float y,

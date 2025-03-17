@@ -237,6 +237,15 @@ class TasmMediator : public LynxEngine::Delegate {
 
   void OnGlobalPropsUpdated(const lepus::Value& props) override;
 
+  virtual void OnEventCapture(long target_id, bool is_catch,
+                              int64_t event_id) override;
+
+  virtual void OnEventBubble(long target_id, bool is_catch,
+                             int64_t event_id) override;
+
+  virtual void OnEventFire(long target_id, bool is_stop,
+                           int64_t event_id) override;
+
  private:
   std::shared_ptr<LynxActor<NativeFacade>> facade_actor_;
 

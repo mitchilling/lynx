@@ -611,6 +611,15 @@ void MockTasmDelegate::OnGlobalPropsUpdated(const lepus::Value& props) {
   ss_ << "NotifyGlobalPropsUpdated " << std::endl;
 }
 
+void MockTasmDelegate::OnEventCapture(long target_id, bool is_catch,
+                                      int64_t event_id) {}
+
+void MockTasmDelegate::OnEventBubble(long target_id, bool is_catch,
+                                     int64_t event_id) {}
+
+void MockTasmDelegate::OnEventFire(long target_id, bool is_stop,
+                                   int64_t event_id) {}
+
 }  // namespace test
 
 }  // namespace tasm

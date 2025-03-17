@@ -2600,6 +2600,15 @@ public class LynxTemplateRender implements ILynxEngine, ILynxErrorReceiver {
     public void onClearAllNativeTimingInfo() {
       nativeClearAllTimingInfo(mNativePtr, mNativeLifecycle);
     }
+
+    @Override
+    public void onEventCapture(long targetID, boolean isCatch, long eventID) {}
+
+    @Override
+    public void onEventBubble(long targetID, boolean isCatch, long eventID) {}
+
+    @Override
+    public void onEventFire(long targetID, boolean isStop, long eventID) {}
   }
 
   @Nullable

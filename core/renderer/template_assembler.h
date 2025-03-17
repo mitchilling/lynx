@@ -213,6 +213,15 @@ class TemplateAssembler final
     virtual void OnCardConfigDataChanged(const lepus::Value& data) = 0;
 
     virtual fml::RefPtr<fml::TaskRunner> GetLepusTimedTaskRunner() = 0;
+
+    virtual void OnEventCapture(long target_id, bool is_catch,
+                                int64_t event_id) = 0;
+
+    virtual void OnEventBubble(long target_id, bool is_catch,
+                               int64_t event_id) = 0;
+
+    virtual void OnEventFire(long target_id, bool is_stop,
+                             int64_t event_id) = 0;
   };
 
   class Scope {
@@ -303,6 +312,20 @@ class TemplateAssembler final
 
   void OnPseudoStatusChanged(int32_t id, uint32_t pre_status,
                              uint32_t current_status);
+
+  void StartEventGenerate(const lepus::Value& event_params);
+
+  void StartEventCapture(int64_t event_id);
+
+  void StartEventBubble(int64_t event_id);
+
+  void StartEventFire(bool is_stop, int64_t event_id);
+
+  void OnEventCapture(long target_id, bool is_catch, int64_t event_id);
+
+  void OnEventBubble(long target_id, bool is_catch, int64_t event_id);
+
+  void OnEventFire(long target_id, bool is_stop, int64_t event_id);
 
   // Just send `onLazyBundleEvent` globalEvent.
   // for history version compatibility, not to break.
