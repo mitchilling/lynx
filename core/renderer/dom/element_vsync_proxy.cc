@@ -58,8 +58,13 @@ void ElementVsyncProxy::RequestNextFrame() {
     std::weak_ptr<ElementVsyncProxy> weak_ptr{shared_from_this()};
     vsync_monitor_->ScheduleVSyncSecondaryCallback(
         reinterpret_cast<uintptr_t>(this),
-        [weak_ptr](int64_t frame_start, int64_t frame_end) {
-          TRACE_EVENT(LYNX_TRACE_CATEGORY, "ElementVsyncProxy::VsyncFrameTime");
+        [weak_ptr, instance_id = element_manager_->GetInstanceId()](
+            int64_t frame_start, int64_t frame_end) {
+          TRACE_EVENT(LYNX_TRACE_CATEGORY, "ElementVsyncProxy::VsyncFrameTime",
+                      [instance_id](lynx::perfetto::EventContext ctx) {
+                        ctx.event()->add_debug_annotations(
+                            "instance_id", std::to_string(instance_id));
+                      });
           // TODO(WUJINTIAN): Access animation vsync proxy and element manager
           // through engine actor, instead of accessing them directly.
           auto shared_ptr = weak_ptr.lock();
