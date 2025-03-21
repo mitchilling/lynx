@@ -108,6 +108,10 @@ public class LynxUIRenderer implements ILynxUIRenderer {
       LynxContext lynxContext, BehaviorRegistry behaviorRegistry, @Nullable UIBodyView body) {
     // Prepare owner to manage ui and shadow node
     mLynxUIOwner = new LynxUIOwner(lynxContext, behaviorRegistry, body);
+    if (body == null) {
+      // TODO(huangweiwu): Centralize the config within LynxContext
+      mLynxUIOwner.setContextFree(true);
+    }
     lynxContext.setLynxUIOwner(mLynxUIOwner);
     mEventDispatcher = new TouchEventDispatcher(mLynxUIOwner);
     lynxContext.setTouchEventDispatcher(mEventDispatcher);
