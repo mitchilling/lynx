@@ -55,6 +55,9 @@ export async function map(frames: StackFrame[], contextLines: number = 3, resPro
       return frame;
     }
     const { source, line, column } = map.getOriginalPosition(lineNumber, columnNumber);
+    if (line == null) {
+      console.warn('failed to parse the stack frame, please check if the sourcemap is valid');
+    }
     const originalSource = source == null ? [] : map.getSource(source);
     return new StackFrame(
       functionName,

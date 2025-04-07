@@ -20,6 +20,9 @@ class MTSResourceProvider implements IResourceProvider {
 
   constructor(debugInfo: any) {
     this.debugInfo = debugInfo;
+    if (!debugInfo) {
+      console.log('MTSResourceProvider: init without debug info');
+    }
   }
 
   async getResource(name: string): Promise<string> {
@@ -30,9 +33,14 @@ class MTSResourceProvider implements IResourceProvider {
       return this.debugInfo.lepusNG_debug_info.function_source ?? null;
     } else if (this.debugInfo.lepus_debug_info) {
       // compatible with legacy format for debug info
-      return this.debugInfo.lepus_debug_info.function_source ?? null;
+      const functionInfoList = this.debugInfo.lepus_debug_info.function_info;
+      if (functionInfoList && functionInfoList.length > 0) {
+        return functionInfoList[0].function_source ?? null;
+      }
+      console.log('MTSResourceProvider: invalid function info in debug info');
     }
-    return '';
+    console.log('MTSResourceProvider: cannot find function source in debug info');
+    return null;
   }
 }
 
@@ -75,6 +83,14 @@ export class MTSErrorParser implements IErrorParser {
       console.log('Failed to parse main thread js error caused by invalid debug info');
       return errorRecord;
     }
+    // fill in the call info for the error
+    if (errorRecord.message.includes('not a function') && rawFrames.length > 0) {
+      const rawFrame = rawFrames[0];
+      const callerInfo = this.getCallerInfo(rawFrame.lineNumber, rawFrame.columnNumber, debugInfoJson);
+      if (callerInfo) {
+        errorRecord.message = errorRecord.message + ':' + callerInfo;
+      }
+    }
     rawFrames = this.getStackFramesInProduction(rawFrames, debugInfoJson);
     const parsedFrames = await map(rawFrames, DEFAULT_CONTEXT_SIZE, new MTSResourceProvider(debugInfoJson));
     errorRecord.stackFrames = parsedFrames;
@@ -89,6 +105,30 @@ export class MTSErrorParser implements IErrorParser {
       stack,
       debugInfoUrl: debugUrl,
     };
+  }
+
+  getCallerInfo(functionId, pcIndex, debugInfoJson: any): string {
+    if (!functionId || !pcIndex) {
+      console.log('Failed to get caller info caused by invalid function id or pc index');
+      return '';
+    }
+    let debugInfo = null;
+    if (debugInfoJson.lepusNG_debug_info) {
+      debugInfo = debugInfoJson.lepusNG_debug_info;
+    } else if (debugInfoJson.lepus_debug_info) {
+      // compatible with legacy format for debug info
+      debugInfo = debugInfoJson.lepus_debug_info;
+    }
+    const functionInfoList = debugInfo ? debugInfo.function_info : null;
+    if (functionInfoList) {
+      const functionInfo = functionInfoList.find((info) => info.function_id == functionId);
+      if (functionInfo && functionInfo.pc2caller_info && pcIndex in functionInfo.pc2caller_info) {
+        return functionInfo.pc2caller_info[pcIndex];
+      }
+      console.log('Cannot find field pc2caller_info in debug info');
+    }
+    console.log('Failed to get caller info');
+    return '';
   }
 
   getStackFramesInProduction(frames: StackFrame[], debugInfoJson: any): StackFrame[] {
@@ -107,25 +147,28 @@ export class MTSErrorParser implements IErrorParser {
       if (!functionInfoList) {
         return frame;
       }
-      const function_id = frame.lineNumber ?? -1;
-      const pc_index = frame.columnNumber ?? -1;
-      const fInfo = functionInfoList.find((info: any) => info.function_id === function_id);
-      if (!fInfo || pc_index === -1) {
+      const functionId = frame.lineNumber ?? -1;
+      const pcIndex = frame.columnNumber ?? -1;
+      const fInfo = functionInfoList.find((info: any) => info.function_id === functionId);
+      if (!fInfo || pcIndex === -1) {
         return frame;
       }
-      if (fInfo.line_col && fInfo.line_col.length > pc_index) {
-        const pos = fInfo.line_col[pc_index];
+      if (fInfo.line_col && fInfo.line_col.length > pcIndex) {
+        const pos = fInfo.line_col[pcIndex];
         frame.lineNumber = pos.line ?? frame.lineNumber;
         frame.columnNumber = pos.column ?? frame.columnNumber;
-      } else if (fInfo.line_col_info && fInfo.line_col_info.line_col && fInfo.line_col_info.line_col.length > pc_index) {
+      } else if (fInfo.line_col_info && fInfo.line_col_info.line_col && fInfo.line_col_info.line_col.length > pcIndex) {
         // compatible with legacy format for debug info
-        const pos = fInfo.line_col_info.line_col.at(pc_index);
+        const pos = fInfo.line_col_info.line_col[pcIndex];
         const line = pos.line ?? -1;
         const column = pos.column ?? -1;
         const shift = 16;
         if (line === 0 && column > 1 << shift) {
           frame.lineNumber = (column >> shift) & 0xffff;
           frame.columnNumber = column & 0xffff;
+        } else if (line > 0 && column > 0) {
+          frame.lineNumber = line;
+          frame.columnNumber = column;
         }
       }
       return frame;
