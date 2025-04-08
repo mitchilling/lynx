@@ -2894,13 +2894,14 @@ TEST_F(LepusValueMethods, TestTableCheckAndGetProperty) {
 
   table.SetProperty("prop", lepus::Value("world"));
 
-  auto result = table.Table()->GetProperty("prop");
+  auto result = table.Table()->GetValueOrNull("prop");
   ASSERT_TRUE(result.has_value());
   ASSERT_TRUE(result.value() == lepus::Value("world"));
 
-  result = table.Table()->GetProperty("no_prop");
-  ASSERT_FALSE(result.has_value());
+  auto result2 = table.Table()->GetValueOrNull("no_prop");
+  ASSERT_FALSE(result2.has_value());
 }
+
 TEST_F(LepusValueMethods, CheckValueIsNumber) {
   auto* ctx = ctx_.context();
   auto v1 = lepus::Value(ctx, LEPUS_NewInt32(ctx, INT32_MAX));

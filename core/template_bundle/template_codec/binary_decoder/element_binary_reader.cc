@@ -644,7 +644,8 @@ bool ElementBinaryReader::DecodeDatasetSection(ElementInfo& info) {
   auto table = lepus::Dictionary::Create();
   for (uint32_t i = 0; i < size; ++i) {
     DECODE_STR(key);
-    DECODE_VALUE_INTO(*table->At(std::move(key)));
+    DECODE_VALUE_INTO(
+        const_cast<lepus::Value&>(*table->GetValueOrInsert(std::move(key))));
   }
   info.data_set_ = lepus::Value(table);
   return true;

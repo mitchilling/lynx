@@ -5,7 +5,7 @@
 #define CORE_RUNTIME_VM_LEPUS_TABLE_H_
 
 #include <algorithm>
-#include <optional>
+#include <string>
 #include <tuple>
 #include <type_traits>
 #include <unordered_map>
@@ -13,15 +13,118 @@
 
 #include "base/include/base_export.h"
 #include "base/include/value/base_string.h"
+#include "core/runtime/vm/lepus/array.h"
 #include "core/runtime/vm/lepus/lepus_value.h"
 #include "core/runtime/vm/lepus/ref_counted_class.h"
 #include "core/runtime/vm/lepus/ref_type.h"
 
 namespace lynx {
 namespace lepus {
+
 class BASE_EXPORT_FOR_DEVTOOL Dictionary : public lepus::RefCounted {
  public:
+  // The implementation is not guaranteed to be std::unordered_map only.
   using HashMap = std::unordered_map<base::String, Value>;
+
+  /// Use ValueWrapper as result of Dictionary's GetValue() method to
+  /// reduce the chance that user cache pointer address of inner Value
+  /// objects of the dictionary.
+  struct ValueWrapper {
+   public:
+    explicit ValueWrapper(const Value* value) : value_(value) {}
+
+    BASE_DISALLOW_COPY_ASSIGN_AND_MOVE(ValueWrapper);
+
+    const Value& value() const { return *value_; }
+    const Value& operator*() const { return *value_; }
+    const Value* operator->() const { return value_; }
+    const Value* get() const { return value_; }
+
+    operator const Value&() const { return *value_; }
+
+    explicit operator bool() const { return value_ != nullptr; }
+    bool has_value() const { return value_ != nullptr; }
+
+    // The following methods may not cover all those of lepus::Value.
+    // Add missing ones if you need, or you should use '->'.
+    ValueType Type() const { return value_->Type(); }
+    bool IsCDate() const { return value_->IsCDate(); }
+    bool IsRegExp() const { return value_->IsRegExp(); }
+    bool IsClosure() const { return value_->IsClosure(); }
+    bool IsCallable() const { return value_->IsCallable(); }
+    bool IsReference() const { return value_->IsReference(); }
+    bool IsBool() const { return value_->IsBool(); }
+    bool IsString() const { return value_->IsString(); }
+    bool IsInt64() const { return value_->IsInt64(); }
+    bool IsNumber() const { return value_->IsNumber(); }
+    bool IsDouble() const { return value_->IsDouble(); }
+    bool IsArray() const { return value_->IsArray(); }
+    bool IsTable() const { return value_->IsTable(); }
+    bool IsObject() const { return value_->IsObject(); }
+    bool IsArrayOrJSArray() const { return value_->IsArrayOrJSArray(); }
+    bool IsCPointer() const { return value_->IsCPointer(); }
+    bool IsRefCounted() const { return value_->IsRefCounted(); }
+    bool IsInt32() const { return value_->IsInt32(); }
+    bool IsUInt32() const { return value_->IsUInt32(); }
+    bool IsUInt64() const { return value_->IsUInt64(); }
+    bool IsNil() const { return value_->IsNil(); }
+    bool IsUndefined() const { return value_->IsUndefined(); }
+    bool IsCFunction() const { return value_->IsCFunction(); }
+    bool IsJSObject() const { return value_->IsJSObject(); }
+    bool IsByteArray() const { return value_->IsByteArray(); }
+    bool IsNaN() const { return value_->IsNaN(); }
+    bool IsJSValue() const { return value_->IsJSValue(); }
+    bool IsJSCPointer() const { return value_->IsJSCPointer(); }
+    bool IsJSArray() const { return value_->IsJSArray(); }
+    bool IsJSTable() const { return value_->IsJSTable(); }
+    bool IsJSBool() const { return value_->IsJSBool(); }
+    bool LEPUSBool() const { return value_->LEPUSBool(); }
+    bool IsJSString() const { return value_->IsJSString(); }
+    bool IsJSUndefined() const { return value_->IsJSUndefined(); }
+    bool IsJSNumber() const { return value_->IsJSNumber(); }
+    bool IsJsNull() const { return value_->IsJsNull(); }
+    double LEPUSNumber() const { return value_->LEPUSNumber(); }
+    bool IsJSInteger() const { return value_->IsJSInteger(); }
+    bool IsJSFunction() const { return value_->IsJSFunction(); }
+    int GetJSLength() const { return value_->GetJSLength(); }
+    bool IsJSFalse() const { return value_->IsJSFalse(); }
+    int64_t JSInteger() const { return value_->JSInteger(); }
+    std::string ToString() const { return value_->ToString(); }
+    bool IsTrue() const { return value_->IsTrue(); }
+    bool IsFalse() const { return value_->IsFalse(); }
+    bool IsEmpty() const { return value_->IsEmpty(); }
+    bool IsEqual(const Value& value) const { return value_->IsEqual(value); }
+    bool Bool() const { return value_->Bool(); }
+    double Double() const { return value_->Double(); }
+    int32_t Int32() const { return value_->Int32(); }
+    uint32_t UInt32() const { return value_->UInt32(); }
+    int64_t Int64() const { return value_->Int64(); }
+    uint64_t UInt64() const { return value_->UInt64(); }
+    double Number() const { return value_->Number(); }
+    base::String String() const { return value_->String(); }
+    std::string_view StringView() const { return value_->StringView(); }
+    const char* CString() const { return value_->CString(); }
+    const std::string& StdString() const { return value_->StdString(); }
+    fml::RefPtr<lepus::CArray> Array() const { return value_->Array(); }
+    fml::RefPtr<lepus::Dictionary> Table() const { return value_->Table(); }
+    CFunction Function() const { return value_->Function(); }
+    void* CPoint() const { return value_->CPoint(); }
+    void* LEPUSCPointer() const { return value_->LEPUSCPointer(); }
+    fml::RefPtr<lepus::RefCounted> RefCounted() const {
+      return value_->RefCounted();
+    }
+    Value GetProperty(uint32_t idx) const { return value_->GetProperty(idx); }
+    Value GetProperty(const base::String& key) const {
+      return value_->GetProperty(key);
+    }
+    int GetLength() const { return value_->GetLength(); }
+    bool Contains(const base::String& key) const {
+      return value_->Contains(key);
+    }
+
+   private:
+    const Value* value_;
+  };
 
  private:
   class alignas(Value) ValueNoOpCtor {
@@ -94,45 +197,46 @@ class BASE_EXPORT_FOR_DEVTOOL Dictionary : public lepus::RefCounted {
     return true;
   }
 
-  const Value& GetValue(const base::String& key, bool forUndef = false);
+  /// Return a default nil value if key not found.
+  ValueWrapper GetValue(const base::String& key) const;
 
-  std::optional<Value> GetProperty(const base::String& key) {
-    if (const auto& result = hash_map_.find(key); result != hash_map_.end()) {
-      return std::make_optional(result->second);
-    }
-    return std::nullopt;
-  }
+  /// Return a default undefined value if key not found.
+  ValueWrapper GetValueOrUndefined(const base::String& key) const;
 
-  // Default construct or get the value by key. For const tables this function
-  // may returns nullptr.
-  Value* At(const base::String& key);
-  Value* At(base::String&& key);
+  /// Return a nullable ValueWrapper and you should check before use.
+  ValueWrapper GetValueOrNull(const base::String& key) const;
+
+  /// Insert a nil value and return it if key not found.
+  ValueWrapper GetValueOrInsert(const base::String& key);
+  ValueWrapper GetValueOrInsert(base::String&& key);
+
+  /// Return false if the dictionary is const, or always true.
+  bool Erase(const base::String& key);
+
+  /// Return -1 if the dictionary is const, or returns number of elements
+  /// erased(0 or 1).
+  int32_t EraseKey(const base::String& key);
 
   bool Contains(const base::String& key) const;
 
-  HashMap::const_iterator find(const base::String& key) const {
-    return hash_map_.find(key);
-  }
+  auto find(const base::String& key) const { return hash_map_.find(key); }
 
-  HashMap::iterator find(const base::String& key) {
-    return hash_map_.find(key);
-  }
-
-  bool Erase(const base::String& key);
+  auto find(const base::String& key) { return hash_map_.find(key); }
 
   size_t size() const { return hash_map_.size(); }
 
-  HashMap::iterator begin() { return hash_map_.begin(); }
+  /// @note Do not cache pointer to value using `&(it->second)`
+  /// to other variables. Later the underlying implementation
+  /// of this map will be changed to flat based instead of node
+  /// based.
+  auto cbegin() const { return hash_map_.cbegin(); }
+  auto cend() const { return hash_map_.cend(); }
+  auto begin() { return hash_map_.begin(); }
+  auto end() { return hash_map_.end(); }
+  auto begin() const { return hash_map_.begin(); }
+  auto end() const { return hash_map_.end(); }
 
-  HashMap::const_iterator cbegin() const { return hash_map_.cbegin(); }
-
-  HashMap::const_iterator cend() const { return hash_map_.cend(); }
-
-  HashMap::iterator end() { return hash_map_.end(); }
-  HashMap::const_iterator begin() const { return hash_map_.begin(); }
-  HashMap::const_iterator end() const { return hash_map_.end(); }
-
-  void dump();
+  void Dump();
   void ReleaseSelf() const override;
 
   friend bool operator==(const Dictionary& left, const Dictionary& right);
@@ -149,13 +253,6 @@ class BASE_EXPORT_FOR_DEVTOOL Dictionary : public lepus::RefCounted {
       if (!value.MarkConst()) return false;
     }
     return (is_const_ = true);
-  }
-
-  int32_t EraseKey(const base::String& key) {
-    if (is_const_) {
-      return -1;
-    }
-    return static_cast<int32_t>(hash_map_.erase(key));
   }
 
  protected:

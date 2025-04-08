@@ -352,10 +352,9 @@ void SetX1Y1(TimingFunctionData& timing_function,
   timing_function.y1 = arr->get(TimingFunctionData::INDEX_Y1).Number();
 }
 
-void UpdateAnimationProp(lepus::Value& p, long& dest,
-                         const tasm::CSSPropertyID anim_id,
+void UpdateAnimationProp(long& dest, const tasm::CSSPropertyID anim_id,
                          const fml::RefPtr<lepus::Dictionary>& map) {
-  p = map->GetValue(std::to_string(anim_id));
+  auto p = map->GetValue(std::to_string(anim_id));
   if (p.IsNumber()) {
     dest = static_cast<long>(p.Number());
   }
@@ -1100,37 +1099,47 @@ bool CSSStyleUtils::ComputeAnimation(const lepus::Value& value,
                                      const tasm::CSSParserConfigs& configs) {
   CSS_HANDLER_FAIL_IF_NOT(value.IsObject(), configs.enable_css_strict_mode, msg)
   auto map = value.Table();
-  auto p = map->GetValue(std::to_string(tasm::kPropertyIDAnimationName));
-  if (p.IsString()) {
-    anim.name = p.String();
+  auto p_name = map->GetValue(std::to_string(tasm::kPropertyIDAnimationName));
+  if (p_name.IsString()) {
+    anim.name = p_name.String();
   }
 
-  UpdateAnimationProp(p, anim.duration, tasm::kPropertyIDAnimationDuration,
-                      map);
-  p = map->GetValue(std::to_string(tasm::kPropertyIDAnimationTimingFunction));
-  if (p.IsArray()) {
-    ComputeTimingFunction(p.Array()->get(0), false, anim.timing_func, configs);
+  UpdateAnimationProp(anim.duration, tasm::kPropertyIDAnimationDuration, map);
+
+  auto p_timing =
+      map->GetValue(std::to_string(tasm::kPropertyIDAnimationTimingFunction));
+  if (p_timing.IsArray()) {
+    ComputeTimingFunction(p_timing.Array()->get(0), false, anim.timing_func,
+                          configs);
   }
 
-  p = map->GetValue(std::to_string(tasm::kPropertyIDAnimationFillMode));
-  if (p.IsNumber()) {
-    anim.fill_mode = static_cast<starlight::AnimationFillModeType>(p.Number());
+  auto p_fill_mode =
+      map->GetValue(std::to_string(tasm::kPropertyIDAnimationFillMode));
+  if (p_fill_mode.IsNumber()) {
+    anim.fill_mode =
+        static_cast<starlight::AnimationFillModeType>(p_fill_mode.Number());
   }
 
-  UpdateAnimationProp(p, anim.delay, tasm::kPropertyIDAnimationDelay, map);
+  UpdateAnimationProp(anim.delay, tasm::kPropertyIDAnimationDelay, map);
 
-  p = map->GetValue(std::to_string(tasm::kPropertyIDAnimationDirection));
-  if (p.IsNumber()) {
-    anim.direction = static_cast<starlight::AnimationDirectionType>(p.Number());
+  auto p_direction =
+      map->GetValue(std::to_string(tasm::kPropertyIDAnimationDirection));
+  if (p_direction.IsNumber()) {
+    anim.direction =
+        static_cast<starlight::AnimationDirectionType>(p_direction.Number());
   }
-  p = map->GetValue(std::to_string(tasm::kPropertyIDAnimationIterationCount));
-  if (p.IsNumber()) {
-    anim.iteration_count = static_cast<int>(p.Number());
+
+  auto p_iteration_count =
+      map->GetValue(std::to_string(tasm::kPropertyIDAnimationIterationCount));
+  if (p_iteration_count.IsNumber()) {
+    anim.iteration_count = static_cast<int>(p_iteration_count.Number());
   }
-  p = map->GetValue(std::to_string(tasm::kPropertyIDAnimationPlayState));
-  if (p.IsNumber()) {
+
+  auto p_play_state =
+      map->GetValue(std::to_string(tasm::kPropertyIDAnimationPlayState));
+  if (p_play_state.IsNumber()) {
     anim.play_state =
-        static_cast<starlight::AnimationPlayStateType>(p.Number());
+        static_cast<starlight::AnimationPlayStateType>(p_play_state.Number());
   }
 
   return true;

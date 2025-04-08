@@ -279,24 +279,24 @@ TEST(AnimationShorthandHandler, Legacy) {
   auto holder =
       table->GetValue(base::String(std::to_string(kPropertyIDAnimationName)));
   EXPECT_EQ(holder.StringView(), "test");
-  holder = table->GetValue(
+  auto holder2 = table->GetValue(
       base::String(std::to_string(kPropertyIDAnimationDuration)));
-  EXPECT_EQ(holder.Number(), 10000);
-  holder =
+  EXPECT_EQ(holder2.Number(), 10000);
+  auto holder3 =
       table->GetValue(base::String(std::to_string(kPropertyIDAnimationDelay)));
-  EXPECT_EQ(holder.Number(), 1000);
-  holder = table->GetValue(
+  EXPECT_EQ(holder3.Number(), 1000);
+  auto holder4 = table->GetValue(
       base::String(std::to_string(kPropertyIDAnimationTimingFunction)));
-  EXPECT_TRUE(holder.IsArray());
-  EXPECT_EQ(holder.Array()->get(0).Number(),
+  EXPECT_TRUE(holder4.IsArray());
+  EXPECT_EQ(holder4.Array()->get(0).Number(),
             static_cast<int>(starlight::TimingFunctionType::kEaseInEaseOut));
-  holder = table->GetValue(
+  auto holder5 = table->GetValue(
       base::String(std::to_string(kPropertyIDAnimationFillMode)));
-  EXPECT_EQ(holder.Number(),
+  EXPECT_EQ(holder5.Number(),
             static_cast<int>(starlight::AnimationFillModeType::kForwards));
-  holder = table->GetValue(
+  auto holder6 = table->GetValue(
       base::String(std::to_string(kPropertyIDAnimationIterationCount)));
-  EXPECT_EQ(holder.Number(), 10E8);
+  EXPECT_EQ(holder6.Number(), 10E8);
 }
 
 }  // namespace test

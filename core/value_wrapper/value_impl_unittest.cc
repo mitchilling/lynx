@@ -429,7 +429,7 @@ TEST_P(PiperValueTests, ValueConvertTest) {
   ASSERT_TRUE(lepus_map->GetValue("key4").IsNil());
   ASSERT_TRUE(lepus_map->GetValue("key5").String().str() == "test2");
   ASSERT_TRUE(lepus_map->GetValue("key6").IsByteArray());
-  auto byte_array2 = lepus_map->GetValue("key6").ByteArray();
+  auto byte_array2 = lepus_map->GetValue("key6")->ByteArray();
   std::string s2(reinterpret_cast<char*>(byte_array2->GetPtr()),
                  byte_array2->GetLength());
   ASSERT_TRUE(s2 == "map_test");

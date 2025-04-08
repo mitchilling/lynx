@@ -7422,11 +7422,11 @@ TEST_P(FiberElementTest, FromTemplateInfoTest) {
   EXPECT_EQ(root_element->IsPartElement(), true);
   auto map = TreeResolver::GetTemplateParts(root_element);
 
-  auto ref_0 = map->GetProperty("0");
+  auto ref_0 = map->GetValueOrNull("0");
   EXPECT_EQ(ref_0.has_value(), false);
-  auto ref_0_0 = map->GetProperty("0_0");
+  auto ref_0_0 = map->GetValueOrNull("0_0");
   EXPECT_EQ(ref_0_0 && ref_0_0->IsRefCounted(), true);
-  auto ref_0_0_0 = map->GetProperty("0_0_0");
+  auto ref_0_0_0 = map->GetValueOrNull("0_0_0");
   EXPECT_EQ(ref_0_0_0 && ref_0_0_0->IsRefCounted(), true);
 }
 

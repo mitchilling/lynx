@@ -35,6 +35,8 @@
 namespace lynx {
 namespace lepus {
 
+Value::Value(CreateAsUndefinedTag) { value_.type = lynx_value_undefined; }
+
 Value::Value(const Value& value) { Copy(value); }
 
 Value::Value(Value&& value) noexcept {

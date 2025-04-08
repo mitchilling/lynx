@@ -248,7 +248,7 @@ bool VMContext::CheckTableShadowUpdatedWithTopLevelVariable(
       reg = reg_info->second;
     }
     result.erase(front_value_iter);
-    Value* ptr = heap_.base() + reg + 1;
+    const Value* ptr = heap_.base() + reg + 1;
 
     for (auto it = result.begin(); it != result.end(); ++it) {
       if (ptr->IsTable()) {
@@ -257,7 +257,7 @@ bool VMContext::CheckTableShadowUpdatedWithTopLevelVariable(
           // target table did not have this new key
           return true;
         }
-        ptr = &(const_cast<Value&>(ptr->Table()->GetValue(key)));
+        ptr = ptr->Table()->GetValue(key).get();
       } else if (ptr->IsArray()) {
         int index;
         if (lynx::base::StringToInt(*it, &index, 10)) {
@@ -1252,12 +1252,15 @@ void VMContext::RunFrame() {
         switch (b->Type()) {
           case Value_Table:
             if (c->IsString()) {
-              *a =
-                  b->Table()->GetValue(c->String(), enable_null_prop_as_undef_);
+              *a = enable_null_prop_as_undef_
+                       ? b->Table()->GetValueOrUndefined(c->String())
+                       : b->Table()->GetValue(c->String());
             } else if (c->IsNumber()) {
               std::ostringstream s;
               s << c->Number();
-              *a = b->Table()->GetValue(s.str(), enable_null_prop_as_undef_);
+              *a = enable_null_prop_as_undef_
+                       ? b->Table()->GetValueOrUndefined(s.str())
+                       : b->Table()->GetValue(s.str());
             } else {
               a->SetNil();
             }

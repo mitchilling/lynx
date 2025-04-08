@@ -108,6 +108,10 @@ class BASE_EXPORT_FOR_DEVTOOL Value {
 
  public:
   explicit Value() = default;
+
+  enum CreateAsUndefinedTag { kCreateAsUndefinedTag };
+  explicit Value(CreateAsUndefinedTag);
+
   Value(const Value& value);
   Value(Value&& value) noexcept;
 

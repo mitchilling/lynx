@@ -23,40 +23,61 @@ bool Dictionary::Erase(const base::String& key) {
   return true;
 }
 
-const Value& Dictionary::GetValue(const base::String& key, bool forUndef) {
-  HashMap::iterator iter = hash_map_.find(key);
+int32_t Dictionary::EraseKey(const base::String& key) {
+  if (IsConstLog()) {
+    return -1;
+  }
+  return static_cast<int32_t>(hash_map_.erase(key));
+}
+
+Dictionary::ValueWrapper Dictionary::GetValue(const base::String& key) const {
+  auto iter = hash_map_.find(key);
   if (iter != hash_map_.end()) {
-    return iter->second;
-  }
-
-  if (forUndef) {
-    static Value kUndefined;
-    kUndefined.SetUndefined();
-    return kUndefined;
+    return ValueWrapper(&iter->second);
   } else {
-    static Value kEmpty;
-    kEmpty.SetNil();
-    return kEmpty;
+    static Value kNil;
+    return ValueWrapper(&kNil);
   }
 }
 
-Value* Dictionary::At(const base::String& key) {
+Dictionary::ValueWrapper Dictionary::GetValueOrUndefined(
+    const base::String& key) const {
+  auto iter = hash_map_.find(key);
+  if (iter != hash_map_.end()) {
+    return ValueWrapper(&iter->second);
+  } else {
+    static Value kUndefined(Value::kCreateAsUndefinedTag);
+    return ValueWrapper(&kUndefined);
+  }
+}
+
+Dictionary::ValueWrapper Dictionary::GetValueOrNull(
+    const base::String& key) const {
+  auto iter = hash_map_.find(key);
+  if (iter != hash_map_.end()) {
+    return ValueWrapper(&iter->second);
+  } else {
+    return ValueWrapper(nullptr);
+  }
+}
+
+Dictionary::ValueWrapper Dictionary::GetValueOrInsert(const base::String& key) {
   if (IsConstLog()) {
-    return nullptr;
+    return ValueWrapper(nullptr);
   } else {
-    return &hash_map_[key];
+    return ValueWrapper(&hash_map_[key]);
   }
 }
 
-Value* Dictionary::At(base::String&& key) {
+Dictionary::ValueWrapper Dictionary::GetValueOrInsert(base::String&& key) {
   if (IsConstLog()) {
-    return nullptr;
+    return ValueWrapper(nullptr);
   } else {
-    return &hash_map_[std::move(key)];
+    return ValueWrapper(&hash_map_[std::move(key)]);
   }
 }
 
-void Dictionary::dump() {
+void Dictionary::Dump() {
   LOGE("begin dump dict----------");
   auto it = begin();
   for (; it != end(); it++) {
@@ -69,7 +90,7 @@ void Dictionary::dump() {
       LOGE(it->first.str() << " : " << value.StdString());
     } else if (value.IsTable()) {
       LOGE(it->first.str() << " : ===>");
-      value.Table()->dump();
+      value.Table()->Dump();
     } else if (value.IsBool()) {
       LOGE(it->first.str() << " : "
                            << ((value.Bool() == true) ? "true" : "false"));

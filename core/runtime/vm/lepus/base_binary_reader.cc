@@ -190,10 +190,12 @@ bool BaseBinaryReader::DecodeTable(fml::RefPtr<Dictionary>& out_value,
     if (is_header) {
       std::string key;
       ERROR_UNLESS(ReadStringDirectly(&key));
-      DECODE_VALUE_HEADER_INTO(*out_value->At(std::move(key)));
+      DECODE_VALUE_HEADER_INTO((const_cast<lepus::Value&>(
+          *out_value->GetValueOrInsert(std::move(key)))));
     } else {
       DECODE_STR(key);
-      DECODE_VALUE_INTO(*out_value->At(std::move(key)));
+      DECODE_VALUE_INTO((const_cast<lepus::Value&>(
+          *out_value->GetValueOrInsert(std::move(key)))));
     }
   }
   return true;
