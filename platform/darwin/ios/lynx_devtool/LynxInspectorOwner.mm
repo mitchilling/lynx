@@ -259,13 +259,17 @@
 
 - (void)attachDebugBridge:(NSString*)url {
   LOGI("LynxInspectorOwner attachToDebugBridge:" << url);
-  if (_devtoolNG != nil && (![_devtoolNG isAttachToDebugRouter])) {
-    int sessionId = [_devtoolNG attachToDebug:url];
-    LynxView* lynxView = [self getLynxView];
-    if (sessionId > 0 && lynxView != nil) {
-      [[DebugRouter instance] setSessionId:sessionId ofView:lynxView];
+  if (_devtoolNG != nil) {
+    if ((![_devtoolNG isAttachToDebugRouter])) {
+      int sessionId = [_devtoolNG attachToDebug:url];
+      LynxView* lynxView = [self getLynxView];
+      if (sessionId > 0 && lynxView != nil) {
+        [[DebugRouter instance] setSessionId:sessionId ofView:lynxView];
+      }
     }
-    [self initRecord];
+    if (self->record_id != 0) {
+      [self initRecord];
+    }
   }
 }
 

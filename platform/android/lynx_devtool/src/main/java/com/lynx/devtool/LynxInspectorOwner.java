@@ -172,13 +172,17 @@ public class LynxInspectorOwner implements LynxBaseInspectorOwnerNG {
 
   public void attachToDebugBridge(String url) {
     LLog.i(TAG, "attachToDebugBridge:" + url);
-    if (mLynxDevToolNG != null && (!mLynxDevToolNG.isAttachToDebugRouter())) {
-      int sessionId = mLynxDevToolNG.attachToDebug(url == null ? "" : url);
-      LynxView lynxView = getLynxView();
-      if (sessionId > 0 && lynxView != null) {
-        DebugRouter.getInstance().setSessionIdOfView(lynxView, sessionId);
+    if (mLynxDevToolNG != null) {
+      if (!mLynxDevToolNG.isAttachToDebugRouter()) {
+        int sessionId = mLynxDevToolNG.attachToDebug(url == null ? "" : url);
+        LynxView lynxView = getLynxView();
+        if (sessionId > 0 && lynxView != null) {
+          DebugRouter.getInstance().setSessionIdOfView(lynxView, sessionId);
+        }
       }
-      initRecord();
+      if (mRecordID != 0) {
+        initRecord();
+      }
     }
   }
 
