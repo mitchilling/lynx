@@ -70,6 +70,8 @@ class PropBundleDarwin : public PropBundle {
     SetProps(property_name, value);
   };
 
+  void SetPropsByID(CSSPropertyID id, const std::vector<uint32_t>& value) override;
+
   void ResetEventHandler() override;
   std::unique_ptr<PropBundle> ShallowCopy() override;
 

@@ -246,6 +246,25 @@ void PropBundleAndroid::SetGestureDetector(const GestureDetector& detector) {
   jni_gesture_detector_map_->PushMap(std::move(jni_map.get()));
 }
 
+void PropBundleAndroid::SetPropsByID(CSSPropertyID id,
+                                     const std::vector<uint32_t>& value) {
+  if (!use_map_buffer_) {
+    const auto& property_name = CSSProperty::GetPropertyName(id);
+
+    auto jni_array = std::make_unique<base::android::JavaOnlyArray>();
+    for (const auto& number : value) {
+      jni_array->PushInt(number);
+    }
+    jni_map_->PushArray(property_name.c_str(), jni_array.get());
+  } else {
+    base::android::MapBufferBuilder buffer_builder{};
+    for (auto i = 0; i < value.size(); ++i) {
+      buffer_builder.putInt(i, value[i]);
+    }
+    style_buffer_builder_.putMapBuffer(id, buffer_builder.build());
+  }
+}
+
 void PropBundleAndroid::ResetEventHandler() {
   CopyIfConst();
   if (jni_event_handler_map_) {

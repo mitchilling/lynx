@@ -10,6 +10,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 #include "core/public/pub_value.h"
 
@@ -47,6 +48,8 @@ class PropBundle {
   virtual void SetPropsByID(CSSPropertyID id, bool value) = 0;
   virtual void SetPropsByID(CSSPropertyID id, double value) = 0;
   virtual void SetPropsByID(CSSPropertyID id, const pub::Value& value) = 0;
+  virtual void SetPropsByID(CSSPropertyID id,
+                            const std::vector<uint32_t>& value) = 0;
 
   // TODO(wujintian): Currently, the copy of the element depends on the shallow
   // copy optimization of the prop bundle to improve performance. In the future,

@@ -163,6 +163,17 @@ void PropBundleDarwin::SetGestureDetector(const GestureDetector& gestureDetector
 #endif
 }
 
+void PropBundleDarwin::SetPropsByID(CSSPropertyID key_id, const std::vector<uint32_t>& value) {
+  NSMutableArray* array = [[NSMutableArray alloc] init];
+  for (const auto& number : value) {
+    [array addObject:[NSNumber numberWithDouble:number]];
+  }
+
+  auto key = CSSProperty::GetPropertyNameCStr(key_id);
+
+  [propMap setObject:array forKey:[[NSString alloc] initWithUTF8String:key]];
+}
+
 void PropBundleDarwin::ResetEventHandler() {
   [eventSet removeAllObjects];
   [lepusEventSet removeAllObjects];

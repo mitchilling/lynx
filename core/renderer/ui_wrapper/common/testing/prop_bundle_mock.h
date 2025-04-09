@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 #include "core/public/prop_bundle.h"
 #include "core/renderer/css/css_property.h"
@@ -68,6 +69,8 @@ class PropBundleMock : public PropBundle {
     auto property_name = CSSProperty::GetPropertyNameCStr(id);
     SetProps(property_name, value);
   };
+  void SetPropsByID(CSSPropertyID id,
+                    const std::vector<uint32_t>& value) override;
 
   std::unique_ptr<PropBundle> ShallowCopy() override { return nullptr; }
 

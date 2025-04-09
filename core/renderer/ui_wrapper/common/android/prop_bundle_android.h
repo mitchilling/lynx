@@ -48,6 +48,8 @@ class PropBundleAndroid : public PropBundle {
   void SetPropsByID(CSSPropertyID id, bool value) override;
   void SetPropsByID(CSSPropertyID id, double value) override;
   void SetPropsByID(CSSPropertyID id, const pub::Value& value) override;
+  void SetPropsByID(CSSPropertyID id,
+                    const std::vector<uint32_t>& value) override;
 
   std::unique_ptr<PropBundle> ShallowCopy() override;
 
