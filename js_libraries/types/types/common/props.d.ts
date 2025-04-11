@@ -121,6 +121,28 @@ export interface StandardProps extends LynxEventProps {
    * @since Lynx 3.1
    */
   'ios-background-shape-layer'?: boolean;
+  'exposure-id'?: string;
+  'exposure-scene'?: string;
+  'exposure-screen-margin-top'?: string;
+  'exposure-screen-margin-right'?: string;
+  'exposure-screen-margin-bottom'?: string;
+  'exposure-screen-margin-left'?: string;
+  'exposure-ui-margin-top'?: string;
+  'exposure-ui-margin-right'?: string;
+  'exposure-ui-margin-bottom'?: string;
+  'exposure-ui-margin-left'?: string;
+  'exposure-area'?: string;
+  'enable-exposure-ui-margin'?: boolean;
+  'user-interaction-enabled'?: boolean;
+  'native-interaction-enabled'?: boolean;
+  'block-native-event'?: boolean;
+  'block-native-event-areas'?: number[][];
+  'consume-slide-event'?: number[][];
+  'event-through'?: boolean;
+  'enable-touch-pseudo-propagation'?: boolean;
+  'hit-slop'?: object | string;
+  'ignore-focus'?: boolean;
+  'ios-enable-simultaneous-touch'?: boolean;
 }
 
 export interface NoProps {
