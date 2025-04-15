@@ -15,8 +15,7 @@
 void RunOnReportThread(JNIEnv* env, jobject jcaller, jobject runnable) {
   auto taskRunner =
       lynx::tasm::report::EventTrackerPlatformImpl::GetReportTaskRunner();
-  if (taskRunner->RunsTasksOnCurrentThread()) {
-    Java_LynxEventReporter_callRunnable(env, runnable);
+  if (!taskRunner) {
     return;
   }
   taskRunner->PostTask(
