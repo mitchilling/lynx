@@ -594,12 +594,18 @@ public abstract class LynxBaseUI
   }
 
   public void updatePropertiesInterval(StylesDiffMap props) {
-    mProps.merge(props.mBackingMap);
+    if (props == null || props.isEmpty()) {
+      return;
+    }
 
+    mProps.merge(props.mBackingMap);
     PropsUpdater.updateProps(this, props);
   }
 
   public void afterPropsUpdated(StylesDiffMap props) {
+    if (props != null && !props.isEmpty()) {
+      invalidate();
+    }
     onPropsUpdated();
     onAnimationUpdated();
     LynxAccessibilityWrapper wrapper = mContext.getLynxAccessibilityWrapper();
@@ -2359,7 +2365,6 @@ public abstract class LynxBaseUI
     if (mContext != null) {
       mContext.addUIToExposedMap(this);
     }
-    invalidate();
   }
 
   public void onBeforeAnimation(int left, int top, int width, int height, int paddingLeft,

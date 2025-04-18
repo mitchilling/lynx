@@ -199,17 +199,17 @@ public class LynxUIOwner {
       ui.setGestureDetectors(gestureDetectors);
     }
 
-    if (props != null) {
-      boolean needUpdateFlatten = !tendToFlatten && ui.isFlatten();
+    boolean needUpdateFlatten = !tendToFlatten && ui.isFlatten();
 
-      // Transit UI between LynxUI and LynxFlattenUI according to props.
-      // tendToFlatten is determined by native.
-      if (needUpdateFlatten) {
-        // update flatten status with old props first & get the new created UI.
-        updateFlatten(tag, tendToFlatten);
-        ui = mUIHolder.get(tag);
-      }
+    // Transit UI between LynxUI and LynxFlattenUI according to props.
+    // tendToFlatten is determined by native.
+    if (needUpdateFlatten) {
+      // update flatten status with old props first & get the new created UI.
+      updateFlatten(tag, false);
+      ui = mUIHolder.get(tag);
+    }
 
+    if (props != null && !props.isEmpty()) {
       // flush new props.
       // When updating UI, the transition and animation properties need to be consumed first.
       if (hasTransitionAnimation(props)) {
@@ -233,14 +233,14 @@ public class LynxUIOwner {
       }
 
       checkShadowOrOutline(props, ui);
-
-      // TODO(renzhongyue): now will setprops twice, one set old props to new UI in updateFlatten,
-      // other set new props to new UI here. Can check props, if don't have initial state related
-      // props, only update the new props to new UI directly.
-
-      ui.updateProperties(props);
-      checkTranslateZ(ui);
     }
+
+    // TODO(renzhongyue): now will setprops twice, one set old props to new UI in updateFlatten,
+    // other set new props to new UI here. Can check props, if don't have initial state related
+    // props, only update the new props to new UI directly.
+    ui.updateProperties(props);
+    checkTranslateZ(ui);
+
     if (TraceEvent.enableTrace()) {
       TraceEvent.endSection(traceEvent);
     }
