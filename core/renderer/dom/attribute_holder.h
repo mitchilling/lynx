@@ -6,7 +6,6 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -39,24 +38,22 @@ void MapInsertOrAssign(T& map, const typename T::key_type& key,
   }
 }
 
-class AttributeHolder : public css::StyleNode {
+class AttributeHolder : public fml::RefCountedThreadSafeStorage,
+                        public css::StyleNode {
  public:
-  AttributeHolder(Element* element = nullptr)
-      : pseudo_element_owner_(nullptr),
-        element_(element),
-        ssr_attribute_holder_{false} {}
+  explicit AttributeHolder(Element* element = nullptr) : element_(element) {}
 
   AttributeHolder(const AttributeHolder& holder)
-      : classes_{holder.classes_},
-        inline_styles_{holder.inline_styles_},
-        attributes_{holder.attributes_},
-        data_set_{holder.data_set_},
-        id_selector_{holder.id_selector_},
-        pseudo_state_{holder.pseudo_state_},
-        pseudo_element_owner_{holder.pseudo_element_owner_},
+      : classes_(holder.classes_),
+        inline_styles_(holder.inline_styles_),
+        attributes_(holder.attributes_),
+        data_set_(holder.data_set_),
+        id_selector_(holder.id_selector_),
+        is_ssr_attribute_holder_(holder.is_ssr_attribute_holder_),
+        pseudo_state_(holder.pseudo_state_),
+        pseudo_element_owner_(holder.pseudo_element_owner_),
         element_(holder.element_),
-        radon_node_ptr_(holder.radon_node_ptr_),
-        ssr_attribute_holder_{holder.ssr_attribute_holder_} {
+        radon_node_ptr_(holder.radon_node_ptr_) {
     for (auto& static_event : holder.static_events_) {
       SetStaticEvent(static_event.second->type(), static_event.second->name(),
                      static_event.second->function());
@@ -64,6 +61,8 @@ class AttributeHolder : public css::StyleNode {
   }
 
   virtual ~AttributeHolder() = default;
+
+  void ReleaseSelf() const override { delete this; }
 
   void OnStyleChange() override;
 
@@ -243,6 +242,7 @@ class AttributeHolder : public css::StyleNode {
   void RemoveEvent(const base::String& name, const base::String& type);
   void RemoveAllEvents();
 
+  static constexpr const char kIdSelectorAttrName[] = "idSelector";
   void SetIdSelector(const base::String& idSelector) {
     id_selector_ = idSelector;
     lepus::Value selector(idSelector);
@@ -274,10 +274,6 @@ class AttributeHolder : public css::StyleNode {
   }
 
   const CSSVariableMap& css_variables_map() const { return css_variables_; }
-
-  const CSSVariableMap& css_variables_from_js() const {
-    return css_variables_from_js_;
-  }
 
   void AddCSSVariableRelated(const base::String& key,
                              const base::String& value) {
@@ -347,8 +343,6 @@ class AttributeHolder : public css::StyleNode {
     this->css_variables_ = src.css_variables_;
   }
 
-  static constexpr const char kIdSelectorAttrName[] = "idSelector";
-
   void OnPseudoStateChanged(PseudoState, PseudoState);
 
   void SetPseudoState(PseudoState state) {
@@ -384,28 +378,20 @@ class AttributeHolder : public css::StyleNode {
 
   bool HasClass() const { return !classes_.empty(); }
 
-  bool IsSSRAttrHolder() { return ssr_attribute_holder_; }
+  bool IsSSRAttrHolder() { return is_ssr_attribute_holder_; }
 
-  void SetSSRAttrHolder(bool flag) { ssr_attribute_holder_ = flag; }
+  void SetSSRAttrHolder(bool flag) { is_ssr_attribute_holder_ = flag; }
 
-  static void CollectIdChangedInvalidation(CSSFragment*,
-                                           css::InvalidationLists&,
-                                           const std::string&,
-                                           const std::string&);
-
-  static void CollectClassChangedInvalidation(CSSFragment*,
-                                              css::InvalidationLists&,
-                                              const ClassList&,
-                                              const ClassList&);
-
-  static void CollectPseudoChangedInvalidation(CSSFragment*,
-                                               css::InvalidationLists&,
-                                               PseudoState, PseudoState);
-
-  RadonNode* radon_node_ptr() { return radon_node_ptr_; }
+  RadonNode* radon_node_ptr() const { return radon_node_ptr_; }
   void set_radon_node_ptr(RadonNode* radon_node_ptr) {
     radon_node_ptr_ = radon_node_ptr;
   }
+
+  bool ContainsIdSelector(const std::string& selector) const override;
+  bool ContainsClassSelector(const std::string& selector) const override;
+  bool ContainsTagSelector(const std::string& selector) const override;
+  bool ContainsAttributeSelector(const std::string& selector) const;
+  void SetElement(Element* element) { element_ = element; }
 
  protected:
   ClassList classes_;
@@ -416,6 +402,9 @@ class AttributeHolder : public css::StyleNode {
   EventMap lepus_events_;
   EventMap global_bind_events_;
   GestureMap gesture_detectors_;
+
+  base::String tag_;
+
   // Should be unique in component
   base::String id_selector_;
 
@@ -435,25 +424,15 @@ class AttributeHolder : public css::StyleNode {
   // `key: --bg-color value: red`
   CSSVariableMap css_variable_related_;
 
-  // Record if is focused / hovered ...
+  bool is_ssr_attribute_holder_{false};
   PseudoState pseudo_state_{kPseudoStateNone};
-  base::String tag_;
-  AttributeHolder* pseudo_element_owner_;
+  AttributeHolder* pseudo_element_owner_{nullptr};
+
   // Reference the element for sibling and parent
   Element* element_;
+
   // Save path to trail Element to RadonNode.
-  // TODO(wangyifei.20010605): Use a delegate class rather than
-  // 'radon_node_ptr_'.
-  RadonNode* radon_node_ptr_ = nullptr;
-
-  bool ssr_attribute_holder_;
-
- public:
-  bool ContainsIdSelector(const std::string& selector) const override;
-  bool ContainsClassSelector(const std::string& selector) const override;
-  bool ContainsTagSelector(const std::string& selector) const override;
-  bool ContainsAttributeSelector(const std::string& selector) const;
-  void SetElement(Element* element) { element_ = element; }
+  RadonNode* radon_node_ptr_{nullptr};
 };
 
 }  // namespace tasm

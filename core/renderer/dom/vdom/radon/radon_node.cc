@@ -36,7 +36,7 @@ namespace tasm {
 RadonNode::RadonNode(PageProxy* const page_proxy_, const base::String& tag_name,
                      uint32_t node_index)
     : RadonBase(kRadonNode, tag_name, node_index), page_proxy_{page_proxy_} {
-  attribute_holder_ = std::make_shared<AttributeHolder>();
+  attribute_holder_ = fml::MakeRefCounted<AttributeHolder>();
   attribute_holder_->set_radon_node_ptr(this);
   attribute_holder_->set_tag(tag());
   if (!page_proxy_) {
@@ -57,7 +57,7 @@ RadonNode::RadonNode(const RadonNode& node, PtrLookupMap& map)
       force_calc_new_style_{node.force_calc_new_style_} {
   if (node.attribute_holder_) {
     attribute_holder_ =
-        std::make_shared<AttributeHolder>(*node.attribute_holder_);
+        fml::MakeRefCounted<AttributeHolder>(*node.attribute_holder_);
     attribute_holder_->set_radon_node_ptr(this);
     attribute_holder_->set_tag(node.tag());
   }
@@ -695,12 +695,12 @@ void RadonNode::CollectInvalidationSetsAndInvalidate(
   css::InvalidationLists invalidation_lists;
   // Works when CSS Selector is enabled
   if (id_dirty_) {
-    AttributeHolder::CollectIdChangedInvalidation(
+    CSSFragment::CollectIdChangedInvalidation(
         style_sheet, invalidation_lists, old_radon_node->id_selector().str(),
         id_selector().str());
   }
   if (class_dirty_) {
-    AttributeHolder::CollectClassChangedInvalidation(
+    CSSFragment::CollectClassChangedInvalidation(
         style_sheet, invalidation_lists, old_radon_node->classes(), classes());
   }
 
@@ -746,7 +746,8 @@ bool RadonNode::OptimizedShouldFlushStyle(RadonNode* old_radon_node,
     // is enough
     cached_styles_ = old_radon_node->cached_styles_;
     // css_variable_map should be reused either.
-    set_css_variables_map(old_radon_node->css_variables_map());
+    attribute_holder_->set_css_variables_map(
+        old_radon_node->css_variables_map());
     style_updated |=
         DiffStyleImpl(old_radon_node->inline_styles(), inline_styles(), true);
   } else {
@@ -761,7 +762,8 @@ bool RadonNode::OptimizedShouldFlushStyle(RadonNode* old_radon_node,
     // just set cached styles.
     cached_styles_ = old_radon_node->cached_styles_;
     // css_variable_map should be reused either.
-    set_css_variables_map(old_radon_node->css_variables_map());
+    attribute_holder_->set_css_variables_map(
+        old_radon_node->css_variables_map());
   }
   return style_updated;
 }
@@ -788,7 +790,8 @@ bool RadonNode::ShouldFlushStyle(RadonNode* old_radon_node,
               });
   bool style_updated = false;
   if (page_proxy_->element_manager()->GetEnableFiberElementForRadonDiff()) {
-    set_css_variables_map(old_radon_node->css_variables_map());
+    attribute_holder_->set_css_variables_map(
+        old_radon_node->css_variables_map());
     auto* fiber_element = static_cast<FiberElement*>(element_.get());
     if (id_dirty_) {
       style_updated = true;
@@ -849,8 +852,8 @@ void RadonNode::CollectInvalidationSetsForPseudoAndInvalidate(
     return;
   }
   css::InvalidationLists invalidation_lists;
-  AttributeHolder::CollectPseudoChangedInvalidation(
-      style_sheet, invalidation_lists, prev, curr);
+  CSSFragment::CollectPseudoChangedInvalidation(style_sheet, invalidation_lists,
+                                                prev, curr);
 
   bool should_patch = false;
   for (auto* invalidation_set : invalidation_lists.descendants) {

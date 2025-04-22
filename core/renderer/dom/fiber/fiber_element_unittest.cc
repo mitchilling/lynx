@@ -9361,7 +9361,7 @@ TEST_P(FiberElementTest, EventTest0) {
   EXPECT_TRUE(!page->event_map().empty());
   EXPECT_TRUE(!page->global_bind_event_map().empty());
 
-  page->data_model_.reset();
+  page->ResetDataModel();
   EXPECT_TRUE(page->event_map().empty());
   EXPECT_TRUE(page->global_bind_event_map().empty());
 }

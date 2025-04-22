@@ -6,7 +6,6 @@
 #define CORE_RENDERER_CSS_STYLE_NODE_H_
 
 #include <string>
-#include <vector>
 
 #include "base/include/value/base_string.h"
 #include "core/renderer/css/css_property.h"
@@ -17,8 +16,8 @@ namespace css {
 
 class StyleNode {
  public:
-  StyleNode() {}
-  virtual ~StyleNode() {}
+  StyleNode() = default;
+  virtual ~StyleNode() = default;
 
   virtual void OnStyleChange() = 0;
 

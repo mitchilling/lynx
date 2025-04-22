@@ -312,20 +312,6 @@ class RadonNode : public RadonBase {
   const CSSVariableMap& css_variables_map() const {
     return attribute_holder_->css_variables_map();
   }
-  void set_css_variables_map(const CSSVariableMap& css_variables) {
-    attribute_holder_->set_css_variables_map(css_variables);
-  }
-  void set_css_variables_map(CSSVariableMap&& css_variables) {
-    attribute_holder_->set_css_variables_map(std::move(css_variables));
-  }
-
-  const CSSVariableMap& css_variables_from_js() const {
-    return attribute_holder_->css_variables_from_js();
-  }
-
-  const CSSVariableMap& css_variable_related() {
-    return attribute_holder_->css_variable_related();
-  }
 
   PseudoState pseudo_state() const {
     return attribute_holder_->GetPseudoState();
@@ -337,7 +323,7 @@ class RadonNode : public RadonBase {
 
   bool IsSSRAttrHolder() { return attribute_holder_->IsSSRAttrHolder(); }
 
-  std::shared_ptr<AttributeHolder> attribute_holder() {
+  const fml::RefPtr<AttributeHolder>& attribute_holder() {
     return attribute_holder_;
   }
 
@@ -398,7 +384,7 @@ class RadonNode : public RadonBase {
   RadonNodeIndexType GetOriginalNodeIndex();
 
   // TODO(wangyifei.20010605): rename it to data_model_;
-  std::shared_ptr<AttributeHolder> attribute_holder_;
+  fml::RefPtr<AttributeHolder> attribute_holder_;
   fml::RefPtr<Element> element_;
 
  private:
