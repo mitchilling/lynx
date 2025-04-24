@@ -111,7 +111,6 @@ subspec_target("lynx") {
     "LynxBackgroundRuntime.mm",
     "LynxConfig+Internal.h",
     "LynxContext+Internal.h",
-    "LynxRuntimeFullLifecycleListener.h",
     "LynxTemplateRender+Internal.h",
     "LynxTemplateRender+Protected.h",
     "LynxTemplateRender.mm",

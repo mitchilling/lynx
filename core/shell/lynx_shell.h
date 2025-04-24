@@ -38,7 +38,6 @@
 #include "core/shell/tasm_mediator.h"
 #include "core/shell/tasm_operation_queue.h"
 #include "core/shell/thread_mode_auto_switch.h"
-#include "lynx/core/runtime/piper/js/runtime_lifecycle_listener_delegate.h"
 
 namespace lynx {
 
@@ -52,7 +51,7 @@ namespace piper {
 class NativeModuleFactory;
 }
 namespace runtime {
-class RuntimeLifecycleObserver;
+class IRuntimeLifecycleObserver;
 }
 
 namespace shell {
@@ -338,6 +337,10 @@ class LynxShell {
 
   void DetachEngineFromUIThread();
 
+  void RegisterRuntimeLifecycleObserver(
+      const std::shared_ptr<lynx::runtime::IRuntimeLifecycleObserver>&
+          runtime_lifecycle_observer,
+      base::MoveOnlyClosure<void, fml::RefPtr<fml::TaskRunner>> on_complete);
   void RegisterModuleFactory(
       std::unique_ptr<lynx::piper::NativeModuleFactory> module_factory);
 
@@ -417,6 +420,8 @@ class LynxShell {
   std::unique_ptr<ThreadModeAutoSwitch> thread_mode_auto_switch_;
   std::shared_ptr<EngineThreadSwitch> engine_thread_switch_;
 
+  std::shared_ptr<lynx::runtime::IRuntimeLifecycleObserver>
+      runtime_lifecycle_observer_;
   // Only ref module_manager;
   std::weak_ptr<lynx::piper::LynxModuleManager> weak_module_manager_;
   // Managed by Runtime, only keep those before runtime create.

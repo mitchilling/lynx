@@ -16,6 +16,7 @@
 #include "base/include/debug/lynx_error.h"
 #include "core/base/threading/task_runner_manufactor.h"
 #include "core/public/prop_bundle.h"
+#include "core/public/runtime_lifecycle_observer.h"
 #include "core/runtime/bindings/jsi/api_call_back.h"
 #include "core/runtime/bindings/jsi/js_app.h"
 #include "core/runtime/bindings/jsi/modules/lynx_jsi_module_callback.h"
@@ -26,8 +27,6 @@
 #include "core/runtime/piper/js/template_delegate.h"
 #include "core/runtime/vm/lepus/lepus_global.h"
 #include "core/template_bundle/template_codec/ttml_constant.h"
-#include "lynx/core/runtime/piper/js/runtime_lifecycle_listener_delegate.h"
-#include "lynx/core/runtime/piper/js/runtime_lifecycle_observer_impl.h"
 #include "third_party/rapidjson/document.h"
 
 namespace lynx {
@@ -55,8 +54,15 @@ class LynxRuntime final {
       const std::shared_ptr<lynx::piper::LynxModuleManager>& module_manager,
       const std::shared_ptr<piper::InspectorRuntimeObserverNG>&
           runtime_observer,
+      std::shared_ptr<runtime::IRuntimeLifecycleObserver>
+          runtime_lifecycle_observer,
       std::vector<std::string> preload_js_paths, bool force_reload_js_core,
       bool force_use_light_weight_js_engine);
+
+  // Temporarily used for runtime standalone
+  void AdoptRuntimeLifecycleObserver(
+      const std::shared_ptr<runtime::IRuntimeLifecycleObserver>&
+          runtime_lifecycle_observer);
 
   void CallJSCallback(const std::shared_ptr<piper::ModuleCallback>& callback,
                       int64_t id_to_delete);
@@ -132,9 +138,6 @@ class LynxRuntime final {
   std::shared_ptr<runtime::IVSyncObserver> GetVSyncObserver() {
     return delegate_->GetVSyncObserver();
   }
-
-  void AddLifecycleListener(
-      std::unique_ptr<RuntimeLifecycleListenerDelegate> listener);
 
   void SetEnableBytecode(bool enable, const std::string& bytecode_source_url);
 
@@ -224,7 +227,8 @@ class LynxRuntime final {
   bool enable_user_bytecode_ = false;
   std::string bytecode_source_url_;
   bool enable_js_group_thread_{false};
-  std::unique_ptr<RuntimeLifecycleObserverImpl> lifecycle_observer_;
+  std::shared_ptr<IRuntimeLifecycleObserver> runtime_lifecycle_observer_{
+      nullptr};
   lepus::Value init_global_props_;
 };
 

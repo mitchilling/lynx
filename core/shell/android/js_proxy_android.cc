@@ -22,7 +22,6 @@
 #include "core/services/long_task_timing/long_task_monitor.h"
 #include "core/shell/android/lynx_runtime_wrapper_android.h"
 #include "core/shell/lynx_shell.h"
-#include "lynx/core/shell/android/runtime_lifecycle_listener_delegate_android.h"
 
 using lynx::base::android::AttachCurrentThread;
 using lynx::base::android::JNIConvertHelper;
@@ -121,13 +120,6 @@ void RunOnJSThread(JNIEnv* env, jclass jcaller, jlong ptr, jobject runnable) {
     }
     env->CallVoidMethod(global_runnable, run_method_id);
   });
-}
-
-void AddLifecycleListener(JNIEnv* env, jobject jcaller, jlong ptr,
-                          jobject delegate, jint listener_type) {
-  JS_PROXY->AddLifecycleListener(
-      std::make_unique<lynx::shell::RuntimeLifecycleListenerDelegateAndroid>(
-          env, delegate, listener_type));
 }
 
 namespace lynx {
@@ -322,13 +314,6 @@ void JSProxyAndroid::RunOnJSThread(base::MoveOnlyClosure<> task) {
     return;
   }
   actor_->Act([task = std::move(task)](auto& runtime) { task(); });
-}
-
-void JSProxyAndroid::AddLifecycleListener(
-    std::unique_ptr<runtime::RuntimeLifecycleListenerDelegate> delegate) {
-  actor_->Act([delegate = std::move(delegate)](auto& runtime) mutable {
-    runtime->AddLifecycleListener(std::move(delegate));
-  });
 }
 
 }  // namespace shell
