@@ -43,6 +43,14 @@
 #include "core/style/transition_data.h"
 
 namespace lynx {
+namespace tasm {
+// TODO(songshourui.null): remove this when all the ##nameToLepus methods are
+// deleted. In the long term, the PropBundleStyleWriter will optimize all Write
+// methods, at which point all ##nameToLepus methods of ComputedCSSStyle can be
+// deleted, and this forward declaration. will also be removed.
+class PropBundleStyleWriter;
+}  // namespace tasm
+
 namespace starlight {
 /** CSSStyle stores the specified values of all CSS properties.
  * Specified values are the values assigned to CSS properties when they are set,
@@ -499,6 +507,12 @@ class ComputedCSSStyle {
                ? width
                : 0.f;
   }
+
+  // TODO(songshourui.null): remove this when all the ##nameToLepus methods are
+  // deleted. In the long term, the PropBundleStyleWriter will optimize all
+  // Write methods, at which point all ##nameToLepus methods of ComputedCSSStyle
+  // can be deleted, and this friend class will also be removed.
+  friend class tasm::PropBundleStyleWriter;
 
 };  // ComputedCSSStyle
 

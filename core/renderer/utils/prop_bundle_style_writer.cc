@@ -44,6 +44,52 @@ void PropBundleStyleWriter::PushStyleToBundle(
       "PropBundleStyleWriter can't find writer function for style id:%d.", id);
 }
 
+#define FOREACH_NEED_OPT_PROPERTY(V)     \
+  V(BackgroundImage)                     \
+  V(BackgroundPosition)                  \
+  V(BackgroundSize)                      \
+  V(MaskImage)                           \
+  V(MaskSize)                            \
+  V(MaskPosition)                        \
+  V(Filter)                              \
+  V(Transform)                           \
+  V(TransformOrigin)                     \
+  V(Animation)                           \
+  V(AnimationName)                       \
+  V(AnimationTimingFunction)             \
+  V(LayoutAnimationCreateTimingFunction) \
+  V(LayoutAnimationDeleteTimingFunction) \
+  V(LayoutAnimationUpdateTimingFunction) \
+  V(Transition)                          \
+  V(EnterTransitionName)                 \
+  V(ExitTransitionName)                  \
+  V(PauseTransitionName)                 \
+  V(ResumeTransitionName)                \
+  V(BoxShadow)                           \
+  V(TextDecoration)                      \
+  V(TextShadow)                          \
+  V(VerticalAlign)                       \
+  V(BorderRadius)                        \
+  V(BorderTopLeftRadius)                 \
+  V(BorderTopRightRadius)                \
+  V(BorderBottomRightRadius)             \
+  V(BorderBottomLeftRadius)              \
+  V(Perspective)                         \
+  V(TextIndent)                          \
+  V(XAutoFontSize)                       \
+  V(XAutoFontSizePresetSizes)
+
+#define NAME_TO_LEPUS(name) name##ToLepus
+#define WRITE_STYLE_IMPL(name)                                               \
+  void PropBundleStyleWriter::Write##name(                                   \
+      PropBundle* bundle, starlight::ComputedCSSStyle* style) {              \
+    bundle->SetPropsByID(CSSPropertyID::kPropertyID##name,                   \
+                         pub::ValueImplLepus(style->NAME_TO_LEPUS(name)())); \
+  }
+FOREACH_NEED_OPT_PROPERTY(WRITE_STYLE_IMPL)
+#undef WRITE_STYLE_IMPL
+#undef NAME_TO_LEPUS
+
 // TODO(songshourui.null): the following methods should directly call specific
 // get methods of ComputedCSSStyle to obtain the value of CSSPropertyID, pushing
 // it directly to PropBundle, instead of calling DefaultWriterFunc. This will
@@ -113,40 +159,14 @@ void PropBundleStyleWriter::WriteBackgroundColor(
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBackgroundColor, style);
 }
 
-void PropBundleStyleWriter::WriteBackgroundImage(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBackgroundImage, style);
-}
-
 void PropBundleStyleWriter::WriteBackgroundOrigin(
     PropBundle* bundle, starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBackgroundOrigin, style);
 }
 
-void PropBundleStyleWriter::WriteBackgroundPosition(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBackgroundPosition,
-                    style);
-}
-
 void PropBundleStyleWriter::WriteBackgroundRepeat(
     PropBundle* bundle, starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBackgroundRepeat, style);
-}
-
-void PropBundleStyleWriter::WriteBackgroundSize(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBackgroundSize, style);
-}
-
-void PropBundleStyleWriter::WriteMaskImage(PropBundle* bundle,
-                                           starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDMaskImage, style);
-}
-
-void PropBundleStyleWriter::WriteMaskSize(PropBundle* bundle,
-                                          starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDMaskSize, style);
 }
 
 void PropBundleStyleWriter::WriteMaskOrigin(
@@ -159,19 +179,9 @@ void PropBundleStyleWriter::WriteMaskClip(PropBundle* bundle,
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDMaskClip, style);
 }
 
-void PropBundleStyleWriter::WriteMaskPosition(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDMaskPosition, style);
-}
-
 void PropBundleStyleWriter::WriteMaskRepeat(
     PropBundle* bundle, starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDMaskRepeat, style);
-}
-
-void PropBundleStyleWriter::WriteFilter(PropBundle* bundle,
-                                        starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDFilter, style);
 }
 
 void PropBundleStyleWriter::WriteBorderLeftColor(
@@ -214,35 +224,9 @@ void PropBundleStyleWriter::WriteBorderBottomWidth(
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBorderBottomWidth, style);
 }
 
-void PropBundleStyleWriter::WriteTransform(PropBundle* bundle,
-                                           starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDTransform, style);
-}
-
-void PropBundleStyleWriter::WriteTransformOrigin(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDTransformOrigin, style);
-}
-
-void PropBundleStyleWriter::WriteAnimation(PropBundle* bundle,
-                                           starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDAnimation, style);
-}
-
-void PropBundleStyleWriter::WriteAnimationName(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDAnimationName, style);
-}
-
 void PropBundleStyleWriter::WriteAnimationDuration(
     PropBundle* bundle, starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDAnimationDuration, style);
-}
-
-void PropBundleStyleWriter::WriteAnimationTimingFunction(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDAnimationTimingFunction,
-                    style);
 }
 
 void PropBundleStyleWriter::WriteAnimationDelay(
@@ -279,13 +263,6 @@ void PropBundleStyleWriter::WriteLayoutAnimationCreateDuration(
       bundle, CSSPropertyID::kPropertyIDLayoutAnimationCreateDuration, style);
 }
 
-void PropBundleStyleWriter::WriteLayoutAnimationCreateTimingFunction(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(
-      bundle, CSSPropertyID::kPropertyIDLayoutAnimationCreateTimingFunction,
-      style);
-}
-
 void PropBundleStyleWriter::WriteLayoutAnimationCreateDelay(
     PropBundle* bundle, starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(
@@ -302,13 +279,6 @@ void PropBundleStyleWriter::WriteLayoutAnimationDeleteDuration(
     PropBundle* bundle, starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(
       bundle, CSSPropertyID::kPropertyIDLayoutAnimationDeleteDuration, style);
-}
-
-void PropBundleStyleWriter::WriteLayoutAnimationDeleteTimingFunction(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(
-      bundle, CSSPropertyID::kPropertyIDLayoutAnimationDeleteTimingFunction,
-      style);
 }
 
 void PropBundleStyleWriter::WriteLayoutAnimationDeleteDelay(
@@ -329,22 +299,10 @@ void PropBundleStyleWriter::WriteLayoutAnimationUpdateDuration(
       bundle, CSSPropertyID::kPropertyIDLayoutAnimationUpdateDuration, style);
 }
 
-void PropBundleStyleWriter::WriteLayoutAnimationUpdateTimingFunction(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(
-      bundle, CSSPropertyID::kPropertyIDLayoutAnimationUpdateTimingFunction,
-      style);
-}
-
 void PropBundleStyleWriter::WriteLayoutAnimationUpdateDelay(
     PropBundle* bundle, starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(
       bundle, CSSPropertyID::kPropertyIDLayoutAnimationUpdateDelay, style);
-}
-
-void PropBundleStyleWriter::WriteTransition(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDTransition, style);
 }
 
 void PropBundleStyleWriter::WriteTransitionProperty(
@@ -367,30 +325,6 @@ void PropBundleStyleWriter::WriteTransitionDelay(
 void PropBundleStyleWriter::WriteTransitionTimingFunction(
     PropBundle* bundle, starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDTransitionTimingFunction,
-                    style);
-}
-
-void PropBundleStyleWriter::WriteEnterTransitionName(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDEnterTransitionName,
-                    style);
-}
-
-void PropBundleStyleWriter::WriteExitTransitionName(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDExitTransitionName,
-                    style);
-}
-
-void PropBundleStyleWriter::WritePauseTransitionName(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDPauseTransitionName,
-                    style);
-}
-
-void PropBundleStyleWriter::WriteResumeTransitionName(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDResumeTransitionName,
                     style);
 }
 
@@ -434,11 +368,6 @@ void PropBundleStyleWriter::WriteOutlineWidth(
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDOutlineWidth, style);
 }
 
-void PropBundleStyleWriter::WriteBoxShadow(PropBundle* bundle,
-                                           starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBoxShadow, style);
-}
-
 void PropBundleStyleWriter::WriteBorderColor(
     PropBundle* bundle, starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBorderColor, style);
@@ -452,11 +381,6 @@ void PropBundleStyleWriter::WriteFontFamily(
 void PropBundleStyleWriter::WriteCaretColor(
     PropBundle* bundle, starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDCaretColor, style);
-}
-
-void PropBundleStyleWriter::WriteTextShadow(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDTextShadow, style);
 }
 
 void PropBundleStyleWriter::WriteDirection(PropBundle* bundle,
@@ -494,11 +418,6 @@ void PropBundleStyleWriter::WriteTextOverflow(
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDTextOverflow, style);
 }
 
-void PropBundleStyleWriter::WriteTextDecoration(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDTextDecoration, style);
-}
-
 void PropBundleStyleWriter::WriteTextDecorationColor(
     PropBundle* bundle, starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDTextDecorationColor,
@@ -515,40 +434,6 @@ void PropBundleStyleWriter::WriteImageRendering(
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDImageRendering, style);
 }
 
-void PropBundleStyleWriter::WriteVerticalAlign(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDVerticalAlign, style);
-}
-
-void PropBundleStyleWriter::WriteBorderRadius(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBorderRadius, style);
-}
-
-void PropBundleStyleWriter::WriteBorderTopLeftRadius(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBorderTopLeftRadius,
-                    style);
-}
-
-void PropBundleStyleWriter::WriteBorderTopRightRadius(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBorderTopRightRadius,
-                    style);
-}
-
-void PropBundleStyleWriter::WriteBorderBottomRightRadius(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBorderBottomRightRadius,
-                    style);
-}
-
-void PropBundleStyleWriter::WriteBorderBottomLeftRadius(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDBorderBottomLeftRadius,
-                    style);
-}
-
 void PropBundleStyleWriter::WriteListMainAxisGap(
     PropBundle* bundle, starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDListMainAxisGap, style);
@@ -559,19 +444,9 @@ void PropBundleStyleWriter::WriteListCrossAxisGap(
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDListCrossAxisGap, style);
 }
 
-void PropBundleStyleWriter::WritePerspective(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDPerspective, style);
-}
-
 void PropBundleStyleWriter::WriteCursor(PropBundle* bundle,
                                         starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDCursor, style);
-}
-
-void PropBundleStyleWriter::WriteTextIndent(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDTextIndent, style);
 }
 
 void PropBundleStyleWriter::WriteClipPath(PropBundle* bundle,
@@ -592,17 +467,6 @@ void PropBundleStyleWriter::WriteTextStrokeWidth(
 void PropBundleStyleWriter::WriteTextStrokeColor(
     PropBundle* bundle, starlight::ComputedCSSStyle* style) {
   DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDTextStrokeColor, style);
-}
-
-void PropBundleStyleWriter::WriteXAutoFontSize(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDXAutoFontSize, style);
-}
-
-void PropBundleStyleWriter::WriteXAutoFontSizePresetSizes(
-    PropBundle* bundle, starlight::ComputedCSSStyle* style) {
-  DefaultWriterFunc(bundle, CSSPropertyID::kPropertyIDXAutoFontSizePresetSizes,
-                    style);
 }
 
 void PropBundleStyleWriter::WriteHyphens(PropBundle* bundle,
