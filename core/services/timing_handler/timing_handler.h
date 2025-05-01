@@ -5,6 +5,7 @@
 #ifndef CORE_SERVICES_TIMING_HANDLER_TIMING_HANDLER_H_
 #define CORE_SERVICES_TIMING_HANDLER_TIMING_HANDLER_H_
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -14,6 +15,7 @@
 #include "base/include/fml/thread.h"
 #include "base/include/vector.h"
 #include "core/public/pipeline_option.h"
+#include "core/services/performance/performance_event_sender.h"
 #include "core/services/timing_handler/timing.h"
 #include "core/services/timing_handler/timing_handler_delegate.h"
 #include "core/services/timing_handler/timing_handler_ng.h"
@@ -66,7 +68,9 @@ enum PipelineType { Setup, Update };
 class TimingHandler {
  public:
   // Delegate interface for handling timing events.
-  TimingHandler(std::unique_ptr<TimingHandlerDelegate> delegate = nullptr);
+  explicit TimingHandler(
+      std::unique_ptr<TimingHandlerDelegate> delegate = nullptr,
+      performance::PerformanceEventSender* sender = nullptr);
 
   // Methods for setting timing information.
   void SetTiming(tasm::Timing timing);

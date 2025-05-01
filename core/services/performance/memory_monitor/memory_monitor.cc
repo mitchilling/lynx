@@ -4,6 +4,8 @@
 
 #include "core/services/performance/memory_monitor/memory_monitor.h"
 
+#include <utility>
+
 #include "core/renderer/utils/lynx_env.h"
 
 namespace lynx {
@@ -36,23 +38,6 @@ uint32_t MemoryMonitor::ScriptingEngineMode() {
   return mode;
 }
 
-MemoryMonitor::MemoryMonitor(MemoryMonitor&& other)
-    : delegate_(other.delegate_),
-      memory_records_(std::move(other.memory_records_)) {
-  other.delegate_ = nullptr;
-}
-
-MemoryMonitor& MemoryMonitor::operator=(MemoryMonitor&& other) {
-  if (this != &other) {
-    // move
-    delegate_ = other.delegate_;
-    memory_records_ = std::move(other.memory_records_);
-    // clear other
-    other.delegate_ = nullptr;
-  }
-  return *this;
-}
-
 MemoryMonitor::~MemoryMonitor() {
   if (Enable()) {
     ReportMemory();
@@ -66,9 +51,9 @@ void MemoryMonitor::AllocateMemory(MemoryRecord&& record) {
   auto ret_record_it = memory_records_.find(record.category_);
   if (ret_record_it == memory_records_.end()) {
     memory_records_.emplace(record.category_, std::move(record));
-    return;
+  } else {
+    ret_record_it->second += record;
   }
-  ret_record_it->second += record;
   ReportMemory();
 }
 
@@ -93,10 +78,10 @@ void MemoryMonitor::UpdateMemoryUsage(MemoryRecord&& record) {
 }
 
 void MemoryMonitor::ReportMemory() {
-  if (delegate_ == nullptr) {
+  if (sender_ == nullptr) {
     return;
   }
-  auto& factory = delegate_->GetValueFactory();
+  auto& factory = sender_->GetValueFactory();
   if (factory == nullptr) {
     return;
   }
@@ -106,17 +91,17 @@ void MemoryMonitor::ReportMemory() {
   float sizeKb = 0.f;
   if (memory_records_.empty()) {
     entry_map->PushDoubleToMap("sizeKb", sizeKb);
-    delegate_->OnPerformanceEvent(std::move(entry_map));
+    sender_->OnPerformanceEvent(std::move(entry_map));
     return;
   }
-  auto detail = delegate_->GetValueFactory()->CreateMap();
+  auto detail = sender_->GetValueFactory()->CreateMap();
   for (const auto& [category, record] : memory_records_) {
-    auto record_map = delegate_->GetValueFactory()->CreateMap();
+    auto record_map = sender_->GetValueFactory()->CreateMap();
     record_map->PushStringToMap("category", record.category_);
     record_map->PushDoubleToMap("sizeKb", record.size_kb_);
     sizeKb += record.size_kb_;
     if (record.detail_) {
-      auto map = delegate_->GetValueFactory()->CreateMap();
+      auto map = sender_->GetValueFactory()->CreateMap();
       for (const auto& [key, value] : *(record.detail_)) {
         map->PushStringToMap(key, value);
       }
@@ -126,8 +111,7 @@ void MemoryMonitor::ReportMemory() {
   }
   entry_map->PushDoubleToMap("sizeKb", sizeKb);
   entry_map->PushValueToMap("detail", std::move(detail));
-  entry_map->PushInt32ToMap("instanceId", delegate_->GetInstanceId());
-  delegate_->OnPerformanceEvent(std::move(entry_map));
+  sender_->OnPerformanceEvent(std::move(entry_map), kEventTypePlatform);
 }
 
 }  // namespace performance

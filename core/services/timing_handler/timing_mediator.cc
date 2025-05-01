@@ -89,8 +89,8 @@ void TimingMediator::OnPerformanceEvent(
     facade_reporter_actor_->ActAsync(
         [entry = lepus_entry, instance_id = instance_id_](auto& facade) {
           TRACE_EVENT(LYNX_TRACE_CATEGORY,
-                      TIMING_MEDIATOR_TRIGGER_PERFORMANCE_CLIENT_CALLBACK,
-                      "instance_id", instance_id);
+                      PERFORMANCE_MEDIATOR_ON_PERFORMANCE_EVENT, "instance_id",
+                      instance_id);
           (void)instance_id;  // Explicitly reference `instance_id` to suppress
                               // the compiler warning.
           facade->OnPerformanceEvent(entry);
@@ -100,7 +100,7 @@ void TimingMediator::OnPerformanceEvent(
   if (runtime_actor_ && enable_js_runtime_) {
     runtime_actor_->ActAsync([entry = std::move(lepus_entry)](auto& runtime) {
       TRACE_EVENT(LYNX_TRACE_CATEGORY,
-                  TIMING_MEDIATOR_TRIGGER_PERFORMANCE_RUNTIME_CALLBACK,
+                  PERFORMANCE_MEDIATOR_ON_PERFORMANCE_EVENT_BTS_ENGINE,
                   "instance_id", runtime->GetRuntimeId());
       auto args = lepus::CArray::Create();
       args->emplace_back(BASE_STATIC_STRING(kPerformanceRuntimeCallback));
@@ -116,7 +116,7 @@ void TimingMediator::OnPerformanceEvent(
     engine_actor_->ActAsync(
         [entry = std::move(lepus_entry)](auto& engine) mutable {
           TRACE_EVENT(LYNX_TRACE_CATEGORY,
-                      TIMING_MEDIATOR_TRIGGER_PERFORMANCE_ENGINE_CALLBACK);
+                      PERFORMANCE_MEDIATOR_ON_PERFORMANCE_EVENT_MTS_ENGINE);
           auto arguments = lepus::CArray::Create();
           arguments->emplace_back(std::move(entry));
           engine->TriggerEventBus(kSetupRuntimeCallback,

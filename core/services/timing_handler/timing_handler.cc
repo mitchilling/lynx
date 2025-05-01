@@ -18,7 +18,8 @@ namespace lynx {
 namespace tasm {
 namespace timing {
 
-TimingHandler::TimingHandler(std::unique_ptr<TimingHandlerDelegate> delegate)
+TimingHandler::TimingHandler(std::unique_ptr<TimingHandlerDelegate> delegate,
+                             performance::PerformanceEventSender* sender)
     : handler_ng_(delegate.get()), delegate_(std::move(delegate)) {
   if (delegate_) {
     timing_info_.SetValueFactory(delegate_->GetValueFactory());

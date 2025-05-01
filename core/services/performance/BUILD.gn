@@ -12,6 +12,9 @@ performance_shared_sources = [
   "memory_monitor/memory_record.h",
   "performance_controller.cc",
   "performance_controller.h",
+  "performance_event_sender.h",
+  "performance_mediator.cc",
+  "performance_mediator.h",
 ]
 
 lynx_core_source_set("performance") {
