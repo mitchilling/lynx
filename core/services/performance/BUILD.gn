@@ -1,0 +1,20 @@
+# Copyright 2025 The Lynx Authors. All rights reserved.
+# Licensed under the Apache License Version 2.0 that can be found in the
+# LICENSE file in the root directory of this source tree.
+
+import("//${lynx_dir}/build_overrides/services_files.gni")
+import("//lynx/core/Lynx.gni")
+
+performance_shared_sources = [
+  "memory_monitor/memory_monitor.cc",
+  "memory_monitor/memory_monitor.h",
+  "memory_monitor/memory_record.cc",
+  "memory_monitor/memory_record.h",
+  "performance_controller.cc",
+  "performance_controller.h",
+]
+
+lynx_core_source_set("performance") {
+  sources = performance_shared_sources
+  deps = [ "//lynx/base/src:base_log_headers" ]
+}

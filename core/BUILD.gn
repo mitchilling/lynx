@@ -202,6 +202,7 @@ group("lynx_native") {
     "//lynx/core/services/feature_count:feature_count",
     "//lynx/core/services/fluency:fluency",
     "//lynx/core/services/long_task_timing:long_task_timing",
+    "//lynx/core/services/performance:performance",
     "//lynx/core/services/timing_handler:timing_handler",
     "//lynx/third_party/modp_b64",
     "//lynx/third_party/rapidjson",

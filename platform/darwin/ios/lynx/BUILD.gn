@@ -717,6 +717,7 @@ subspec_target("tasm") {
            "//lynx/core/services/feature_count:feature_count",
            "//lynx/core/services/fluency:fluency",
            "//lynx/core/services/long_task_timing:long_task_timing",
+           "//lynx/core/services/performance:performance",
            "//lynx/core/services/ssr",
            "//lynx/core/services/timing_handler:timing_handler",
            "//lynx/core/services/timing_handler:timing_handler_delegate",

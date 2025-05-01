@@ -13,6 +13,7 @@ group("tasm_group") {
     "//lynx/core/renderer/dom/selector:element_selector",
     "//lynx/core/services/event_report:event_report",
     "//lynx/core/services/long_task_timing:long_task_timing",
+    "//lynx/core/services/performance:performance",
     "//lynx/core/services/ssr",
     "//lynx/core/shell:shell",
   ]
@@ -48,6 +49,7 @@ lynx_core_source_set("tasm") {
     "//lynx/core/runtime/vm/lepus",
     "//lynx/core/services/event_report",
     "//lynx/core/services/long_task_timing",
+    "//lynx/core/services/performance",
     "//lynx/core/template_bundle:template_bundle",
   ]
 
