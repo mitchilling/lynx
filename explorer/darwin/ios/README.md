@@ -5,7 +5,7 @@ This document will help you build LynxExplorer for iOS on macOS.
 ## System requirements
 
 - 100GB or more of disk space
-- Git/Python3(>=3.9)/Ruby(>=2.7) installed
+- Git/Python3(>=3.9)/Ruby(>=2.7, <3.4) installed
 
 ## Install dependencies
 
