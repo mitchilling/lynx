@@ -9,13 +9,45 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// @brief The configuration object used to identify the monitoring instance.
+@interface LynxFluencyConfig : NSObject
+
+/// @brief The key used to identify the monitoring instance.
+@property(nonatomic, nonnull, strong) id<NSCopying> key;
+/// @brief The tag name used to identify the monitoring instance.
+@property(nonatomic, nullable, copy) NSString *tagName;
+/// @brief The tag name used to identify the scroll monitoring instance if it is existing.
+@property(nonatomic, nullable, copy) NSString *scrollMonitorTagName;
+/// @brief The instance id of the LynxView.
+@property(nonatomic, assign) int32_t instanceId;
+
+/// @brief Initialize the configuration object with the specified key, tag name, scroll monitor tag
+/// name and instance id.
+/// @param key The key used to identify the monitoring instance.
+/// @param tagName The tag name used to identify the monitoring instance.
+/// @param scrollMonitorTagName The tag name used to identify the scroll monitoring instance if it
+/// is existing.
+/// @param instanceId The instance id of the LynxView.
+- (instancetype)initWithKey:(id<NSCopying>)key
+                    tagName:(NSString *)tagName
+       scrollMonitorTagName:(NSString *)scrollMonitorTagName
+                 instanceId:(int32_t)instanceId;
+
+@end
+
 @interface LynxFluencyMonitor : NSObject
 
 @property(nonatomic, readonly) BOOL shouldSendAllScrollEvent;
 
-- (void)startWithScrollInfo:(LynxScrollInfo*)info;
+/// @breif Start the fluency monitoring with the specified configuration.
+/// @param config The fluency configuration object used to identify the monitoring instance to be
+/// start.
+- (void)startWithFluencyConfig:(LynxFluencyConfig *)config;
 
-- (void)stopWithScrollInfo:(LynxScrollInfo*)info;
+/// @breif Stop the fluency monitoring with the specified configuration.
+/// @param config The fluency configuration object used to identify the monitoring instance to be
+/// stopped.
+- (void)stopWithFluencyConfig:(LynxFluencyConfig *)config;
 
 /// Set the sampling decision of whether to enable fluency metics collection.
 ///

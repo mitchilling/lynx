@@ -3,6 +3,8 @@
 // LICENSE file in the root directory of this source tree.
 
 #import "LynxScrollFluency.h"
+#import <Lynx/LynxScrollListener.h>
+#import <Lynx/LynxView+Internal.h>
 #import "LynxFluencyMonitor.h"
 
 @implementation LynxScrollFluency {
@@ -17,18 +19,35 @@
   return self;
 }
 
++ (LynxFluencyConfig *)constructFluencyConfigWithLynxScrollInfo:(LynxScrollInfo *)info {
+  id<NSCopying> key = info;
+  int32_t instanceId = info.lynxView ? [info.lynxView instanceId] : -1;
+  return [[LynxFluencyConfig alloc] initWithKey:key
+                                        tagName:info.tagName
+                           scrollMonitorTagName:info.scrollMonitorTagName
+                                     instanceId:instanceId];
+}
+
 - (void)scrollerWillBeginDragging:(LynxScrollInfo *)info {
-  [_fluencyMonitor startWithScrollInfo:info];
+  if (info.lynxView == nil) {
+    // This method should be called synchronic when a UIScrollView in LynxView is scrolling. Info's
+    // lynxView should not be nil.
+    return;
+  }
+  LynxFluencyConfig *config = [LynxScrollFluency constructFluencyConfigWithLynxScrollInfo:info];
+  [_fluencyMonitor startWithFluencyConfig:config];
 }
 
 - (void)scrollerDidEndDragging:(LynxScrollInfo *)info willDecelerate:(BOOL)decelerate {
   if (!decelerate) {
-    [_fluencyMonitor stopWithScrollInfo:info];
+    LynxFluencyConfig *config = [LynxScrollFluency constructFluencyConfigWithLynxScrollInfo:info];
+    [_fluencyMonitor stopWithFluencyConfig:config];
   }
 }
 
 - (void)scrollerDidEndDecelerating:(LynxScrollInfo *)info {
-  [_fluencyMonitor stopWithScrollInfo:info];
+  LynxFluencyConfig *config = [LynxScrollFluency constructFluencyConfigWithLynxScrollInfo:info];
+  [_fluencyMonitor stopWithFluencyConfig:config];
 }
 
 - (void)setEnabledBySampling:(LynxBooleanOption)enabledBySampling {
