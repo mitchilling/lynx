@@ -365,8 +365,8 @@ bool LynxBinaryBaseCSSReader::DecodeCSSValue(
     result->SetDefaultValue(std::move(default_value));
     if (enable_css_variable_multi_default_value) {
       auto& target = result->GetDefaultValueMapOpt();
-      if (!target.has_value()) {
-        target = lepus::Value();
+      if (target == nullptr) {
+        target = std::make_unique<lepus::Value>();
       }
       DECODE_VALUE_INTO(*target);
     }

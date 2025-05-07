@@ -5,7 +5,7 @@
 #ifndef CORE_RENDERER_CSS_CSS_VALUE_H_
 #define CORE_RENDERER_CSS_CSS_VALUE_H_
 
-#include <optional>
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -16,7 +16,7 @@
 
 namespace lynx {
 namespace tasm {
-enum class CSSValuePattern {
+enum class CSSValuePattern : uint8_t {
   EMPTY = 0,
   STRING = 1,
   NUMBER = 2,
@@ -40,12 +40,12 @@ enum class CSSValuePattern {
   COUNT = 20,
 };
 
-enum class CSSValueType {
+enum class CSSValueType : uint8_t {
   DEFAULT = 0,
   VARIABLE = 1,
 };
 
-enum class CSSFunctionType {
+enum class CSSFunctionType : uint8_t {
   DEFAULT = 0,
   REPEAT = 1,
   MINMAX = 2,
@@ -62,17 +62,17 @@ class BASE_EXPORT_FOR_DEVTOOL CSSValue {
   CSSValue(const lepus::Value& value, CSSValuePattern pattern,
            CSSValueType type, const base::String& default_val)
       : value_(value),
+        default_value_(default_val),
         pattern_(pattern),
-        type_(type),
-        default_value_(default_val) {}
+        type_(type) {}
   CSSValue(const lepus::Value& value, CSSValuePattern pattern,
            CSSValueType type, const base::String& default_val,
            const lepus::Value& default_value_map_opt)
       : value_(value),
-        pattern_(pattern),
-        type_(type),
         default_value_(default_val),
-        default_value_map_opt_(default_value_map_opt) {}
+        default_value_map_opt_(new lepus::Value(default_value_map_opt)),
+        pattern_(pattern),
+        type_(type) {}
   explicit CSSValue(fml::RefPtr<lepus::CArray>&& array,
                     CSSValuePattern pattern = CSSValuePattern::ARRAY)
       : value_(std::move(array)),
@@ -91,6 +91,37 @@ class BASE_EXPORT_FOR_DEVTOOL CSSValue {
         pattern_(CSSValuePattern::NUMBER),
         type_(CSSValueType::DEFAULT) {}
 
+  CSSValue(const CSSValue& other)
+      : value_(other.value_),
+        default_value_(other.default_value_),
+        pattern_(other.pattern_),
+        type_(other.type_) {
+    if (other.default_value_map_opt_) {
+      default_value_map_opt_ =
+          std::make_unique<lepus::Value>(*other.default_value_map_opt_);
+    }
+  }
+
+  CSSValue& operator=(const CSSValue& other) {
+    if (this == &other) {
+      return *this;
+    }
+    this->value_ = other.value_;
+    this->default_value_ = other.default_value_;
+    if (other.default_value_map_opt_) {
+      this->default_value_map_opt_ =
+          std::make_unique<lepus::Value>(*other.default_value_map_opt_);
+    } else {
+      this->default_value_map_opt_ = nullptr;
+    }
+    this->pattern_ = other.pattern_;
+    this->type_ = other.type_;
+    return *this;
+  }
+
+  CSSValue(CSSValue&& other) = default;
+  CSSValue& operator=(CSSValue&& other) = default;
+
   template <typename T>
   T GetEnum() const {
     return (T)AsNumber();
@@ -106,7 +137,7 @@ class BASE_EXPORT_FOR_DEVTOOL CSSValue {
   CSSValuePattern GetPattern() const { return pattern_; }
   CSSValueType GetValueType() const { return type_; }
   base::String& GetDefaultValue() const { return default_value_; }
-  std::optional<lepus::Value>& GetDefaultValueMapOpt() const {
+  std::unique_ptr<lepus::Value>& GetDefaultValueMapOpt() const {
     return default_value_map_opt_;
   }
 
@@ -124,10 +155,10 @@ class BASE_EXPORT_FOR_DEVTOOL CSSValue {
     default_value_ = std::move(default_val);
   }
   void SetDefaultValueMap(lepus::Value default_value_map) {
-    default_value_map_opt_ = std::nullopt;
+    default_value_map_opt_ = nullptr;
     if (default_value_map != lepus::Value()) {
       default_value_map_opt_ =
-          std::optional<lepus::Value>(std::move(default_value_map));
+          std::make_unique<lepus::Value>(std::move(default_value_map));
     }
   }
 
@@ -200,10 +231,10 @@ class BASE_EXPORT_FOR_DEVTOOL CSSValue {
 
  private:
   mutable lepus::Value value_;
+  mutable base::String default_value_;
+  mutable std::unique_ptr<lepus::Value> default_value_map_opt_;
   mutable CSSValuePattern pattern_;
   mutable CSSValueType type_;
-  mutable base::String default_value_;
-  mutable std::optional<lepus::Value> default_value_map_opt_;
 };
 }  // namespace tasm
 }  // namespace lynx

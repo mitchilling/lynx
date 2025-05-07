@@ -521,9 +521,9 @@ std::unordered_map<std::string, std::string> ElementInspector::GetCssByStyleMap(
     if (pair.second.GetValueType() == lynx::tasm::CSSValueType::VARIABLE) {
       Value value_expr = pair.second.GetValue();
       String property = pair.second.GetDefaultValue();
-      std::optional<Value> default_value_map_opt =
-          pair.second.GetDefaultValueMapOpt();
-      auto default_value_map = default_value_map_opt.value_or(Value());
+      auto& default_value_map_opt = pair.second.GetDefaultValueMapOpt();
+      auto default_value_map =
+          default_value_map_opt ? *default_value_map_opt : Value();
       if (element && value_expr.IsString()) {
         lynx::tasm::CSSVariableHandler handler;
         property = handler.GetCSSVariableByRule(value_expr.StdString(),

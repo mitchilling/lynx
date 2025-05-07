@@ -29,12 +29,10 @@ bool CSSVariableHandler::HandleCSSVariables(StyleMap& map,
     if (css_value.IsVariable()) {
       const auto& value_expr = css_value.GetValue();
       if (value_expr.IsString()) {
-        const std::optional<lepus::Value>& default_value_map_opt =
-            css_value.GetDefaultValueMapOpt();
+        const auto& default_value_map_opt = css_value.GetDefaultValueMapOpt();
         auto property = GetCSSVariableByRule(
             value_expr.StdString(), holder, css_value.GetDefaultValue(),
-            default_value_map_opt.has_value() ? *default_value_map_opt
-                                              : lepus::Value());
+            default_value_map_opt ? *default_value_map_opt : lepus::Value());
         UnitHandler::Process(id, lepus::Value(std::move(property)), style_map,
                              configs);
       } else {
