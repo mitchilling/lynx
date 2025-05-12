@@ -146,7 +146,7 @@ export interface BaseAnimationEvent<T> extends BaseEventOrig<{}, T> {
   };
 }
 
-export interface AnimationEvent extends BaseAnimationEvent<Target | MainThreadElement> {}
+export interface AnimationEvent extends BaseAnimationEvent<Target> {}
 
 export interface BaseTransitionEvent<T> extends BaseEventOrig<{}, T> {
   params:
@@ -170,16 +170,31 @@ export interface BaseTransitionEvent<T> extends BaseEventOrig<{}, T> {
           | 'transition-opacity';
       };
 }
-export interface TransitionEvent extends BaseTransitionEvent<Target | MainThreadElement> {}
+export interface TransitionEvent extends BaseTransitionEvent<Target> {}
 
-export interface ImageLoadEvent {
+export interface BaseImageLoadEvent<T> extends BaseEventOrig<{}, T> {
   detail: {
     width: number;
     height: number;
   };
 }
 
-export interface ImageErrorEvent {
+export interface ImageLoadEvent extends BaseImageLoadEvent<Target> {
+  detail: {
+    width: number;
+    height: number;
+  };
+}
+
+export interface BaseImageErrorEvent<T> extends BaseEventOrig<{}, T> {
+  detail: {
+    errMsg: string;
+    error_code: number;
+    lynx_categorized_code: number;
+  };
+}
+
+export interface ImageErrorEvent extends BaseImageErrorEvent<Target> {
   detail: {
     errMsg: string;
     error_code: number;
@@ -310,100 +325,100 @@ export interface BaseEvent<T = string, D = any> {
   detail: D;
 }
 
-export interface LynxEvent<Target> {
+export interface LynxEvent<T> {
   /**
    * Listening for background image loading success.
    * @since since Lynx 2.6
    */
-  BGLoad?: EventHandler<ImageLoadEvent>;
+  BGLoad?: EventHandler<BaseImageLoadEvent<T>>;
 
   /**
    * Failed to load background image for listening.
    * @since since: Android: Lynx 2.6, iOS: Lynx 2.8
    */
-  BGError?: EventHandler<ImageErrorEvent>;
+  BGError?: EventHandler<BaseImageErrorEvent<T>>;
 
   // NodeAppear?: EventHandler<ReactLynx.AppearanceEvent>;
 
   // NodeDisappear?: EventHandler<ReactLynx.AppearanceEvent>;
 
   /** Finger touch action begins. */
-  TouchStart?: EventHandler<BaseTouchEvent<Target>>;
+  TouchStart?: EventHandler<BaseTouchEvent<T>>;
 
   /** Moving after touching with fingers. */
-  TouchMove?: EventHandler<BaseTouchEvent<Target>>;
+  TouchMove?: EventHandler<BaseTouchEvent<T>>;
 
   /** Finger touch actions are interrupted by incoming call reminders and pop-up windows. */
-  TouchCancel?: EventHandler<BaseTouchEvent<Target>>;
+  TouchCancel?: EventHandler<BaseTouchEvent<T>>;
 
   /** Finger touch action ends. */
-  TouchEnd?: EventHandler<BaseTouchEvent<Target>>;
+  TouchEnd?: EventHandler<BaseTouchEvent<T>>;
 
   /** After touching the finger, if it leaves after more than 350ms and the event callback function is specified and triggered, the tap event will not be triggered. */
-  LongPress?: EventHandler<BaseCommonEvent<Target>>;
+  LongPress?: EventHandler<BaseCommonEvent<T>>;
 
   /** It will trigger during a transition animation start. */
-  TransitionStart?: EventHandler<BaseTransitionEvent<Target>>;
+  TransitionStart?: EventHandler<BaseTransitionEvent<T>>;
 
   /** It will trigger when a transition animation is cancelled. */
-  TransitionCancel?: EventHandler<BaseTransitionEvent<Target>>;
+  TransitionCancel?: EventHandler<BaseTransitionEvent<T>>;
 
   /** It will trigger after the transition or createAnimation animation is finished. */
-  TransitionEnd?: EventHandler<BaseTransitionEvent<Target>>;
+  TransitionEnd?: EventHandler<BaseTransitionEvent<T>>;
 
   /** It will trigger at the beginning of an animation. */
-  AnimationStart?: EventHandler<BaseAnimationEvent<Target>>;
+  AnimationStart?: EventHandler<BaseAnimationEvent<T>>;
 
   /** It will trigger during an animation iteration. */
-  AnimationIteration?: EventHandler<BaseAnimationEvent<Target>>;
+  AnimationIteration?: EventHandler<BaseAnimationEvent<T>>;
 
   /** It will trigger when an animation is cancelled. */
-  AnimationCancel?: EventHandler<BaseAnimationEvent<Target>>;
+  AnimationCancel?: EventHandler<BaseAnimationEvent<T>>;
 
   /** It will trigger upon completion of an animation. */
-  AnimationEnd?: EventHandler<BaseAnimationEvent<Target>>;
+  AnimationEnd?: EventHandler<BaseAnimationEvent<T>>;
 
   /** Mouse Clicked. */
-  MouseDown?: EventHandler<BaseMouseEvent<Target>>;
+  MouseDown?: EventHandler<BaseMouseEvent<T>>;
 
   /** Mouse released. */
-  MouseUp?: EventHandler<BaseMouseEvent<Target>>;
+  MouseUp?: EventHandler<BaseMouseEvent<T>>;
 
   /** Mouse movement. */
-  MouseMove?: EventHandler<BaseMouseEvent<Target>>;
+  MouseMove?: EventHandler<BaseMouseEvent<T>>;
 
   /** Mouse click. */
-  MouseClick?: EventHandler<BaseMouseEvent<Target>>;
+  MouseClick?: EventHandler<BaseMouseEvent<T>>;
 
   /** Double-click the mouse.  */
-  MouseDblClick?: EventHandler<BaseMouseEvent<Target>>;
+  MouseDblClick?: EventHandler<BaseMouseEvent<T>>;
 
   /** Long press on the mouse. */
-  MouseLongPress?: EventHandler<BaseMouseEvent<Target>>;
+  MouseLongPress?: EventHandler<BaseMouseEvent<T>>;
 
   /** Mouse (or touchpad) scrolling. */
-  Wheel?: EventHandler<BaseWheelEvent<Target>>;
+  Wheel?: EventHandler<BaseWheelEvent<T>>;
 
   /** Keyboard (or remote control) button pressed. */
-  KeyDown?: EventHandler<BaseKeyEvent<Target>>;
+  KeyDown?: EventHandler<BaseKeyEvent<T>>;
 
   /** Keyboard (or remote control) key released. */
-  KeyUp?: EventHandler<BaseKeyEvent<Target>>;
+  KeyUp?: EventHandler<BaseKeyEvent<T>>;
 
   /** Element gets focus. */
-  Focus?: EventHandler<BaseCommonEvent<Target>>;
+  Focus?: EventHandler<BaseCommonEvent<T>>;
 
   /** Element loses focus. */
-  Blur?: EventHandler<BaseCommonEvent<Target>>;
+  Blur?: EventHandler<BaseCommonEvent<T>>;
 
   /** layout info Change event */
-  LayoutChange?: LayoutChangeEvent;
+  LayoutChange?: EventHandler<LayoutChangeDetailEvent<T>>;
 
   /** UI appear event */
-  UIAppear?: UIAppearanceEvent;
+  UIAppear?: EventHandler<UIAppearanceDetailEvent<T>>;
 
   /** UI disappear event */
-  UIDisappear?: UIAppearanceEvent;
+  UIDisappear?: EventHandler<UIAppearanceDetailEvent<T>>;
   /**
    * The text layout event is triggered when the text layout changes.
    * @since since: Android: Lynx 2.6, iOS: Lynx 2.8
@@ -416,28 +431,27 @@ export interface LynxEvent<Target> {
    * @spec {@link https://developer.apple.com/documentation/appkit/nsaccessibility/2869551-accessibilitycustomactions/ | iOS}
    * @spec {@link https://developer.android.com/reference/androidx/core/view/accessibility/AccessibilityNodeInfoCompat?hl=en#addAction(androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat) | Android}
    */
-  AccessibilityAction?: EventHandler<AccessibilityActionDetailEvent<Target>>;
+  AccessibilityAction?: EventHandler<AccessibilityActionDetailEvent<T>>;
 }
 
-export type LayoutChangeEvent = EventHandler<LayoutChangeDetailEvent<Target>>;
-
-export type UIAppearanceEvent = EventHandler<UIAppearanceDetailEvent<Target>>;
+export interface LayoutChangeEvent extends LayoutChangeDetailEvent<Target> {}
+export interface UIAppearanceEvent extends UIAppearanceDetailEvent<Target> {}
 
 /**
  * This type is different with LynxEvent that they only have `bind` and `catch` event. But not `on` Event.
  */
-export interface LynxBindCatchEvent<Target = any> {
+export interface LynxBindCatchEvent<T = any> {
   /** Immediately lift your finger after touching. */
-  Tap?: EventHandler<BaseTouchEvent<Target>>;
+  Tap?: EventHandler<BaseTouchEvent<T>>;
 
   /** After touching the finger, leave after more than 350ms (it is recommended to use the longpress event instead). */
-  LongTap?: EventHandler<BaseTouchEvent<Target>>;
+  LongTap?: EventHandler<BaseTouchEvent<T>>;
 }
 
-export type LynxEventPropsBase<Target> = {
-  [K in keyof LynxEvent<Target> as Lowercase<`bind${K}` | `catch${K}` | `capture-bind${K}` | `capture-catch${K}` | `global-bind${K}`>]: LynxEvent<Target>[K];
+export type LynxEventPropsBase<T> = {
+  [K in keyof LynxEvent<T> as Lowercase<`bind${K}` | `catch${K}` | `capture-bind${K}` | `capture-catch${K}` | `global-bind${K}`>]: LynxEvent<T>[K];
 } & {
-  [K in keyof LynxBindCatchEvent<Target> as Lowercase<`bind${K}` | `catch${K}` | `capture-bind${K}` | `capture-catch${K}` | `global-bind${K}`>]: LynxBindCatchEvent<Target>[K];
+  [K in keyof LynxBindCatchEvent<T> as Lowercase<`bind${K}` | `catch${K}` | `capture-bind${K}` | `capture-catch${K}` | `global-bind${K}`>]: LynxBindCatchEvent<T>[K];
 };
 
 export type LynxEventProps = LynxEventPropsBase<Target>;

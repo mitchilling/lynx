@@ -18,7 +18,7 @@ import {
   NativeModules as INativeModules,
   SystemInfo,
   PlatformType,
-} from '../../types';
+} from '../../types/index';
 
 describe('Global Variable Type Test ', () => {
   it('lynx Properties Types Test', () => {

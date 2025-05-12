@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 3.2.5
+
+### Patch Changes
+
+- Add more events like `LayoutChangeEvent` into `MainThread` namespace
+
+In this commit, we add `AnimationEvent`, `TransitionEvent`, `LayoutChangeEvent`, `UIAppearanceEvent` into `MainThread` namespace. 
+Now you can use like this:
+
+```
+function handleLayoutChange(e: MainThread.LayoutChangeEvent) {
+  // ...
+}
+
+<view
+  main-thread:bindlayoutchange={handleLayoutChange}
+/>
+```
+
 ## 3.2.4
 
 ### Patch Changes
