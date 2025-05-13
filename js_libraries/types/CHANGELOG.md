@@ -1,12 +1,19 @@
 # CHANGELOG
 
-## 3.2.5
+## 3.3.0
 
-### Patch Changes
+### Major Changes
 
+- Update Types Version to 3.3.*
+- Add default properties for PipelineEntry.frameworkRenderingTiming
+- Add some missing typing of event props
+- Add type testing for objects & methods mounted in global
+- Add type testing to lynx react.JSX.IntrinsicElements
+- Add some missing types of built-in element `list`
+- Add some missing types of built-in element `image`
 - Add more events like `LayoutChangeEvent` into `MainThread` namespace
 
-In this commit, we add `AnimationEvent`, `TransitionEvent`, `LayoutChangeEvent`, `UIAppearanceEvent` into `MainThread` namespace. 
+In this commit, we add `AnimationEvent`, `TransitionEvent`, `LayoutChangeEvent`, `UIAppearanceEvent` into `MainThread` namespace.
 Now you can use like this:
 
 ```
@@ -18,27 +25,6 @@ function handleLayoutChange(e: MainThread.LayoutChangeEvent) {
   main-thread:bindlayoutchange={handleLayoutChange}
 />
 ```
-
-## 3.2.4
-
-### Patch Changes
-
-- Add default properties for PipelineEntry.frameworkRenderingTiming
-
-## 3.2.3
-
-### Patch Changes
-
-- Add some missing typing of event props
-- Add type testing for objects & methods mounted in global
-- Add type testing to lynx react.JSX.IntrinsicElements 
-
-## 3.2.2
-
-### Patch Changes
-
-- Add some missing types of built-in element `list`
-- Add some missing types of built-in element `image`
 
 ## 3.2.1
 
