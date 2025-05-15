@@ -4,9 +4,12 @@
 
 #import <Lynx/LynxPropsProcessor.h>
 #import <Lynx/LynxUI+Internal.h>
+#import <Lynx/LynxUI+Private.h>
 #import <Lynx/LynxUIView.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
+#import <malloc/malloc.h>
+#include <objc/runtime.h>
 #import "LynxUI+Gesture.h"
 #import "LynxUI+Private.h"
 
@@ -98,6 +101,46 @@
   XCTAssertTrue([ui getMemberScrollY] == 0.0f);
   XCTAssertTrue([ui getGestureDetectorMap].count == 0);
   XCTAssertTrue([ui getGestureHandlers].count == 0);
+}
+
+void printAllIvarDetails(Class cls) {
+  unsigned int ivarCount = 0;
+  Ivar *ivars = class_copyIvarList(cls, &ivarCount);
+
+  // Print the table header
+  printf("| %-20s | %-10s | %-10s | %-10s |\n", "Ivar Name", "Type", "Size (bytes)", "Offset");
+  printf("|%21s|%11s|%11s|%10s|\n", "---------------------", "----------", "----------",
+         "----------");
+
+  for (unsigned int i = 0; i < ivarCount; i++) {
+    Ivar ivar = ivars[i];
+    const char *ivarName = ivar_getName(ivar);
+    const char *ivarType = ivar_getTypeEncoding(ivar);
+    ptrdiff_t ivarOffset = ivar_getOffset(ivar);
+
+    NSUInteger size;
+    NSUInteger alignment;
+    NSGetSizeAndAlignment(ivarType, &size, &alignment);
+
+    printf("| %-20s | %-10s | %-10lu | %-10td |\n", ivarName, ivarType, (unsigned long)size,
+           ivarOffset);
+  }
+
+  free(ivars);
+}
+
+- (void)testMemoryPadding {
+  LynxUI *ui = [[LynxUI alloc] init];
+  unsigned long original_size = class_getInstanceSize([ui class]);
+  unsigned long padding_size = malloc_size((__bridge const void *)(ui));
+  printf(@"Size of %@: %zd", NSStringFromClass([ui class]), original_size);
+  printf(@"Size of %@: %zd", @"malloc size", padding_size);
+
+  if (padding_size - original_size >= 100) {
+    printAllIvarDetails([ui class]);
+    XCTFail("LynxUI size is beyond bar causing memory padding, wasting memory usage. Please check "
+            "its ivar to reduce it size under bar.");
+  }
 }
 
 @end

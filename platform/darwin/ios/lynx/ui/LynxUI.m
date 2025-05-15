@@ -65,6 +65,11 @@ static const CGFloat OFFSET_ROTATE_AUTO = -1024.f;
 
 #define IS_ZERO(num) (fabs(num) < 0.0000000001)
 
+@interface LynxUITransformInfo : NSObject
+@property(nonatomic, nonnull, strong) LynxAnimationTransformRotation* lastTransformRotation;
+@property(nonatomic) CATransform3D lastTransformWithoutRotate;
+@property(nonatomic) CATransform3D lastTransformWithoutRotateXY;
+@end
 @interface LynxUI () <NSCopying>
 // transition animation
 @property(nonatomic, strong, nullable) LynxTransitionAnimationManager* transitionAnimationManager;
@@ -81,6 +86,8 @@ static const CGFloat OFFSET_ROTATE_AUTO = -1024.f;
 // accessibility
 @property(nonatomic, nullable, strong) NSString* lynxAccessibilityStatus;
 @property(nonatomic, strong) NSString* lynxAccessibilityLabel;
+
+@property(nonatomic, nullable, strong) LynxUITransformInfo* transformInfo;
 
 - (void)prepareKeyframeManager;
 - (void)prepareLayoutAnimationManager;
@@ -119,7 +126,12 @@ static const CGFloat OFFSET_ROTATE_AUTO = -1024.f;
   BOOL _autoResumeAnimation;
   BOOL _enableReuseAnimationState;
   NSMutableArray<LynxAnimationInfo*>* _animationInfos;
+  LynxUITransformInfo* _transformInfo;
 }
+
+@dynamic lastTransformRotation;
+@dynamic lastTransformWithoutRotate;
+@dynamic lastTransformWithoutRotateXY;
 
 - (id)copyWithZone:(nullable NSZone*)zone {
   LynxUI* ui = [[self.class alloc] initWithView:nil];
@@ -175,9 +187,6 @@ static const CGFloat OFFSET_ROTATE_AUTO = -1024.f;
   _updatedFrame = CGRectZero;
   _lastUpdatedFrame = CGRectZero;
   _overflow = OVERFLOW_HIDDEN_VAL;
-  _lastTransformRotation = [[LynxAnimationTransformRotation alloc] init];
-  _lastTransformWithoutRotate = CATransform3DIdentity;
-  _lastTransformWithoutRotateXY = CATransform3DIdentity;
   _autoResumeAnimation = YES;
   _enableNewTransformOrigin = YES;
   _enableReuseAnimationState = YES;
@@ -1487,10 +1496,32 @@ LYNX_PROP_DEFINE("async-display", setAsyncDisplay, BOOL) {
   self.backgroundManager.transformOrigin = CGPointMake(anchorX, anchorY);
 }
 
+- (void)prepareTransformInfo {
+  if (!_transformInfo) {
+    _transformInfo = [[LynxUITransformInfo alloc] init];
+  }
+}
+
+// To keep pulbic API stable, to be checked and removed
+- (LynxAnimationTransformRotation*)lastTransformRotation {
+  [self prepareTransformInfo];
+  return _transformInfo.lastTransformRotation;
+}
+
+- (CATransform3D)lastTransformWithoutRotate {
+  [self prepareTransformInfo];
+  return _transformInfo.lastTransformWithoutRotate;
+}
+
+- (CATransform3D)lastTransformWithoutRotateXY {
+  [self prepareTransformInfo];
+  return _transformInfo.lastTransformWithoutRotateXY;
+}
+
 - (void)applyTransform {
   // TODO(renzhongyue): modify this function such that it can run on the async thread.
   LYNX_ASSERT_ON_MAIN_THREAD;
-
+  [self prepareTransformInfo];
   [_transitionAnimationManager removeTransitionAnimation:TRANSITION_TRANSFORM];
   if (_enableNewTransformOrigin) {
     [self applyTransformOrigin];
@@ -1511,7 +1542,7 @@ LYNX_PROP_DEFINE("async-display", setAsyncDisplay, BOOL) {
                                                    rotationY:&currentRotationY
                                                    rotationZ:&currentRotationZ];
 
-  LynxAnimationTransformRotation* oldTransformRotation = _lastTransformRotation;
+  LynxAnimationTransformRotation* oldTransformRotation = _transformInfo.lastTransformRotation;
   LynxAnimationTransformRotation* newTransformRotation =
       [[LynxAnimationTransformRotation alloc] init];
   newTransformRotation.rotationX = currentRotationX;
@@ -1532,22 +1563,23 @@ LYNX_PROP_DEFINE("async-display", setAsyncDisplay, BOOL) {
                                         callback:^(BOOL finished) {
                                           weakSelf.view.layer.transform = transform3D;
                                           weakSelf.backgroundManager.transform = transform3D;
-                                          weakSelf.lastTransformRotation = newTransformRotation;
-                                          weakSelf.lastTransformWithoutRotate =
+                                          weakSelf.transformInfo.lastTransformRotation =
+                                              newTransformRotation;
+                                          weakSelf.transformInfo.lastTransformWithoutRotate =
                                               transformWithoutRotate;
-                                          weakSelf.lastTransformWithoutRotateXY =
+                                          weakSelf.transformInfo.lastTransformWithoutRotateXY =
                                               transformWithoutRotateXY;
                                           [weakSelf.view setNeedsDisplay];
                                         }];
   } else {
     if (!CATransform3DEqualToTransform(_view.layer.transform, transform3D) ||
-        ![_lastTransformRotation isEqualToTransformRotation:newTransformRotation]) {
+        ![_transformInfo.lastTransformRotation isEqualToTransformRotation:newTransformRotation]) {
       // Transform will be apply on background manager
       _view.layer.transform = transform3D;
       _backgroundManager.transform = transform3D;
-      self.lastTransformRotation = newTransformRotation;
-      self.lastTransformWithoutRotate = transformWithoutRotate;
-      self.lastTransformWithoutRotateXY = transformWithoutRotateXY;
+      _transformInfo.lastTransformRotation = newTransformRotation;
+      _transformInfo.lastTransformWithoutRotate = transformWithoutRotate;
+      _transformInfo.lastTransformWithoutRotateXY = transformWithoutRotateXY;
       [self.view setNeedsDisplay];
       // Static transform animation changes the UI‘s layout.
       [self.context.observer notifyLayout:nil];
@@ -4059,4 +4091,16 @@ LYNX_PROP_DEFINE("hit-slop", setHitSlop, NSObject*) {
   [self applyOffset:resultPoint andRotate:rotateDeg toLayer:self.view.layer];
 }
 
+@end
+
+@implementation LynxUITransformInfo
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _lastTransformRotation = [[LynxAnimationTransformRotation alloc] init];
+    _lastTransformWithoutRotate = CATransform3DIdentity;
+    _lastTransformWithoutRotateXY = CATransform3DIdentity;
+  }
+  return self;
+}
 @end
