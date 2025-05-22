@@ -143,11 +143,11 @@ static inline bool LynxHasBorderRadii(LynxBorderRadii radii) {
 @property(nonatomic, assign) BOOL implicitAnimation;
 @property(nonatomic, assign) CATransform3D transform;
 @property(nonatomic, assign) CGPoint transformOrigin;
+@property(nonatomic) CGPoint postTranslate;
 
 @property(nonatomic, nullable, readonly) LynxBackgroundSubBackgroundLayer* backgroundLayer;
 @property(nonatomic, nullable, readonly) LynxBorderLayer* borderLayer;
 @property(nonatomic, nullable, readonly) CALayer* outlineLayer;
-@property(nonatomic) CGPoint postTranslate;
 @property(nonatomic, nullable, readonly) LynxBackgroundSubBackgroundLayer* maskLayer;
 @property(nonatomic, strong) UIView* opacityView;
 

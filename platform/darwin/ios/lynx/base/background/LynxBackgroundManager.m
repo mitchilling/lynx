@@ -21,6 +21,63 @@
 #import "LynxConvertUtils.h"
 #import "LynxUIContext+Internal.h"
 
+@interface LynxBackgroundBorderInfo : NSObject
+@property(nonatomic, assign) LynxBorderRadii borderRadius;
+@property(nonatomic, assign) LynxBorderRadii borderRadiusRaw;
+@property(nonatomic, assign) UIEdgeInsets borderWidth;
+
+@property(nonatomic, nullable) UIColor* borderTopColor;
+@property(nonatomic, nullable) UIColor* borderBottomColor;
+@property(nonatomic, nullable) UIColor* borderLeftColor;
+@property(nonatomic, nullable) UIColor* borderRightColor;
+
+- (BOOL)radiusEquals:(LynxBorderUnitValue*)l;
+
+@end
+
+@interface LynxBackgroundTransformInfo : NSObject
+@property(nonatomic, assign) CATransform3D transform;
+@property(nonatomic, assign) CGPoint transformOrigin;
+@property(nonatomic) CGPoint postTranslate;
+@end
+
+@implementation LynxBackgroundBorderInfo
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _borderRadiusRaw = _borderRadius = LynxBorderRadiiZero;
+  }
+  return self;
+}
+
+- (BOOL)radiusEquals:(LynxBorderUnitValue*)l {
+  LynxBorderUnitValue* r = (LynxBorderUnitValue*)&_borderRadius;
+  for (int i = 0; i < 8; i++) {
+    if (!isBorderUnitEqual(l[i], r[i])) {
+      return YES;
+      break;
+    }
+  }
+  return NO;
+}
+
+@end
+
+@implementation LynxBackgroundTransformInfo
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _transform = CATransform3DIdentity;
+    _transformOrigin = CGPointMake(0.5, 0.5);
+    _postTranslate = CGPointZero;
+  }
+  return self;
+}
+
+@end
+
 NSString* NSStringFromLynxBorderRadii(LynxBorderRadii* radii) {
   return [NSString
       stringWithFormat:@"LynxBorderRadii_%f_%ld_%f_%ld_%f_%ld_%f_%ld_%f_%ld_%f_%ld_%f_%ld_%f_%ld",
@@ -38,6 +95,10 @@ NSString* NSStringFromLynxBorderRadii(LynxBorderRadii* radii) {
 
 const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
                                              {0, 0}, {0, 0}, {0, 0}, {0, 0}};
+
+@interface LynxBackgroundManager ()
+@property(nonatomic, nullable) LynxBackgroundBorderInfo* borderInfo;
+@end
 
 #pragma mark LynxBackgroundSubLayer
 @implementation LynxBackgroundSubLayer
@@ -70,6 +131,8 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
   // not css property background-size.
   CGSize _backgroundSize;
   BOOL _onlyGradient;
+  LynxBackgroundBorderInfo* _borderInfo;
+  LynxBackgroundTransformInfo* _transformInfo;
 }
 
 - (instancetype)initWithUI:(LynxUI*)ui {
@@ -79,27 +142,87 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
     _backgroundInfo = [[LynxBackgroundInfo alloc] init];
     _isBGChangedImage = _isBGChangedNoneImage = NO;
     _opacity = 1;
-    // TODO(fangzhou): move these properties to info
-    _transform = CATransform3DIdentity;
-    _transformOrigin = CGPointMake(0.5, 0.5);
     _implicitAnimation = true;
-    _postTranslate = CGPointZero;
     _overlapRendering = NO;
     _uiBackgroundShapeLayerEnabled = LynxBgShapeLayerPropUndefine;
     _shouldRasterizeShadow = NO;
-    _borderRadiusRaw = _borderRadius = LynxBorderRadiiZero;
     _onlyGradient = YES;
     _isPixelated = NO;
   }
   return self;
 }
 
+@dynamic borderRadius;
+@dynamic borderRadiusRaw;
+@dynamic borderWidth;
+@dynamic borderTopColor;
+@dynamic borderBottomColor;
+@dynamic borderLeftColor;
+@dynamic borderRightColor;
+@dynamic transform;
+@dynamic transformOrigin;
+@dynamic postTranslate;
+
+- (LynxBackgroundBorderInfo*)borderInfo {
+  if (!_borderInfo) {
+    _borderInfo = [[LynxBackgroundBorderInfo alloc] init];
+  }
+  return _borderInfo;
+}
+
+- (LynxBorderRadii)borderRadius {
+  return self.borderInfo.borderRadius;
+}
+- (LynxBorderRadii)borderRadiusRaw {
+  return self.borderInfo.borderRadiusRaw;
+}
+- (UIEdgeInsets)borderWidth {
+  return self.borderInfo.borderWidth;
+}
+- (UIColor*)borderTopColor {
+  return self.borderInfo.borderTopColor;
+}
+- (UIColor*)borderBottomColor {
+  return self.borderInfo.borderBottomColor;
+}
+- (UIColor*)borderLeftColor {
+  return self.borderInfo.borderLeftColor;
+}
+- (UIColor*)borderRightColor {
+  return self.borderInfo.borderRightColor;
+}
+
+- (BOOL)hasBorder {
+  return _borderInfo != nil;
+}
+
+- (LynxBackgroundTransformInfo*)transformInfo {
+  if (!_transformInfo) {
+    _transformInfo = [[LynxBackgroundTransformInfo alloc] init];
+  }
+  return _transformInfo;
+}
+
+- (CATransform3D)transform {
+  return self.transformInfo.transform;
+}
+- (CGPoint)transformOrigin {
+  return self.transformInfo.transformOrigin;
+}
+- (CGPoint)postTranslate {
+  return self.transformInfo.postTranslate;
+}
+
+- (BOOL)hasTransform {
+  return _transformInfo != nil;
+}
+
 - (void)applyTransformOrigin:(CALayer*)layer {
   CGFloat oldAnchorX = layer.anchorPoint.x;
   CGFloat oldAnchorY = layer.anchorPoint.y;
-  CGFloat anchorX = _transformOrigin.x;
-  CGFloat anchorY = _transformOrigin.y;
-  layer.anchorPoint = _transformOrigin;
+  CGFloat anchorX = self.transformInfo.transformOrigin.x;
+  CGFloat anchorY = self.transformInfo.transformOrigin.y;
+  layer.anchorPoint = self.transformInfo.transformOrigin;
   CGFloat newPositionX = layer.position.x + (anchorX - oldAnchorX) * layer.frame.size.width;
   CGFloat newPositionY = layer.position.y + (anchorY - oldAnchorY) * layer.frame.size.height;
   layer.position = CGPointMake(newPositionX, newPositionY);
@@ -208,7 +331,7 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
 }
 
 - (void)setPostTranslate:(CGPoint)postTranslate {
-  _postTranslate = postTranslate;
+  self.transformInfo.postTranslate = postTranslate;
 
   CATransform3D transform = [self getTransformWithPostTranslate];
   _ui.view.layer.transform = transform;
@@ -216,14 +339,14 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
 }
 
 - (CATransform3D)getTransformWithPostTranslate {
-  CATransform3D result = _transform;
-  result.m41 = result.m41 + _postTranslate.x;
-  result.m42 = result.m42 + _postTranslate.y;
+  CATransform3D result = self.transformInfo.transform;
+  result.m41 = result.m41 + self.transformInfo.postTranslate.x;
+  result.m42 = result.m42 + self.transformInfo.postTranslate.y;
   return result;
 }
 
 - (void)setTransform:(CATransform3D)transform {
-  _transform = transform;
+  self.transformInfo.transform = transform;
   [self setTransformToLayers:transform];
 }
 
@@ -240,7 +363,7 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
 }
 
 - (void)setTransformOrigin:(CGPoint)transformOrigin {
-  _transformOrigin = transformOrigin;
+  self.transformInfo.transformOrigin = transformOrigin;
   [self setTransformOriginToLayers:transformOrigin];
 }
 
@@ -711,7 +834,7 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
   _borderLayer.type = type;
   _borderLayer.transform = CATransform3DIdentity;
   _borderLayer.frame = _ui.view.layer.frame;
-  _borderLayer.transform = _transform;
+  _borderLayer.transform = self.transformInfo.transform;
   _borderLayer.allowsEdgeAntialiasing = _allowsEdgeAntialiasing;
   if (_ui.enableNewTransformOrigin) {
     [self applyTransformOrigin:_borderLayer];
@@ -784,7 +907,7 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
   _maskLayer.type = LynxBgTypeComplex;
   _maskLayer.transform = CATransform3DIdentity;
   _maskLayer.frame = self.ui.view.layer.frame;
-  _maskLayer.transform = _transform;
+  _maskLayer.transform = self.transformInfo.transform;
   if (_ui.enableNewTransformOrigin) {
     [self applyTransformOrigin:_maskLayer];
   }
@@ -808,7 +931,7 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
   // reset transform before change frame, otherwise the result value of frame is undefined.
   _backgroundLayer.transform = CATransform3DIdentity;
   _backgroundLayer.frame = self.ui.view.layer.frame;
-  _backgroundLayer.transform = _transform;
+  _backgroundLayer.transform = self.transformInfo.transform;
   if (_ui.enableNewTransformOrigin) {
     [self applyTransformOrigin:_backgroundLayer];
   }
@@ -850,8 +973,8 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
         [self generateBackgroundImageLayerWithSize:_backgroundSize info:self.backgroundDrawable];
   }
   [_backgroundLayer markDirtyWithSize:self->_backgroundSize
-                                radii:self->_borderRadius
-                         borderInsets:self->_borderWidth
+                                radii:self.borderInfo.borderRadius
+                         borderInsets:self.borderInfo.borderWidth
                       backgroundColor:self->_backgroundColor
                            drawToEdge:NO
                             capInsets:self->_backgroundCapInsets.capInsets
@@ -870,8 +993,8 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
                                                             info:self.maskDrawable];
   }
   [_maskLayer markDirtyWithSize:self->_backgroundSize
-                          radii:self->_borderRadius
-                   borderInsets:self->_borderWidth
+                          radii:self.borderInfo.borderRadius
+                   borderInsets:self.borderInfo.borderWidth
                 backgroundColor:[UIColor clearColor]
                      drawToEdge:NO
                       capInsets:self->_backgroundCapInsets.capInsets
@@ -1025,8 +1148,8 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
 - (void)extractBorderRadiusValue:(const CGSize*)newViewSize {
   CGRect rect = {.size = *newViewSize};
   // Use borderRadiusRaw for calculation and borderRadius for rendering.
-  LynxCornerInsets cornerInsets = LynxGetCornerInsetsA(rect, _borderRadiusRaw, UIEdgeInsetsZero,
-                                                       _backgroundInfo->borderRadiusCalc);
+  LynxCornerInsets cornerInsets = LynxGetCornerInsetsA(
+      rect, self.borderInfo.borderRadiusRaw, UIEdgeInsetsZero, _backgroundInfo->borderRadiusCalc);
   LynxBorderRadii radii = (LynxBorderRadii){.topLeftX.val = cornerInsets.topLeft.width,
                                             .topLeftX.unit = LynxBorderValueUnitDefault,
                                             .topLeftY.val = cornerInsets.topLeft.height,
@@ -1043,15 +1166,8 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
                                             .bottomLeftX.unit = LynxBorderValueUnitDefault,
                                             .bottomLeftY.val = cornerInsets.bottomLeft.height,
                                             .bottomLeftY.unit = LynxBorderValueUnitDefault};
-  bool changed = NO;
   LynxBorderUnitValue* l = (LynxBorderUnitValue*)&radii;
-  LynxBorderUnitValue* r = (LynxBorderUnitValue*)&_borderRadius;
-  for (int i = 0; i < 8; i++) {
-    if (!isBorderUnitEqual(l[i], r[i])) {
-      changed = YES;
-      break;
-    }
-  }
+  bool changed = [self.borderInfo radiusEquals:l];
   if (changed) {
     self.borderRadius = radii;
     // radius changed, background and border need updating.
@@ -1071,7 +1187,7 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
   const CGSize newViewSize = CGSizeMake(_ui.view.frame.size.width, _ui.view.frame.size.height);
   const BOOL isSizeChanged = !CGSizeEqualToSize(_backgroundSize, newViewSize);
 
-  if (isSizeChanged) {
+  if (isSizeChanged && [self hasBorder]) {
     // size changed, should use the new reference box calculate the borderRadius.
     // TODO(renzhongyue): we can skip this if no percentage or calc values in the raw radius value
     // from CSSComputedStyle. But it requires a more complicate state management.
@@ -1192,7 +1308,8 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
   if (!CGSizeEqualToSize(newViewSize, CGSizeZero) || _withAnimation) {
     // if lynxUI has sticky attribute, transform = _transform + stickyTransform
     // else transform is default _transform
-    CATransform3D transformWithSticky = [self getTransformWithPostTranslate];
+    CATransform3D transformWithSticky =
+        [self hasTransform] ? [self getTransformWithPostTranslate] : CATransform3DIdentity;
 
     _ui.view.layer.transform = CATransform3DIdentity;
     if (_backgroundLayer != nil) {
@@ -1582,32 +1699,36 @@ const LynxBorderRadii LynxBorderRadiiZero = {{0, 0}, {0, 0}, {0, 0}, {0, 0},
 }
 
 - (void)setBorderRadius:(LynxBorderRadii)borderRadius {
-  _borderRadius = borderRadius;
+  self.borderInfo.borderRadius = borderRadius;
   [_backgroundInfo setBorderRadius:borderRadius];
 }
 
+- (void)setBorderRadiusRaw:(LynxBorderRadii)borderRadius {
+  self.borderInfo.borderRadiusRaw = borderRadius;
+}
+
 - (void)setBorderWidth:(UIEdgeInsets)width {
-  _borderWidth = width;
+  self.borderInfo.borderWidth = width;
   [_backgroundInfo setBorderWidth:width];
 }
 
 - (void)setBorderTopColor:(UIColor*)borderTopColor {
-  _borderTopColor = borderTopColor;
+  self.borderInfo.borderTopColor = borderTopColor;
   [_backgroundInfo updateBorderColor:LynxBorderTop value:borderTopColor];
 }
 
 - (void)setBorderLeftColor:(UIColor*)borderLeftColor {
-  _borderLeftColor = borderLeftColor;
+  self.borderInfo.borderLeftColor = borderLeftColor;
   [_backgroundInfo updateBorderColor:LynxBorderLeft value:borderLeftColor];
 }
 
 - (void)setBorderRightColor:(UIColor*)borderRightColor {
-  _borderRightColor = borderRightColor;
+  self.borderInfo.borderRightColor = borderRightColor;
   [_backgroundInfo updateBorderColor:LynxBorderRight value:borderRightColor];
 }
 
 - (void)setBorderBottomColor:(UIColor*)borderBottomColor {
-  _borderBottomColor = borderBottomColor;
+  self.borderInfo.borderBottomColor = borderBottomColor;
   [_backgroundInfo updateBorderColor:LynxBorderBottom value:borderBottomColor];
 }
 

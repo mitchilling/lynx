@@ -353,10 +353,10 @@ public class LynxBackgroundManager : NSObject, <CALayerDelegate> {
   public BOOL LynxBackgroundManager::implicitAnimation implicitAnimation;
   public CATransform3D LynxBackgroundManager::transform transform;
   public CGPoint LynxBackgroundManager::transformOrigin transformOrigin;
+  public CGPoint LynxBackgroundManager::postTranslate postTranslate;
   public LynxBackgroundSubBackgroundLayer* LynxBackgroundManager::backgroundLayer backgroundLayer;
   public LynxBorderLayer* LynxBackgroundManager::borderLayer borderLayer;
   public CALayer* LynxBackgroundManager::outlineLayer outlineLayer;
-  public CGPoint LynxBackgroundManager::postTranslate postTranslate;
   public LynxBackgroundSubBackgroundLayer* LynxBackgroundManager::maskLayer maskLayer;
   public UIView* LynxBackgroundManager::opacityView opacityView;
   public NSArray<LynxBoxShadow*>* LynxBackgroundManager::shadowArray shadowArray;
