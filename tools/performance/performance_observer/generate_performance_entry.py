@@ -38,6 +38,7 @@ def prepare_before_generate(yaml_files):
                             entry_mapping[key] = class_name
 
 def generate_java_code(yaml_files):
+    remove_exist_dirs(java_output_file_path)
     # Generate Definition files
     for yaml_file in yaml_files:
         items = read_yaml_file(os.path.join(base_dir, yaml_file))
@@ -71,6 +72,8 @@ def generate_java_code(yaml_files):
     write_file(os.path.join(java_output_file_path, f'{converter_name}.java'), java_output)
 
 def generate_objc_code(yaml_files):
+    remove_exist_dirs(objc_header_output_file_path)
+    remove_exist_dirs(objc_impl_output_file_path)
     # Generate Definition files
     for yaml_file in yaml_files:
         items = read_yaml_file(os.path.join(base_dir, yaml_file))

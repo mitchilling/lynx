@@ -5,6 +5,7 @@
 
 import os
 import yaml
+import shutil
 
 # common variable
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -43,3 +44,14 @@ def get_license(year):
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.\n'''
     return license
+
+def remove_exist_dirs(dir_path):
+    """Remove all directories under the specified path
+    Args:
+        dir_path (str): Path to the directory
+    """
+    if os.path.exists(dir_path) and os.path.isdir(dir_path):
+        try:
+            shutil.rmtree(dir_path)
+        except Exception as e:
+            print(f"Failed to remove directory {dir_path}: {e}", file=sys.stderr)
