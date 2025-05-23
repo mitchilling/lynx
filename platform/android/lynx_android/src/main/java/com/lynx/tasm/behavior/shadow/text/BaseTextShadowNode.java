@@ -120,12 +120,12 @@ public class BaseTextShadowNode extends ShadowNode {
   @Override
   public void setContext(LynxContext context) {
     super.setContext(context);
-    mEnableTextRefactor = getContext().isTextRefactorEnabled();
-    mEnableNewClipMode = getContext().isNewClipModeEnabled();
-    mEnableTextBoringLayout = getContext().isTextBoringLayoutEnabled();
-    mTextAttributes.setIncludePadding(getContext().getDefaultTextIncludePadding());
+    mEnableTextRefactor = context.isTextRefactorEnabled();
+    mEnableNewClipMode = context.isNewClipModeEnabled();
+    mEnableTextBoringLayout = context.isTextBoringLayoutEnabled();
+    mTextAttributes.setIncludePadding(context.getDefaultTextIncludePadding());
     mTextAttributes.setFontSize(
-        Math.round(PixelUtils.dipToPx(14, getContext().getScreenMetrics().density)));
+        Math.round(PixelUtils.dipToPx(14, context.getScreenMetrics().density)));
   }
 
   protected boolean isParagraph() {
