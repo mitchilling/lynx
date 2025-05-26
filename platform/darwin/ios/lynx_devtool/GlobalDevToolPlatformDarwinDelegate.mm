@@ -25,7 +25,6 @@ class GlobalDevToolPlatformDarwin : public GlobalDevToolPlatformFacade {
 
   void StopMemoryTracing() override { [GlobalDevToolPlatformDarwinDelegate stopMemoryTracing]; }
 
-#if ENABLE_TRACE_PERFETTO || ENABLE_TRACE_SYSTRACE
   lynx::trace::TraceController* GetTraceController() override {
     intptr_t res = [GlobalDevToolPlatformDarwinDelegate getTraceController];
     if (res) {
@@ -65,7 +64,6 @@ class GlobalDevToolPlatformDarwin : public GlobalDevToolPlatformFacade {
   std::string GetLynxVersion() override {
     return [[LynxDeviceInfoHelper getLynxVersion] UTF8String];
   }
-#endif
 
   std::string GetSystemModelName() override {
     return [GlobalDevToolPlatformDarwinDelegate getSystemModelName];
@@ -90,8 +88,6 @@ GlobalDevToolPlatformFacade& GlobalDevToolPlatformFacade::GetInstance() {
   [[LynxMemoryController shareInstance] stopMemoryTracing];
 }
 
-#if ENABLE_TRACE_PERFETTO || ENABLE_TRACE_SYSTRACE
-
 + (intptr_t)getTraceController {
   return [[LynxTraceController sharedInstance] getTraceController];
 }
@@ -107,7 +103,6 @@ GlobalDevToolPlatformFacade& GlobalDevToolPlatformFacade::GetInstance() {
 + (intptr_t)getInstanceTracePlugin {
   return [[LynxInstanceTrace shareInstance] getInstanceTracePlugin];
 }
-#endif
 
 + (std::string)getSystemModelName {
   struct utsname systemInfo;

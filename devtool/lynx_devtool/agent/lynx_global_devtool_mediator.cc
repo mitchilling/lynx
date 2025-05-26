@@ -16,13 +16,9 @@
 namespace lynx {
 namespace devtool {
 
-#if ENABLE_TRACE_PERFETTO || ENABLE_TRACE_SYSTRACE
 constexpr int kDefaultBufferSize = 20 * 1024;  // 20M
 LynxGlobalDevToolMediator::LynxGlobalDevToolMediator()
     : tracing_session_id_(-1) {
-#else
-LynxGlobalDevToolMediator::LynxGlobalDevToolMediator() {
-#endif
   ui_task_runner_ = base::UIThread::GetRunner();
 }
 
@@ -267,18 +263,17 @@ void LynxGlobalDevToolMediator::TracingStart(
     const std::shared_ptr<lynx::devtool::MessageSender>& sender,
     const Json::Value& message) {
   if (default_task_runner_) {
-#if ENABLE_TRACE_PERFETTO || ENABLE_TRACE_SYSTRACE
     RunOnTaskRunner(default_task_runner_, [this, sender, message]() {
-#else
-    RunOnTaskRunner(default_task_runner_, [sender, message]() {
-#endif
       int id = static_cast<int>(message["id"].asInt64());
-#if ENABLE_TRACE_PERFETTO || ENABLE_TRACE_SYSTRACE
-      LOGI("start tracing");
+      if (!lynx::tasm::LynxEnv::GetInstance().IsDebugModeEnabled()) {
+        sender->SendErrorResponse(id, "Tracing not enabled");
+        return;
+      }
       if (this->tracing_session_id_ > 0) {
         sender->SendErrorResponse(id, "Tracing already started");
         return;
       }
+      LOGI("start tracing");
 
       auto config = std::make_shared<lynx::trace::TraceConfig>();
       const auto& params = message["params"];
@@ -375,9 +370,6 @@ void LynxGlobalDevToolMediator::TracingStart(
       } else {
         sender->SendErrorResponse(id, "Failed to start tracing");
       }
-#else
-      sender->SendErrorResponse(id, "Tracing not enabled");
-#endif
     });
   }
 }
@@ -386,13 +378,8 @@ void LynxGlobalDevToolMediator::TracingEnd(
     const std::shared_ptr<lynx::devtool::MessageSender>& sender,
     const Json::Value& message) {
   if (default_task_runner_) {
-#if ENABLE_TRACE_PERFETTO || ENABLE_TRACE_SYSTRACE
     RunOnTaskRunner(default_task_runner_, [this, sender, message]() {
-#else
-    RunOnTaskRunner(default_task_runner_, [sender, message]() {
-#endif
       int id = static_cast<int>(message["id"].asInt64());
-#if ENABLE_TRACE_PERFETTO || ENABLE_TRACE_SYSTRACE
       LOGI("End tracing");
       if (this->tracing_session_id_ <= 0) {
         sender->SendErrorResponse(id, "Tracing is not started");
@@ -410,9 +397,6 @@ void LynxGlobalDevToolMediator::TracingEnd(
       controller->StopTracing(this->tracing_session_id_);
       //  controller->RemoveCompleteCallbacks(this->tracing_session_id_);
       this->tracing_session_id_ = -1;
-#else
-      sender->SendErrorResponse(id, "Tracing not enabled");
-#endif
     });
   }
 }
@@ -422,7 +406,6 @@ void LynxGlobalDevToolMediator::SetStartupTracingConfig(
     const Json::Value& message) {
   if (default_task_runner_) {
     RunOnTaskRunner(default_task_runner_, [sender, message]() {
-#if ENABLE_TRACE_PERFETTO || ENABLE_TRACE_SYSTRACE
       const int id = static_cast<int>(message["id"].asInt());
       auto controller =
           GlobalDevToolPlatformFacade::GetInstance().GetTraceController();
@@ -438,7 +421,6 @@ void LynxGlobalDevToolMediator::SetStartupTracingConfig(
       } else {
         sender->SendErrorResponse(id, "Set Startup Tracing config is null");
       }
-#endif
     });
   }
 }
@@ -448,7 +430,6 @@ void LynxGlobalDevToolMediator::GetStartupTracingConfig(
     const Json::Value& message) {
   if (default_task_runner_) {
     RunOnTaskRunner(default_task_runner_, [sender, message]() {
-#if ENABLE_TRACE_PERFETTO || ENABLE_TRACE_SYSTRACE
       const int id = static_cast<int>(message["id"].asInt());
       auto controller =
           GlobalDevToolPlatformFacade::GetInstance().GetTraceController();
@@ -463,7 +444,6 @@ void LynxGlobalDevToolMediator::GetStartupTracingConfig(
       response["result"] = result;
       response["id"] = message["id"].asInt64();
       sender->SendMessage("CDP", response);
-#endif
     });
   }
 }
@@ -473,7 +453,6 @@ void LynxGlobalDevToolMediator::GetStartupTracingFile(
     const Json::Value& message) {
   if (default_task_runner_) {
     RunOnTaskRunner(default_task_runner_, [sender, message]() {
-#if ENABLE_TRACE_PERFETTO || ENABLE_TRACE_SYSTRACE
       const int id = static_cast<int>(message["id"].asInt());
       auto controller =
           GlobalDevToolPlatformFacade::GetInstance().GetTraceController();
@@ -500,7 +479,6 @@ void LynxGlobalDevToolMediator::GetStartupTracingFile(
           sender->SendErrorResponse(id, "Failed to get startup tracing file");
         }
       }
-#endif
     });
   }
 }

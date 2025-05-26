@@ -8,9 +8,7 @@
 #include <memory>
 #include <string>
 
-#if ENABLE_TRACE_PERFETTO || ENABLE_TRACE_SYSTRACE
 #include "base/trace/native/trace_controller.h"
-#endif
 
 namespace lynx {
 namespace devtool {
@@ -46,14 +44,12 @@ class GlobalDevToolPlatformFacade
   virtual void StartMemoryTracing() = 0;
   virtual void StopMemoryTracing() = 0;
 
-#if ENABLE_TRACE_PERFETTO || ENABLE_TRACE_SYSTRACE
   // The following functions are used for tracing agent.
   virtual lynx::trace::TraceController* GetTraceController() = 0;
   virtual lynx::trace::TracePlugin* GetFPSTracePlugin() = 0;
   virtual lynx::trace::TracePlugin* GetFrameViewTracePlugin() = 0;
   virtual lynx::trace::TracePlugin* GetInstanceTracePlugin() = 0;
   virtual std::string GetLynxVersion() { return ""; }
-#endif
 
   virtual std::string GetSystemModelName() { return ""; }
 };

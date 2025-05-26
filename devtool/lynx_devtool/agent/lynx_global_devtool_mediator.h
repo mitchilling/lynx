@@ -54,9 +54,7 @@ class LynxGlobalDevToolMediator : public LynxDevToolMediatorBase {
 
  protected:
   fml::RefPtr<fml::TaskRunner> ui_task_runner_;
-#if ENABLE_TRACE_PERFETTO || ENABLE_TRACE_SYSTRACE
   int tracing_session_id_;
-#endif
 
   friend class lynx::base::NoDestructor<LynxGlobalDevToolMediator>;
   LynxGlobalDevToolMediator();

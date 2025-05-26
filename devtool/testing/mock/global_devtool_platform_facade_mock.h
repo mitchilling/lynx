@@ -17,6 +17,16 @@ class GlobalDevToolPlatformFacadeMock
  public:
   void StartMemoryTracing() override {}
   void StopMemoryTracing() override {}
+  lynx::trace::TraceController* GetTraceController() override {
+    return nullptr;
+  }
+  lynx::trace::TracePlugin* GetFPSTracePlugin() override { return nullptr; }
+  lynx::trace::TracePlugin* GetFrameViewTracePlugin() override {
+    return nullptr;
+  }
+  lynx::trace::TracePlugin* GetInstanceTracePlugin() override {
+    return nullptr;
+  }
 };
 
 }  // namespace testing
