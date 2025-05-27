@@ -326,9 +326,7 @@ static const int kVirtual = 1 << 2;
   }
 }
 
-- (void)runAction:(id)obj
-    setReplayTimeCallback:(void (^)(int64_t))setReplayTimeCallback
-      onTestBenchComplete:(void (^)(int64_t))onTestBenchComplete {
+- (void)runAction:(id)obj onTestBenchComplete:(void (^)(int64_t))onTestBenchComplete {
   NSString* functionName = obj[@"Function Name"];
   if ([functionName isEqualToString:@"updateViewPort"] ||
       [functionName isEqualToString:@"setThreadStrategy"]) {
@@ -346,14 +344,13 @@ static const int kVirtual = 1 << 2;
   } else {
     recordTime = recordTime * 1000;
   }
-  setReplayTimeCallback(recordTime);
+  if (_startTime == 0) {
+    _startTime = recordTime;
+  }
   if ([functionName isEqualToString:@"sendEventDarwin"] && ![self.replayConfig replayGesture]) {
     return;
   }
   NSDictionary* params = obj[@"Params"];
-  if (_startTime == 0) {
-    _startTime = recordTime;
-  }
   NSInteger interval = recordTime - _startTime;
   if ([[self.replayConfig reloadFuncName] containsObject:functionName]) {
     [_reloadFuncList addObject:[[ReloadAction alloc] initWithParams:interval
@@ -384,6 +381,30 @@ static const int kVirtual = 1 << 2;
   }
 }
 
+- (NSString*)replayTimeEnvJScript {
+  NSString* jsonPath = [[NSBundle mainBundle] pathForResource:@"Resource/testBench/testBench"
+                                                       ofType:@"js"];
+  NSData* data = [NSData dataWithContentsOfFile:jsonPath];
+  NSString* script = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+
+  script =
+      [script stringByReplacingOccurrencesOfString:@"###TESTBENCH_REPLAY_TIME###"
+                                        withString:[NSString stringWithFormat:@"%lld", _startTime]];
+
+  NSString* docPath =
+      [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
+
+  NSString* filePath = [docPath stringByAppendingPathComponent:@"testBench.js"];
+
+  NSFileManager* fileManager = [NSFileManager defaultManager];
+
+  [fileManager createFileAtPath:filePath
+                       contents:[script dataUsingEncoding:NSUTF8StringEncoding]
+                     attributes:nil];
+
+  return [@"file://" stringByAppendingString:filePath];
+}
+
 - (void)handleActionList:(NSArray*)actionList {
   __block BOOL hasSetReplayStartTime = NO;
   if ([self.replayConfig enablePreDecode]) {
@@ -392,12 +413,6 @@ static const int kVirtual = 1 << 2;
   [actionList enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL* stop) {
     @try {
       [self runAction:obj
-          setReplayTimeCallback:^(int64_t recordTime) {
-            if (!hasSetReplayStartTime) {
-              [TestBenchReplayDataModule setTime:recordTime];
-              hasSetReplayStartTime = YES;
-            }
-          }
           onTestBenchComplete:^(int64_t interval) {
             if (idx == actionList.count - 1 && self.onTestBenchComplete) {
               __weak typeof(self) _self = self;
@@ -542,7 +557,7 @@ static const int kVirtual = 1 << 2;
 
       NSMutableArray* preloadJSPaths = [[NSMutableArray alloc] init];
       if (![self.replayConfig forbidTimeFreeze]) {
-        [preloadJSPaths addObject:[TestBenchReplayDataModule replayTimeEnvJScript]];
+        [preloadJSPaths addObject:[self replayTimeEnvJScript]];
       }
       NSString* groupName = @"ark";
       if (strongSelf->_lynxGroup == nil) {

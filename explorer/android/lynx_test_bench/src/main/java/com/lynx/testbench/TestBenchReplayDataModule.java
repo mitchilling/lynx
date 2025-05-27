@@ -28,8 +28,6 @@ public class TestBenchReplayDataModule extends LynxModule {
   // "jsbSettings" field from record json file
   private static JSONObject mJsbSettings;
 
-  private static long mReplayTime;
-
   public TestBenchReplayDataModule(Context context) {
     super(context);
   }
@@ -48,10 +46,6 @@ public class TestBenchReplayDataModule extends LynxModule {
 
   public static void setJsbSettings(JSONObject jsbSettings) {
     mJsbSettings = jsbSettings;
-  }
-
-  public static void setTime(long time) {
-    mReplayTime = time;
   }
 
   @LynxMethod
@@ -135,55 +129,6 @@ public class TestBenchReplayDataModule extends LynxModule {
       return "{}";
     }
     return json.toString();
-  }
-
-  public String replayTimeEnvJScript() {
-    InputStream in = null;
-    try {
-      in = this.mContext.getAssets().open("testBench.js");
-      int length = in.available();
-      byte[] buffer = new byte[length];
-      in.read(buffer);
-
-      String script = new String(buffer);
-
-      script = script.replace("###TESTBENCH_REPLAY_TIME###", String.valueOf(mReplayTime));
-
-      File file = new File(this.mContext.getFilesDir(), "testBench.js");
-      if (file.exists()) {
-        if (!file.delete()) {
-          LLog.e("TestBench", "Call replayTimeEnvJScript failed: file can't be deleted.");
-          return "";
-        }
-      }
-      if (file.createNewFile()) {
-        String filePath = "";
-        FileOutputStream outStream = null;
-        try {
-          outStream = new FileOutputStream(file);
-          outStream.write(script.getBytes());
-          filePath = "file://" + file.getPath();
-        } catch (IOException e) {
-          filePath = "";
-          e.printStackTrace();
-        } finally {
-          if (outStream != null) {
-            try {
-              outStream.close();
-            } catch (IOException e) {
-              e.printStackTrace();
-            }
-          }
-          return filePath;
-        }
-      } else {
-        LLog.e("TestBench", "Call replayTimeEnvJScript failed: file can't created.");
-        return "";
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-      return "";
-    }
   }
 
   private String getJsbIgnoredInfo() {

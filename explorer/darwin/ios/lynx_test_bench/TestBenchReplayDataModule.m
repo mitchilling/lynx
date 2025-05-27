@@ -13,13 +13,7 @@ static NSArray *jsbIgnoredInfo;
 
 static NSDictionary *jsbSettings;
 
-static int64_t replayTime;
-
 @implementation TestBenchReplayDataModule
-
-+ (void)setTime:(int64_t)time {
-  replayTime = time;
-}
 
 + (NSString *)name {
   return @"TestBenchReplayDataModule";
@@ -112,30 +106,6 @@ static int64_t replayTime;
   NSData *jsonData = [NSJSONSerialization dataWithJSONObject:json options:0 error:0];
   NSString *strData = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
   return strData;
-}
-
-+ (NSString *)replayTimeEnvJScript {
-  NSString *jsonPath = [[NSBundle mainBundle] pathForResource:@"Resource/testBench/testBench"
-                                                       ofType:@"js"];
-  NSData *data = [NSData dataWithContentsOfFile:jsonPath];
-  NSString *script = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-
-  script =
-      [script stringByReplacingOccurrencesOfString:@"###TESTBENCH_REPLAY_TIME###"
-                                        withString:[NSString stringWithFormat:@"%lld", replayTime]];
-
-  NSString *docPath =
-      [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
-
-  NSString *filePath = [docPath stringByAppendingPathComponent:@"testBench.js"];
-
-  NSFileManager *fileManager = [NSFileManager defaultManager];
-
-  [fileManager createFileAtPath:filePath
-                       contents:[script dataUsingEncoding:NSUTF8StringEncoding]
-                     attributes:nil];
-
-  return [@"file://" stringByAppendingString:filePath];
 }
 
 - (NSString *)getJsbIgnoredInfo {

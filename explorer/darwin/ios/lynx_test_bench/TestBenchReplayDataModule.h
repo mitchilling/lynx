@@ -12,8 +12,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)addCallbackDictionary:(NSDictionary *)callbackDictionary;
 + (void)setJSbIgnoredInfo:(NSArray *)info;
 + (void)setJsbSettings:(NSDictionary *)settings;
-+ (NSString *)replayTimeEnvJScript;
-+ (void)setTime:(int64_t)time;
 @end
 
 NS_ASSUME_NONNULL_END

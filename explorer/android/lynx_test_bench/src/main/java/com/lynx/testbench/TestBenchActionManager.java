@@ -46,6 +46,7 @@ import com.lynx.tasm.utils.LynxViewBuilderProperty;
 import com.lynx.tasm.utils.UIThreadUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -542,6 +543,55 @@ public class TestBenchActionManager {
     }
   }
 
+  private String replayTimeEnvJScript() {
+    InputStream in = null;
+    try {
+      in = this.mContext.getAssets().open("testBench.js");
+      int length = in.available();
+      byte[] buffer = new byte[length];
+      in.read(buffer);
+
+      String script = new String(buffer);
+
+      script = script.replace("###TESTBENCH_REPLAY_TIME###", String.valueOf(mStartTime));
+
+      File file = new File(this.mContext.getFilesDir(), "testBench.js");
+      if (file.exists()) {
+        if (!file.delete()) {
+          Log.e("TestBench", "Call replayTimeEnvJScript failed: file can't be deleted.");
+          return "";
+        }
+      }
+      if (file.createNewFile()) {
+        String filePath = "";
+        FileOutputStream outStream = null;
+        try {
+          outStream = new FileOutputStream(file);
+          outStream.write(script.getBytes());
+          filePath = "file://" + file.getPath();
+        } catch (IOException e) {
+          filePath = "";
+          e.printStackTrace();
+        } finally {
+          if (outStream != null) {
+            try {
+              outStream.close();
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
+          return filePath;
+        }
+      } else {
+        Log.e("TestBench", "Call replayTimeEnvJScript failed: file can't created.");
+        return "";
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+      return "";
+    }
+  }
+
   private void downloadRecordedFile() {
     if (mUrl.startsWith("asset:///")) {
       try {
@@ -594,7 +644,6 @@ public class TestBenchActionManager {
 
   private void handleActionList(JSONArray actionList) {
     long recordTime = 0;
-    boolean hasSetReplayStartTime = false;
     if (mPreDecode) {
       preDecodeTemplate(mTemplateBundleParams);
     }
@@ -609,11 +658,6 @@ public class TestBenchActionManager {
         recordTime = action.getLong("Record Time") * 1000;
         if (action.has("RecordMillisecond")) {
           recordTime = action.getLong("RecordMillisecond");
-        }
-
-        if (!hasSetReplayStartTime) {
-          TestBenchReplayDataModule.setTime(recordTime);
-          hasSetReplayStartTime = true;
         }
         JSONObject params = action.getJSONObject("Params");
         if (!mCanMockFuncMap.containsKey(functionName)) {
@@ -942,7 +986,7 @@ public class TestBenchActionManager {
           builder.setFontScale(mRawFontScale);
         }
         if (!mForbidTimeFreeze) {
-          mPreloadScripts.add(new TestBenchReplayDataModule(mContext).replayTimeEnvJScript());
+          mPreloadScripts.add(replayTimeEnvJScript());
         }
         onLynxViewWillBuild(this, builder);
         mLynxView = builder.build(mContext);
