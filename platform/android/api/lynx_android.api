@@ -877,6 +877,7 @@ public class com::lynx::tasm::behavior::BehaviorRegistry :  {
   public void com.lynx.tasm.behavior.BehaviorRegistry.add(List< Behavior > behaviorList);
   public void com.lynx.tasm.behavior.BehaviorRegistry.addBehaviors(List< Behavior > behaviorList);
   public void com.lynx.tasm.behavior.BehaviorRegistry.addBehavior(Behavior behavior);
+  public void com.lynx.tasm.behavior.BehaviorRegistry.setBuiltInBehaviors(Map< String, Behavior > behaviors);
   public Behavior com.lynx.tasm.behavior.BehaviorRegistry.get(String className);
   public Set< String > com.lynx.tasm.behavior.BehaviorRegistry.getAllBehaviorRegistryName();
 }
@@ -1062,6 +1063,11 @@ public class com::lynx::tasm::TemplateBundleOption::Builder :  {
 
 public class com::lynx::tasm::behavior::BuiltInBehavior : com.lynx.tasm.behavior.BehaviorBundle {
   public List< Behavior > com.lynx.tasm.behavior.BuiltInBehavior.create();
+}
+
+public class com::lynx::tasm::behavior::BuiltInUIRegistry :  {
+  public static BuiltInUIRegistry com.lynx.tasm.behavior.BuiltInUIRegistry.getInstance();
+  public Map< String, Behavior > com.lynx.tasm.behavior.BuiltInUIRegistry.getBuiltInUIBehaviors();
 }
 
 public interface com::lynx::tasm::image::model::CacheChoice {

@@ -13,6 +13,8 @@ import java.util.Set;
 public class BehaviorRegistry {
   private final Map<String, Behavior> mBehaviorMap;
 
+  private Map<String, Behavior> mBuiltInBehaviorsMap = null;
+
   public BehaviorRegistry() {
     mBehaviorMap = new HashMap<>();
   }
@@ -62,8 +64,19 @@ public class BehaviorRegistry {
     mBehaviorMap.put(name, behavior);
   }
 
+  public void setBuiltInBehaviors(Map<String, Behavior> behaviors) {
+    mBuiltInBehaviorsMap = behaviors;
+  }
+
   public Behavior get(String className) {
-    Behavior viewManager = mBehaviorMap.get(className);
+    Behavior viewManager = null;
+    if (mBuiltInBehaviorsMap != null) {
+      viewManager = mBuiltInBehaviorsMap.get(className);
+    }
+
+    if (viewManager == null) {
+      viewManager = mBehaviorMap.get(className);
+    }
     if (viewManager != null) {
       return viewManager;
     }
@@ -74,6 +87,12 @@ public class BehaviorRegistry {
     Set<String> registeredBehavior = new HashSet<String>();
     for (Behavior behavior : mBehaviorMap.values()) {
       registeredBehavior.add(behavior.getName());
+    }
+
+    if (mBuiltInBehaviorsMap != null) {
+      for (Behavior behavior : mBuiltInBehaviorsMap.values()) {
+        registeredBehavior.add(behavior.getName());
+      }
     }
     return registeredBehavior;
   }

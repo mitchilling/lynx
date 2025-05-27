@@ -41,6 +41,9 @@
 
 - (void)setEmbeddedMode:(EmbeddedMode)embeddedMode {
   _embeddedMode = embeddedMode;
+  if (embeddedMode != UNSET) {
+    [LynxComponentScopeRegistry tryRegisterBuiltInClasses];
+  }
 }
 
 - (LynxThreadStrategyForRender)getThreadStrategyForRender {

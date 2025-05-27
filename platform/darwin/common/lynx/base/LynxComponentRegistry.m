@@ -10,12 +10,16 @@
 #import <Lynx/LynxPropsProcessor.h>
 #import <Lynx/LynxShadowNode.h>
 #import <Lynx/LynxUI.h>
+#import <Lynx/LynxUIImage.h>
 #endif
 
 @implementation LynxComponentRegistry
 
 static LynxThreadSafeDictionary<NSString*, Class>* LynxUIClasses;
 static LynxThreadSafeDictionary<NSString*, Class>* LynxShadowNodeClasses;
+
+static NSDictionary<NSString*, Class>* LynxBuiltInUIClasses;
+static NSDictionary<NSString*, Class>* LynxBuiltInShadowNodeClasses;
 
 + (void)registerUI:(Class)componentClass nameAs:(NSString*)name {
 #if OS_IOS
@@ -160,6 +164,31 @@ static LynxThreadSafeDictionary<NSString*, Class>* LynxShadowNodeClasses;
   NSMutableSet<NSString*>* component =
       [[NSMutableSet<NSString*> alloc] initWithArray:[_uiClasses allKeys]];
   return [component setByAddingObjectsFromSet:[LynxComponentRegistry lynxUIClasses]];
+}
+
+// register built in behaviors which should not be overwritten
++ (void)tryRegisterBuiltInClasses {
+#if OS_IOS
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    LynxBuiltInUIClasses = @{
+      @"image" : [LynxUIImage class],
+    };
+
+    LynxBuiltInShadowNodeClasses = @{
+      @"image" : [LynxImageShadowNode class],
+    };
+  });
+#endif
+}
+
++ (void)registerBuiltInBehaviors:(LynxComponentScopeRegistry*)registry {
+  for (NSString* name in LynxBuiltInUIClasses) {
+    [registry registerUI:[LynxBuiltInUIClasses valueForKey:name] withName:name];
+  }
+  for (NSString* name in LynxBuiltInShadowNodeClasses) {
+    [registry registerShadowNode:[LynxBuiltInShadowNodeClasses valueForKey:name] withName:name];
+  }
 }
 
 @end

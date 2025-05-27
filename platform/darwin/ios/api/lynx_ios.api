@@ -881,6 +881,8 @@ public class LynxComponentScopeRegistry : NSObject {
   public Class LynxComponentScopeRegistry::shadowNodeClassWithName:accessible:(NSString *name,[accessible] BOOL *legal);
   public Class LynxComponentScopeRegistry::uiClassWithName:accessible:(NSString *name,[accessible] BOOL *legal);
   public void LynxComponentScopeRegistry::makeIntoGloabl();
+  public void LynxComponentScopeRegistry::tryRegisterBuiltInClasses();
+  public void LynxComponentScopeRegistry::registerBuiltInBehaviors:(LynxComponentScopeRegistry *registry);
 }
 
 public class LynxConfig : NSObject {
@@ -4110,6 +4112,7 @@ public class LynxUIOwner : NSObject {
   public void LynxUIOwner::attachContainerView:(UIView< LUIBodyView > *_Nonnull containerView);
   public instancetype LynxUIOwner::initWithContainerView:componentRegistry:screenMetrics:(UIView< LUIBodyView > *containerView,[componentRegistry] LynxComponentScopeRegistry *registry,[screenMetrics] LynxScreenMetrics *screenMetrics);
   public instancetype LynxUIOwner::initWithContainerView:componentRegistry:screenMetrics:errorHandler:uiConfig:(UIView< LUIBodyView > *containerView,[componentRegistry] LynxComponentScopeRegistry *registry,[screenMetrics] LynxScreenMetrics *screenMetrics,[errorHandler] id< LUIErrorHandling > _Nullable errorHandler,[uiConfig] id< LUIConfig > _Nullable uiConfig);
+  public instancetype LynxUIOwner::initWithContainerView:componentRegistry:screenMetrics:errorHandler:uiConfig:embeddedMode:(UIView< LUIBodyView > *containerView,[componentRegistry] LynxComponentScopeRegistry *registry,[screenMetrics] LynxScreenMetrics *screenMetrics,[errorHandler] id< LUIErrorHandling > _Nullable errorHandler,[uiConfig] id< LUIConfig > _Nullable uiConfig,[embeddedMode] EmbeddedMode embeddedMode);
   public LynxUI * LynxUIOwner::findUIBySign:(NSInteger sign);
   public LynxUI * LynxUIOwner::findUIByComponentId:(NSString *componentId);
   public LynxUI * LynxUIOwner::findUIByIdSelector:withinUI:(NSString *idSelector,[withinUI] LynxUI *ui);

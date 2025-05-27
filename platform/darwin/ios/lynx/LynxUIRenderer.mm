@@ -190,7 +190,10 @@
       [[LynxScreenMetrics alloc] initWithScreenSize:screenSize scale:[UIScreen mainScreen].scale];
   _uiOwner = [[LynxUIOwner alloc] initWithContainerView:containerView
                                       componentRegistry:builder.config.componentRegistry
-                                          screenMetrics:screenMetrics];
+                                          screenMetrics:screenMetrics
+                                           errorHandler:containerView
+                                               uiConfig:nil
+                                           embeddedMode:[builder getEmbeddedMode]];
 
   _uiOwner.uiContext.contextDict = [builder.config.contextDict copy];
   _uiOwner.uiContext.lynxModuleExtraData = builder.lynxModuleExtraData;

@@ -59,6 +59,9 @@
 - (Class)shadowNodeClassWithName:(NSString*)name accessible:(BOOL*)legal;
 - (Class)uiClassWithName:(NSString*)name accessible:(BOOL*)legal;
 
++ (void)tryRegisterBuiltInClasses;
++ (void)registerBuiltInBehaviors:(LynxComponentScopeRegistry*)registry;
+
 - (void)makeIntoGloabl;
 
 @end

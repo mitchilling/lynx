@@ -42,6 +42,14 @@ public class BehaviorRegistryTest {
     Assert.assertTrue(listSet.equals(mapSet));
   }
 
+  @Test
+  public void testBuiltInBehaviors() {
+    BehaviorRegistry behaviorRegistry = new BehaviorRegistry();
+    behaviorRegistry.setBuiltInBehaviors(BuiltInUIRegistry.getInstance().getBuiltInUIBehaviors());
+    Assert.assertTrue(behaviorRegistry.getAllBehaviorRegistryName().size()
+        >= BuiltInUIRegistry.getInstance().getBuiltInUIBehaviors().size());
+  }
+
   private List<Behavior> createOtherBehaviors() {
     List<Behavior> behaviorsList = new ArrayList<>();
     // Add 100 behaviors

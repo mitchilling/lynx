@@ -12,6 +12,7 @@ import com.lynx.tasm.base.TraceEvent;
 import com.lynx.tasm.base.trace.TraceEventDef;
 import com.lynx.tasm.behavior.Behavior;
 import com.lynx.tasm.behavior.BehaviorRegistry;
+import com.lynx.tasm.behavior.BuiltInUIRegistry;
 import com.lynx.tasm.behavior.LynxUIRenderCreator;
 import com.lynx.tasm.component.DynamicComponentFetcher;
 import com.lynx.tasm.image.model.LynxImageFetcher;
@@ -610,6 +611,9 @@ public class LynxViewBuilder {
    */
   public LynxViewBuilder setEmbeddedMode(EmbeddedMode embeddedMode) {
     this.embeddedMode = embeddedMode;
+    if (embeddedMode != EmbeddedMode.UNSET) {
+      behaviorRegistry.setBuiltInBehaviors(BuiltInUIRegistry.getInstance().getBuiltInUIBehaviors());
+    }
     return this;
   }
 }
