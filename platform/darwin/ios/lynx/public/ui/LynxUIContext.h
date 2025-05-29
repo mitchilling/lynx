@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class LynxUIIntersectionObserverManager;
 @class LynxGlobalObserver;
 @class LynxContext;
+@class LynxShadowNode;
 @protocol LUIErrorHandling;
 
 @interface LynxUIContext : NSObject
@@ -108,6 +109,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)removeUIFromExposedMap:(LynxUI*)ui;
 - (void)removeUIFromExposedMap:(LynxUI*)ui withUniqueIdentifier:(NSString* _Nullable)uniqueID;
 - (void)removeUIFromIntersectionManager:(LynxUI*)ui;
+
+- (void)findShadowNodeAndRunTask:(NSInteger)sign task:(void (^)(LynxShadowNode*))task;
 
 - (nullable id<LynxResourceFetcher>)getGenericResourceFetcher;
 

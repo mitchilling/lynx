@@ -3744,6 +3744,10 @@ public class com::lynx::tasm::utils::LynxConstants :  {
   public final int com.lynx.tasm.utils.LynxConstants.LYNX_ROOT_UI_SIGN LYNX_ROOT_UI_SIGN;
 }
 
+public interface com::lynx::tasm::base::LynxConsumer {
+  public void com.lynx.tasm.base.LynxConsumer< T >.accept(T t);
+}
+
 public class abstract com::lynx::tasm::behavior::LynxContext : com.lynx.tasm.behavior.LynxBaseContext, com.lynx.tasm.behavior.ExceptionHandler {
   public final int com.lynx.tasm.behavior.LynxContext.INSTANCE_ID_DEFAULT INSTANCE_ID_DEFAULT;
   public com.lynx.tasm.behavior.LynxContext.LynxContext(Context base, DisplayMetrics screenMetrics);
@@ -3812,6 +3816,7 @@ public class abstract com::lynx::tasm::behavior::LynxContext : com.lynx.tasm.beh
   public LynxIntersectionObserverManager com.lynx.tasm.behavior.LynxContext.getIntersectionObserverManager();
   public Long com.lynx.tasm.behavior.LynxContext.getRuntimeId();
   public void com.lynx.tasm.behavior.LynxContext.setJSProxy(JSProxy proxy);
+  public void com.lynx.tasm.behavior.LynxContext.setLayoutProxy(LynxLayoutProxy proxy);
   public JSModule com.lynx.tasm.behavior.LynxContext.getJSModule(String module);
   public void com.lynx.tasm.behavior.LynxContext.sendKeyEvent(int keyCode, String name);
   public void com.lynx.tasm.behavior.LynxContext.sendGlobalEvent(String name, JavaOnlyArray params);
@@ -3845,6 +3850,7 @@ public class abstract com::lynx::tasm::behavior::LynxContext : com.lynx.tasm.beh
   public void com.lynx.tasm.behavior.LynxContext.reportModuleCustomError(String message);
   public void com.lynx.tasm.behavior.LynxContext.setShadowNodeOwner(ShadowNodeOwner shadowNodeOwner);
   public ShadowNode com.lynx.tasm.behavior.LynxContext.findShadowNodeBySign(int sign);
+  public void com.lynx.tasm.behavior.LynxContext.findShadowNodeAndRunTask(int sign, LynxConsumer< ShadowNode > task);
   public LynxBaseInspectorOwner com.lynx.tasm.behavior.LynxContext.getBaseInspectorOwner();
   public void com.lynx.tasm.behavior.LynxContext.setProviderRegistry(LynxProviderRegistry providerRegistry);
   public LynxProviderRegistry com.lynx.tasm.behavior.LynxContext.getProviderRegistry();
@@ -4795,6 +4801,12 @@ public enum com::lynx::tasm::animation::keyframe::LynxKeyframeAnimator::LynxKFAn
   public com.lynx.tasm.animation.keyframe.LynxKeyframeAnimator.LynxKFAnimatorState.PAUSED PAUSED;
   public com.lynx.tasm.animation.keyframe.LynxKeyframeAnimator.LynxKFAnimatorState.CANCELED CANCELED;
   public com.lynx.tasm.animation.keyframe.LynxKeyframeAnimator.LynxKFAnimatorState.DESTROYED DESTROYED;
+}
+
+public class com::lynx::tasm::core::LynxLayoutProxy :  {
+  public com.lynx.tasm.core.LynxLayoutProxy.LynxLayoutProxy(long lynxShellPtr);
+  public void com.lynx.tasm.core.LynxLayoutProxy.runOnLayoutThread(Runnable runnable);
+  public void com.lynx.tasm.core.LynxLayoutProxy.destroy();
 }
 
 public class abstract com::lynx::tasm::service::LynxLazyInitializer :  {

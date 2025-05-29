@@ -283,6 +283,10 @@ class LynxShell {
     return engine_actor_;
   }
 
+  std::shared_ptr<LynxActor<tasm::LayoutContext>> GetLayoutActor() {
+    return layout_actor_;
+  }
+
   base::TaskRunnerManufactor* GetRunners() { return &runners_; }
 
   void RunOnTasmThread(std::function<void(void)>&& task);

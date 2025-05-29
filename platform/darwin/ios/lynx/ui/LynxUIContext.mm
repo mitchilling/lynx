@@ -11,6 +11,7 @@
 #import <Lynx/LynxRootUI.h>
 #import <Lynx/LynxService.h>
 #import <Lynx/LynxServiceDevToolProtocol.h>
+#import <Lynx/LynxShadowNode.h>
 #import <Lynx/LynxSubErrorCode.h>
 #import <Lynx/LynxUIContext.h>
 #import <Lynx/LynxUIOwner.h>
@@ -330,6 +331,19 @@
 
 - (int32_t)instanceId {
   return self.rootView.instanceId;
+}
+
+- (void)findShadowNodeAndRunTask:(NSInteger)sign task:(void (^)(LynxShadowNode*))task {
+  __weak __typeof(self) weakSelf = self;
+  [self.lynxContext runOnLayoutThread:^{
+    __strong __typeof(weakSelf) strongSelf = weakSelf;
+    if (strongSelf) {
+      LynxShadowNode* node = [strongSelf.nodeOwner nodeWithSign:sign];
+      if (node) {
+        task(node);
+      }
+    }
+  }];
 }
 
 @end

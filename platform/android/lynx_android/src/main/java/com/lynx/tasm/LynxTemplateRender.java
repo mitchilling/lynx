@@ -62,6 +62,7 @@ import com.lynx.tasm.behavior.ui.UIGroup;
 import com.lynx.tasm.common.LepusBuffer;
 import com.lynx.tasm.core.JSProxy;
 import com.lynx.tasm.core.LynxEngineProxy;
+import com.lynx.tasm.core.LynxLayoutProxy;
 import com.lynx.tasm.core.resource.LynxResourceLoader;
 import com.lynx.tasm.event.LynxCustomEvent;
 import com.lynx.tasm.eventreport.LynxEventReporter;
@@ -198,6 +199,8 @@ public class LynxTemplateRender implements ILynxEngine, ILynxErrorReceiver {
   private JSProxy mJSProxy;
   private LynxGroup mGroup;
   private LynxEngineProxy mEngineProxy;
+
+  private LynxLayoutProxy mLayoutProxy;
 
   private Map<Double, PlatformCallBack> platformCallBackMap = new HashMap<>();
 
@@ -3135,6 +3138,9 @@ public class LynxTemplateRender implements ILynxEngine, ILynxErrorReceiver {
     }
     mEngineProxy = new LynxEngineProxy(mNativePtr);
     mNativeFacade.setEngineProxy(mEngineProxy);
+
+    mLayoutProxy = new LynxLayoutProxy(mNativePtr);
+    mLynxContext.setLayoutProxy(mLayoutProxy);
   }
 
   // TODO(hexionghui): This interface will be deleted later. Since LynxSendCustomEventRunnable
@@ -3241,6 +3247,10 @@ public class LynxTemplateRender implements ILynxEngine, ILynxErrorReceiver {
 
     if (mEngineProxy != null) {
       mEngineProxy.destroy();
+    }
+
+    if (mLayoutProxy != null) {
+      mLayoutProxy.destroy();
     }
     mNativeFacade = null;
     mNativeLifecycle = 0;

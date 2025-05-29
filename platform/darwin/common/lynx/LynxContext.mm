@@ -33,6 +33,10 @@ NSString *const kDefaultComponentID = @"-1";
   proxy_ = proxy;
 }
 
+- (void)setLayoutProxy:(const std::shared_ptr<lynx::shell::LynxLayoutProxyDarwin> &)layout_proxy {
+  layout_proxy_ = layout_proxy;
+}
+
 - (void)sendGlobalEvent:(nonnull NSString *)name withParams:(nullable NSArray *)params {
   auto eventEmitter = [self getJSModule:@"GlobalEventEmitter"];
   NSMutableArray *args = [[NSMutableArray alloc] init];
@@ -94,6 +98,12 @@ NSString *const kDefaultComponentID = @"-1";
 - (void)runOnJSThread:(dispatch_block_t)task {
   if (task && proxy_) {
     proxy_->RunOnJSThread(task);
+  }
+}
+
+- (void)runOnLayoutThread:(dispatch_block_t)task {
+  if (task && layout_proxy_) {
+    layout_proxy_->RunOnLayoutThread(task);
   }
 }
 

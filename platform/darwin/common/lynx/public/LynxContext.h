@@ -9,6 +9,7 @@
 #import <Lynx/JSModule.h>
 #import <Lynx/LynxError.h>
 #import <Lynx/LynxView.h>
+
 @protocol LynxExtensionModule;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -27,6 +28,7 @@ FOUNDATION_EXPORT NSString *const kDefaultComponentID;
 
 - (void)runOnTasmThread:(dispatch_block_t)task;
 - (void)runOnJSThread:(dispatch_block_t)task;
+- (void)runOnLayoutThread:(dispatch_block_t)task;
 
 // Experimental method. Must be called on Main Thread.
 - (void)setExtensionModule:(nonnull id<LynxExtensionModule>)extensionModule

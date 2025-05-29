@@ -941,12 +941,15 @@ public class LynxContext : NSObject {
   public nullable LynxView * LynxContext::getLynxView();
   public void LynxContext::runOnTasmThread:(dispatch_block_t task);
   public void LynxContext::runOnJSThread:(dispatch_block_t task);
+  public void LynxContext::runOnLayoutThread:(dispatch_block_t task);
   public void LynxContext::setExtensionModule:forKey:(nonnull id< LynxExtensionModule > extensionModule,[forKey] nonnull NSString *key);
   public nonnull id< LynxExtensionModule > LynxContext::getExtensionModuleByKey:(nonnull NSString *key);
   public nonnull instancetype LynxContext()::initWithContainerView:(id< LUIBodyView > _Nullable containerView);
   public void LynxContext()::setJSProxy:(const std::shared_ptr< lynx::shell::JSProxyDarwin > &proxy);
+  public void LynxContext()::setLayoutProxy:(const std::shared_ptr< lynx::shell::LynxLayoutProxyDarwin > &layout_proxy);
   public nullable NSDictionary * LynxContext()::extentionModules();
   public std::shared_ptr<lynx::shell::JSProxyDarwin> LynxContext()::proxy_ proxy_;
+  public std::shared_ptr<lynx::shell::LynxLayoutProxyDarwin> LynxContext()::layout_proxy_ layout_proxy_;
   public LynxUIOwner* _Nullable LynxContext()::uiOwner uiOwner;
   public LynxUIIntersectionObserverManager* _Nullable LynxContext()::intersectionManager intersectionManager;
   public id<LUIBodyView> _Nullable LynxContext()::containerView containerView;
@@ -3842,6 +3845,7 @@ public class LynxUIContext : NSObject {
   public void LynxUIContext::removeUIFromExposedMap:(LynxUI *ui);
   public void LynxUIContext::removeUIFromExposedMap:withUniqueIdentifier:(LynxUI *ui,[withUniqueIdentifier] NSString *_Nullable uniqueID);
   public void LynxUIContext::removeUIFromIntersectionManager:(LynxUI *ui);
+  public void LynxUIContext::findShadowNodeAndRunTask:task:(NSInteger sign,[task] void(^ task)(LynxShadowNode *));
   public nullable id< LynxResourceFetcher > LynxUIContext::getGenericResourceFetcher();
   public void LynxUIContext()::setUIConfig:(id< LUIConfig > config);
   public void LynxUIContext()::setDefaultOverflowVisible:(BOOL enable);

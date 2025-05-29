@@ -28,6 +28,7 @@ import com.lynx.react.bridge.ReadableMap;
 import com.lynx.react.bridge.ReadableMapKeySetIterator;
 import com.lynx.tasm.*;
 import com.lynx.tasm.base.LLog;
+import com.lynx.tasm.base.LynxConsumer;
 import com.lynx.tasm.base.TraceEvent;
 import com.lynx.tasm.base.trace.TraceEventDef;
 import com.lynx.tasm.behavior.shadow.ShadowNode;
@@ -37,6 +38,7 @@ import com.lynx.tasm.behavior.ui.UIBody;
 import com.lynx.tasm.behavior.ui.UIExposure;
 import com.lynx.tasm.behavior.ui.accessibility.LynxAccessibilityWrapper;
 import com.lynx.tasm.core.JSProxy;
+import com.lynx.tasm.core.LynxLayoutProxy;
 import com.lynx.tasm.fluency.FluencyTraceHelper;
 import com.lynx.tasm.fontface.FontFace;
 import com.lynx.tasm.image.model.LynxImageFetcher;
@@ -69,6 +71,8 @@ public abstract class LynxContext extends LynxBaseContext implements ExceptionHa
   private TouchEventDispatcher mTouchEventDispatcher = null;
   private ListNodeInfoFetcher mListNodeInfoFetcher;
   private WeakReference<JSProxy> mJSProxy;
+
+  private WeakReference<LynxLayoutProxy> mLayoutProxy;
   private UIBody mUIBody;
   private Map<String, FontFace> mParsedFontFace;
   private WeakReference<LynxUIOwner> mLynxUIOwner;
@@ -582,6 +586,10 @@ public abstract class LynxContext extends LynxBaseContext implements ExceptionHa
     mJSProxy = new WeakReference<>(proxy);
   }
 
+  public void setLayoutProxy(LynxLayoutProxy proxy) {
+    mLayoutProxy = new WeakReference<>(proxy);
+  }
+
   public JSModule getJSModule(String module) {
     if (mJSProxy == null) {
       return null;
@@ -852,6 +860,23 @@ public abstract class LynxContext extends LynxBaseContext implements ExceptionHa
       return owner.getShadowNode(sign);
     }
     return null;
+  }
+
+  /**
+   * @brief Find shadow node by sign and run task on layout thread
+   * @detail Find shadownode by sign, and run task on layout thread,
+   * if shadownode is not found, task will not be run.
+   * @param sign shadow node id
+   * @param task  task to run on layout thread
+   */
+  public void findShadowNodeAndRunTask(int sign, LynxConsumer<ShadowNode> task) {
+    runOnLayoutThread(() -> {
+      ShadowNodeOwner owner = mShadowNodeOwnerRef.get();
+      if (owner != null) {
+        ShadowNode node = owner.getShadowNode(sign);
+        task.accept(node);
+      }
+    });
   }
 
   public LynxBaseInspectorOwner getBaseInspectorOwner() {
@@ -1288,6 +1313,17 @@ public abstract class LynxContext extends LynxBaseContext implements ExceptionHa
       return;
     }
     proxy.runOnJSThread(runnable);
+  }
+
+  private void runOnLayoutThread(Runnable runnable) {
+    if (runnable == null) {
+      return;
+    }
+    LynxLayoutProxy layoutProxy = mLayoutProxy.get();
+    if (layoutProxy == null) {
+      return;
+    }
+    layoutProxy.runOnLayoutThread(runnable);
   }
 
   public void setForceDarkAllowed(boolean allowed) {

@@ -71,6 +71,7 @@
 #include "core/services/timing_handler/timing_collector_platform_impl.h"
 #include "core/services/timing_handler/timing_constants.h"
 #include "core/shell/ios/data_utils.h"
+#include "core/shell/ios/lynx_layout_proxy_darwin.h"
 #include "core/shell/ios/native_facade_darwin.h"
 #include "core/shell/ios/native_facade_reporter_darwin.h"
 #include "core/shell/ios/tasm_platform_invoker_darwin.h"
@@ -475,6 +476,9 @@ LYNX_NOT_IMPLEMENTED(-(instancetype)initWithCoder : (NSCoder*)aDecoder)
 - (void)setUpLynxContextWithLastInstanceId:(int32_t)lastInstanceId {
   _context = [[LynxContext alloc] initWithContainerView:_lynxView];
   _context.instanceId = shell_->GetInstanceId();
+  auto layout_proxy =
+      std::make_shared<lynx::shell::LynxLayoutProxyDarwin>(shell_->GetLayoutActor());
+  [_context setLayoutProxy:layout_proxy];
   [_lynxUIRenderer setLynxContext:_context];
   [LynxEventReporter moveExtraParams:lastInstanceId toInstanceId:_context.instanceId];
   [LynxEventReporter updateGenericInfo:@(_threadStrategyForRendering)

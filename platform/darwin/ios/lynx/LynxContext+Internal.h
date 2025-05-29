@@ -7,6 +7,7 @@
 #import <Lynx/LynxProviderRegistry.h>
 #import <Lynx/LynxView.h>
 #include "core/shell/ios/js_proxy_darwin.h"
+#include "core/shell/ios/lynx_layout_proxy_darwin.h"
 
 @class LynxUIIntersectionObserverManager;
 @class LynxUIOwner;
@@ -14,6 +15,7 @@
 @interface LynxContext () {
  @public
   std::shared_ptr<lynx::shell::JSProxyDarwin> proxy_;
+  std::shared_ptr<lynx::shell::LynxLayoutProxyDarwin> layout_proxy_;
 }
 
 @property(nonatomic, weak) LynxUIOwner* _Nullable uiOwner;
@@ -26,6 +28,7 @@
 
 - (nonnull instancetype)initWithContainerView:(id<LUIBodyView> _Nullable)containerView;
 - (void)setJSProxy:(const std::shared_ptr<lynx::shell::JSProxyDarwin>&)proxy;
+- (void)setLayoutProxy:(const std::shared_ptr<lynx::shell::LynxLayoutProxyDarwin>&)layout_proxy;
 
 - (nullable NSDictionary*)extentionModules;
 
