@@ -2,707 +2,1064 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-#include "core/services/starlight_standalone/core/include/starlight.h"
-
-#include <cmath>
-#include <list>
+#include "core/include/starlight_standalone/starlight.h"
 
 #include "base/include/no_destructor.h"
-#include "core/renderer/css/computed_css_style.h"
-#include "core/renderer/lynx_env_config.h"
+#include "core/include/starlight_standalone/starlight_enums.h"
+#include "core/include/starlight_standalone/starlight_value.h"
+#include "core/renderer/starlight/layout/box_info.h"
 #include "core/renderer/starlight/layout/layout_object.h"
+#include "core/renderer/starlight/layout/property_resolving_utils.h"
+#include "core/renderer/starlight/style/layout_computed_style.h"
 #include "core/renderer/starlight/types/layout_configs.h"
 
-using LayoutObject = lynx::starlight::LayoutObject;
+#define GET_INNER_LAYOUT_NODE(a) \
+  reinterpret_cast<lynx::starlight::LayoutObject *>(a)
+#define GET_OUTER_LAYOUT_NODE(a) reinterpret_cast<StarlightNode *>(a)
 
-#define GET_NODE(a) static_cast<StarlightLayoutNode *>(a)
-#define GET_LAYOUT_NODE(a) \
-  static_cast<StarlightLayoutNode *>(a)->GetLayoutObject()
-
-namespace starlight {
-
-namespace {
-
-const lynx::starlight::LayoutConfigs &GetDefaultLayoutConfigs() {
-  static lynx::starlight::LayoutConfigs default_configs;
-  return default_configs;
-}
-
-class StarlightLayoutNode {
- public:
-  StarlightLayoutNode(const LayoutConfig &config)
-      : css_style_(std::make_unique<lynx::starlight::ComputedCSSStyle>(
-            config.Density(), config.Scale())) {
-    sl_node_ = std::make_unique<LayoutObject>(
-        GetDefaultLayoutConfigs(), css_style_->GetLayoutComputedStyle());
-    auto envs =
-        lynx::tasm::LynxEnvConfig(config.ScreenWidth(), config.ScreenHeight(),
-                                  config.Density(), config.Scale());
-    envs.UpdateViewport(
-        config.ViewportWidth(),
-        static_cast<SLMeasureMode>(config.ViewportWidthMode()),
-        config.ViewportHeight(),
-        static_cast<SLMeasureMode>(config.ViewportHeightMode()));
-    css_style_->SetScreenWidth(envs.ScreenWidth());
-    css_style_->SetViewportWidth(envs.ViewportWidth());
-    css_style_->SetViewportHeight(envs.ViewportHeight());
-    css_style_->SetLayoutUnit(config.Scale(), config.Density());
-  }
-  ~StarlightLayoutNode() = default;
-
-  lynx::starlight::ComputedCSSStyle *GetCSSMutableStyle() {
-    return css_style_.get();
-  }
-  LayoutObject *GetLayoutObject() { return sl_node_.get(); }
-
-  std::list<StarlightLayoutNode *> children_;
-  StarlightLayoutNode *parent_ = nullptr;
-
- private:
-  std::unique_ptr<LayoutObject> sl_node_;
-  std::unique_ptr<lynx::starlight::ComputedCSSStyle> css_style_;
-};
-}  // namespace
-
-static const lynx::tasm::CSSParserConfigs &GetCSSParserConfigs() {
-  static lynx::base::NoDestructor<lynx::tasm::CSSParserConfigs>
-      kDefaultCSSConfigs(
-          lynx::tasm::CSSParserConfigs{.enable_css_strict_mode = false,
-                                       .remove_css_parser_log = true,
-                                       .enable_legacy_parser = false,
-                                       .enable_length_unit_check = false});
-  return *kDefaultCSSConfigs;
-}
-
-static lynx::tasm::CSSValuePattern GetPatternForLengthType(SLLengthType type) {
-  switch (type) {
-    case kSLLengthPPX:
-      return lynx::tasm::CSSValuePattern::NUMBER;
-    case kSLLengthPX:
-      return lynx::tasm::CSSValuePattern::PX;
-    case kSLLengthRPX:
-      return lynx::tasm::CSSValuePattern::RPX;
-    case kSLLengthVW:
-      return lynx::tasm::CSSValuePattern::VW;
-    case kSLLengthVH:
-      return lynx::tasm::CSSValuePattern::VH;
-    case kSLLengthPercentage:
-      return lynx::tasm::CSSValuePattern::PERCENT;
-    case kSLLengthAuto:
-      return lynx::tasm::CSSValuePattern::ENUM;
-    default:
-      return lynx::tasm::CSSValuePattern::EMPTY;
-  }
-}
-
-static SLLengthType GetSLLengthTypeFromNLengthType(
-    lynx::starlight::NLengthType type) {
-  switch (type) {
-    case lynx::starlight::NLengthType::kNLengthAuto:
-      return kSLLengthAuto;
-    case lynx::starlight::NLengthType::kNLengthUnit:
-      return kSLLengthPPX;
-    case lynx::starlight::NLengthType::kNLengthPercentage:
-      return kSLLengthPercentage;
-    default:
-      return kSLLengthAuto;
-  }
-}
-
-template <typename T>
-static lynx::tasm::CSSValue GetNumberCSSValue(T value) {
-  lynx::tasm::CSSValue css_value = lynx::tasm::CSSValue(
-      lynx::lepus::Value(value), lynx::tasm::CSSValuePattern::NUMBER);
-  return css_value;
-}
-
-static lynx::tasm::CSSValue GetLengthCSSValue(const SLLength value) {
-  lynx::tasm::CSSValue css_value;
-  css_value.GetValue().SetNumber(value.value_);
-  css_value.SetPattern(GetPatternForLengthType(value.type_));
-  return css_value;
-}
-
-template <typename T>
-static void SetEnumTypeByPropertyID(const SLNodeRef node,
-                                    lynx::tasm::CSSPropertyID id, T type) {
-  if (GET_NODE(node)->GetCSSMutableStyle()->SetValue(
-          id, lynx::tasm::CSSValue::MakeEnum(type))) {
-    GET_LAYOUT_NODE(node)->MarkDirty();
-  }
-}
-
-static SLLength NLengthToSLLength(const lynx::starlight::NLength &length) {
-  return SLLength(length.GetRawValue(),
-                  GetSLLengthTypeFromNLengthType(length.GetType()));
-}
-
-static void SetValueTypeByPropertyID(const SLNodeRef node,
-                                     lynx::tasm::CSSPropertyID id,
-                                     float value) {
-  if (GET_NODE(node)->GetCSSMutableStyle()->SetValue(
-          id, GetNumberCSSValue(value), std::isnan(value))) {
-    GET_LAYOUT_NODE(node)->MarkDirty();
-  }
-}
-
-static void SetLengthTypeByPropertyID(const SLNodeRef node,
-                                      lynx::tasm::CSSPropertyID id,
-                                      const SLLength value) {
-  if (GET_NODE(node)->GetCSSMutableStyle()->SetValue(
-          id, GetLengthCSSValue(value), std::isnan(value.value_))) {
-    GET_LAYOUT_NODE(node)->MarkDirty();
-  }
-}
-
-static lynx::starlight::Direction ResolveEdgeToDirection(SLNodeRef node,
-                                                         SLEdge edge) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  bool isRtl = layout_object->GetCSSStyle()->IsRtl();
+static lynx::starlight::Direction ResolveEdgeToDirection(
+    lynx::starlight::LayoutObject *const node, SLEdge edge) {
+  const bool is_rtl = node->GetCSSStyle()->IsRtl();
   switch (edge) {
-    case kSLLeft:
+    case SLEdgeLeft:
       return lynx::starlight::Direction::kLeft;
-    case kSLRight:
+    case SLEdgeRight:
       return lynx::starlight::Direction::kRight;
-    case kSLTop:
+    case SLEdgeTop:
       return lynx::starlight::Direction::kTop;
-    case kSLBottom:
+    case SLEdgeBottom:
       return lynx::starlight::Direction::kBottom;
-    case kSLInlineStart:
-      return isRtl ? lynx::starlight::Direction::kRight
-                   : lynx::starlight::Direction::kLeft;
-    case kSLInlineEnd:
-      return isRtl ? lynx::starlight::Direction::kLeft
-                   : lynx::starlight::Direction::kRight;
+    case SLEdgeStart:
+      return is_rtl ? lynx::starlight::Direction::kRight
+                    : lynx::starlight::Direction::kLeft;
+    case SLEdgeEnd:
+      return is_rtl ? lynx::starlight::Direction::kLeft
+                    : lynx::starlight::Direction::kRight;
+    default:
+      return lynx::starlight::Direction::kLeft;
   }
 }
 
-SLNodeRef CreateWithConfig(const LayoutConfig &config) {
-  StarlightLayoutNode *node = new StarlightLayoutNode(config);
-  return static_cast<SLNodeRef>(node);
+static struct StarlightValue NLengthToStarlightValue(
+    const lynx::starlight::NLength &length) {
+  struct StarlightValue result;
+  switch (length.GetType()) {
+    case lynx::starlight::NLengthType::kNLengthAuto:
+      result.unit_ = SLUnitAuto;
+      break;
+    case lynx::starlight::NLengthType::kNLengthUnit:
+      result.value_ = length.GetRawValue();
+      result.unit_ = SLUnitPoint;
+      break;
+    case lynx::starlight::NLengthType::kNLengthPercentage:
+      result.value_ = length.GetRawValue();
+      result.unit_ = SLUnitPercent;
+      break;
+    case lynx::starlight::NLengthType::kNLengthMaxContent:
+      result.unit_ = SLUnitMaxContent;
+      break;
+    case lynx::starlight::NLengthType::kNLengthFitContent:
+      result.unit_ = SLUnitFitContent;
+      break;
+    default:
+      break;
+  }
+  return result;
 }
 
-void UpdateConfig(const SLNodeRef node, const LayoutConfig &config) {
-  for (const auto &child : GET_NODE(node)->children_) {
-    GET_NODE(child)->GetCSSMutableStyle()->SetScreenWidth(config.ScreenWidth());
-    UpdateConfig(child, config);
-  }
+static lynx::starlight::LayoutConfigs CreateDefaultLayoutConfigs() {
+  lynx::starlight::LayoutConfigs config;
+  config.SetQuirksMode(lynx::kAbsoluteAndFixedBoxInfoFixedVersion);
+  config.SetTargetSDKVersion(kStarlightDefaultTargetSDKVersion);
+  return config;
 }
 
-void SetViewportSizeToRootNode(const SLNodeRef node, float width,
-                               StarlightMeasureMode width_mode, float height,
-                               StarlightMeasureMode height_mode) {
-  switch (width_mode) {
-    case kStarlightMeasureModeDefinite:
-      SetWidth(node, SLLength(width, kSLLengthPPX));
-      SetMaxWidth(node,
-                  SLLength(lynx::starlight::DefaultLayoutStyle::kDefaultMaxSize,
-                           kSLLengthPPX));
-      break;
-    case kStarlightMeasureModeAtMost:
-      SetWidth(node, kSLAutoLength);
-      SetMaxWidth(node, SLLength(width, kSLLengthPPX));
-      break;
-    case kStarlightMeasureModeIndefinite:
-      SetWidth(node, kSLAutoLength);
-      SetMaxWidth(node,
-                  SLLength(lynx::starlight::DefaultLayoutStyle::kDefaultMaxSize,
-                           kSLLengthPPX));
-      break;
-  }
-
-  switch (height_mode) {
-    case kStarlightMeasureModeDefinite:
-      SetHeight(node, SLLength(height, kSLLengthPPX));
-      SetMaxHeight(
-          node, SLLength(lynx::starlight::DefaultLayoutStyle::kDefaultMaxSize,
-                         kSLLengthPPX));
-      break;
-    case kStarlightMeasureModeAtMost:
-      SetHeight(node, kSLAutoLength);
-      SetMaxHeight(node, SLLength(height, kSLLengthPPX));
-      break;
-    case kStarlightMeasureModeIndefinite:
-      SetHeight(node, kSLAutoLength);
-      SetMaxHeight(
-          node, SLLength(lynx::starlight::DefaultLayoutStyle::kDefaultMaxSize,
-                         kSLLengthPPX));
-      break;
-  }
+static const lynx::starlight::LayoutConfigs &GetDefaultLayoutConfigs() {
+  static const lynx::base::NoDestructor<lynx::starlight::LayoutConfigs>
+      kDefaultLayoutConfigs(CreateDefaultLayoutConfigs());
+  return *kDefaultLayoutConfigs;
 }
 
-void UpdateViewport(const SLNodeRef node, float width,
-                    StarlightMeasureMode width_mode, float height,
-                    StarlightMeasureMode height_mode) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  lynx::starlight::ComputedCSSStyle *css_style =
-      GET_NODE(node)->GetCSSMutableStyle();
-  lynx::starlight::LayoutUnit viewport_width =
-      width_mode == kStarlightMeasureModeDefinite
-          ? lynx::starlight::LayoutUnit(width)
-          : lynx::starlight::LayoutUnit();
-  lynx::starlight::LayoutUnit viewport_height =
-      height_mode == kStarlightMeasureModeDefinite
-          ? lynx::starlight::LayoutUnit(height)
-          : lynx::starlight::LayoutUnit();
-  css_style->SetViewportWidth(viewport_width);
-  css_style->SetViewportHeight(viewport_height);
-
-  if (!layout_object->ParentLayoutObject()) {
-    SetViewportSizeToRootNode(node, width, width_mode, height, height_mode);
-  }
-
-  for (const auto &child : GET_NODE(node)->children_) {
-    UpdateViewport(child, width, width_mode, height, height_mode);
-  }
+static const lynx::starlight::LayoutComputedStyle &GetDefaultStyle() {
+  static const lynx::base::NoDestructor<lynx::starlight::LayoutComputedStyle>
+      kDefaultStyle(kDefaultPhysicalPixelsPerLayoutUnit);
+  return *kDefaultStyle;
 }
 
-void InsertChild(const SLNodeRef node, const SLNodeRef child, int32_t index) {
-  StarlightLayoutNode *layout_node = GET_NODE(node);
-  StarlightLayoutNode *child_node = GET_NODE(child);
-  if (StarlightLayoutNode *original_parent = child_node->parent_) {
-    GET_LAYOUT_NODE(original_parent)->RemoveChild(GET_LAYOUT_NODE(child_node));
-    original_parent->children_.remove(child_node);
-    child_node->parent_ = nullptr;
+SLNodeRef SLNodeNew() {
+  lynx::starlight::LayoutObject *node = new lynx::starlight::LayoutObject(
+      GetDefaultLayoutConfigs(),
+      new lynx::starlight::LayoutComputedStyle(GetDefaultStyle()));
+  return GET_OUTER_LAYOUT_NODE(node);
+}
+
+SLNodeRef SLNodeNewWithConfig(StarlightConfig *config) {
+  lynx::starlight::LayoutComputedStyle *const css_style =
+      new lynx::starlight::LayoutComputedStyle(GetDefaultStyle());
+  css_style->SetPhysicalPixelsPerLayoutUnit(
+      SLConfigGetPhysicalPixelsPerLayoutUnit(config));
+  lynx::starlight::LayoutObject *node =
+      new lynx::starlight::LayoutObject(GetDefaultLayoutConfigs(), css_style);
+  return GET_OUTER_LAYOUT_NODE(node);
+}
+
+void SLNodeInsertChild(const SLNodeRef parent, const SLNodeRef child,
+                       int32_t index) {
+  lynx::starlight::LayoutObject *parent_node = GET_INNER_LAYOUT_NODE(parent);
+  lynx::starlight::LayoutObject *child_node = GET_INNER_LAYOUT_NODE(child);
+  if (lynx::starlight::LayoutObject *original_parent =
+          child_node->ParentLayoutObject()) {
+    original_parent->RemoveChild(child_node);
   }
   if (index == -1) {
-    GET_LAYOUT_NODE(layout_node)->AppendChild(GET_LAYOUT_NODE(child_node));
-    layout_node->children_.push_back(child_node);
+    parent_node->AppendChild(child_node);
   } else {
-    GET_LAYOUT_NODE(layout_node)
-        ->InsertChildBefore(GET_LAYOUT_NODE(child_node),
-                            static_cast<LayoutObject *>(
-                                GET_LAYOUT_NODE(layout_node)->Find(index)));
-    auto iter = GET_NODE(layout_node)->children_.begin();
-    std::advance(iter, index);
-    GET_NODE(layout_node)->children_.insert(iter, child_node);
+    parent_node->InsertChildBefore(
+        child_node,
+        static_cast<lynx::starlight::LayoutObject *>(parent_node->Find(index)));
   }
-  GET_LAYOUT_NODE(layout_node)->MarkDirty();
-  child_node->parent_ = layout_node;
+  parent_node->MarkDirty();
 }
 
-void RemoveAllChild(const SLNodeRef parent) {
-  StarlightLayoutNode *parent_node = GET_NODE(parent);
+void SLNodeRemoveChild(const SLNodeRef parent, const SLNodeRef child) {
+  lynx::starlight::LayoutObject *parent_node = GET_INNER_LAYOUT_NODE(parent);
+  lynx::starlight::LayoutObject *child_node = GET_INNER_LAYOUT_NODE(child);
+  if (parent_node == child_node->ParentLayoutObject()) {
+    parent_node->RemoveChild(child_node);
+    parent_node->MarkDirty();
+  }
+}
 
-  if (parent_node->children_.empty()) {
+void SLNodeRemoveAllChildren(const SLNodeRef parent) {
+  lynx::starlight::LayoutObject *parent_node = GET_INNER_LAYOUT_NODE(parent);
+  while (parent_node->GetChildCount() > 0) {
+    lynx::starlight::LayoutObject *child =
+        static_cast<lynx::starlight::LayoutObject *>(parent_node->FirstChild());
+    SLNodeRemoveChild(GET_OUTER_LAYOUT_NODE(parent_node),
+                      GET_OUTER_LAYOUT_NODE(child));
+  }
+}
+
+SLNodeRef SLNodeGetChild(const SLNodeRef node, int32_t index) {
+  lynx::starlight::LayoutObject *inner_node = GET_INNER_LAYOUT_NODE(node);
+  if (index < inner_node->GetChildCount()) {
+    return GET_OUTER_LAYOUT_NODE(inner_node->Find(index));
+  }
+  return nullptr;
+}
+
+int32_t SLNodeGetChildCount(const SLNodeRef node) {
+  return GET_INNER_LAYOUT_NODE(node)->GetChildCount();
+}
+
+SLNodeRef SLNodeGetParent(const SLNodeRef node) {
+  lynx::starlight::LayoutObject *inner_node = GET_INNER_LAYOUT_NODE(node);
+  return GET_OUTER_LAYOUT_NODE(inner_node->ParentLayoutObject());
+}
+
+void SLNodeFree(const SLNodeRef node) {
+  lynx::starlight::LayoutObject *inner_node = GET_INNER_LAYOUT_NODE(node);
+  if (inner_node == nullptr) {
     return;
   }
-
-  for (auto &child_node : parent_node->children_) {
-    GET_LAYOUT_NODE(parent_node)->RemoveChild(GET_LAYOUT_NODE(child_node));
-    GET_LAYOUT_NODE(parent_node)->MarkDirty();
-    child_node->parent_ = nullptr;
+  if (auto *css_style = inner_node->GetCSSMutableStyle()) {
+    delete css_style;
   }
-
-  parent_node->children_.clear();
+  delete inner_node;
 }
 
-void RemoveChild(const SLNodeRef parent, const SLNodeRef child) {
-  StarlightLayoutNode *parent_node = GET_NODE(parent);
-  StarlightLayoutNode *child_node = GET_NODE(child);
-  if (parent_node == child_node->parent_) {
-    GET_LAYOUT_NODE(parent_node)->RemoveChild(GET_LAYOUT_NODE(child_node));
-    GET_LAYOUT_NODE(parent_node)->MarkDirty();
-    GET_NODE(parent_node)->children_.remove(child_node);
-    child_node->parent_ = nullptr;
+void SLNodeFreeRecursive(const SLNodeRef node) {
+  lynx::starlight::LayoutObject *inner_node = GET_INNER_LAYOUT_NODE(node);
+  while (inner_node->GetChildCount() > 0) {
+    lynx::starlight::LayoutObject *const child =
+        static_cast<lynx::starlight::LayoutObject *>(inner_node->FirstChild());
+    SLNodeFreeRecursive(GET_OUTER_LAYOUT_NODE(child));
   }
+  SLNodeFree(GET_OUTER_LAYOUT_NODE(inner_node));
 }
 
-void RemoveChild(const SLNodeRef parent, int32_t index) {
-  int count = GET_LAYOUT_NODE(parent)->GetChildCount();
-  if (count == 0) {
-    return;
-  }
-
-  auto iter = GET_NODE(parent)->children_.begin();
-  std::advance(iter, index);
-  if (LayoutObject *node =
-          static_cast<LayoutObject *>(GET_LAYOUT_NODE(parent)->Find(index))) {
-    GET_LAYOUT_NODE(parent)->RemoveChild(node);
-    GET_LAYOUT_NODE(parent)->MarkDirty();
-    (*iter)->parent_ = nullptr;
-    GET_NODE(parent)->children_.erase(iter);
-  }
+void SLNodeReset(const SLNodeRef node) {
+  lynx::starlight::LayoutObject *inner_node = GET_INNER_LAYOUT_NODE(node);
+  inner_node->Reset(inner_node);
 }
 
-void MoveChild(SLNodeRef node, SLNodeRef child, uint32_t from_index,
-               uint32_t to_index) {
-  RemoveChild(node, child);
-  InsertChild(node, child, to_index);
+bool SLNodeIsDirty(const SLNodeRef node) {
+  return GET_INNER_LAYOUT_NODE(node)->IsDirty();
 }
 
-uint32_t GetChildCount(SLNodeRef node) {
-  return GET_NODE(node)->children_.size();
+void SLNodeMarkDirty(const SLNodeRef node) {
+  GET_INNER_LAYOUT_NODE(node)->MarkDirty();
 }
 
-SLNodeRef GetParent(SLNodeRef node) { return GET_NODE(node)->parent_; }
-
-SLNodeRef GetChild(SLNodeRef node, uint32_t index) {
-  auto &children = GET_NODE(node)->children_;
-  if (index >= children.size()) {
-    return nullptr;
-  }
-  auto it = std::next(children.begin(), index);
-  return *it;
-}
-
-void Free(const SLNodeRef node) {
-  StarlightLayoutNode *child_node = GET_NODE(node);
-  if (StarlightLayoutNode *parent_node = child_node->parent_) {
-    RemoveChild(parent_node, node);
-  }
-  RemoveAllChild(node);
-  delete GET_NODE(node);
-}
-
-void MarkDirty(const SLNodeRef node) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  layout_object->MarkDirty();
-}
-
-bool IsDirty(SLNodeRef node) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  return layout_object->IsDirty();
-}
-
-bool IsRTL(const SLNodeRef node) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  return layout_object->GetCSSStyle()->IsRtl();
-}
-
-bool SetStyle(SLNodeRef node, const std::string &name,
-              const std::string &value) {
-  lynx::tasm::CSSPropertyID id = lynx::tasm::CSSProperty::GetPropertyID(name);
-  lynx::tasm::StyleMap styleMap = lynx::tasm::UnitHandler::Process(
-      id, lynx::lepus::Value(value), GetCSSParserConfigs());
-  bool result = false;
-  for (auto &pair : styleMap) {
-    result = result | GET_NODE(node)->GetCSSMutableStyle()->SetValue(
-                          pair.first, pair.second);
-  }
-  if (result) {
-    GET_LAYOUT_NODE(node)->MarkDirty();
-  }
-  return result;
-}
-
-bool SetMultiStyles(SLNodeRef node, const std::vector<std::string> &names,
-                    const std::vector<std::string> &values) {
-  if (names.size() != values.size()) {
-    return false;
-  }
-
-  bool result = false;
-  for (size_t i = 0; i < names.size(); ++i) {
-    result |= SetStyle(GET_NODE(node), names[i], values[i]);
-  }
-
-  return result;
-}
-
-bool ResetStyle(SLNodeRef node, const std::string &name) {
-  lynx::tasm::CSSPropertyID id = lynx::tasm::CSSProperty::GetPropertyID(name);
-  bool ret = false;
-  static lynx::base::NoDestructor<lynx::tasm::CSSValue> kEmpty(
-      lynx::tasm::CSSValue::Empty());
-  if ((ret = GET_NODE(node)->GetCSSMutableStyle()->SetValue(id, *kEmpty.get(),
-                                                            true))) {
-    GET_LAYOUT_NODE(node)->MarkDirty();
-  }
-  return ret;
-}
-
-void MarkUpdated(SLNodeRef node) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  layout_object->MarkUpdated();
-  for (const auto &child : GET_NODE(node)->children_) {
-    MarkUpdated(child);
+static void SLNodeMarkNotDirtyRecursive(lynx::starlight::LayoutObject *node) {
+  node->MarkNotDirty();
+  lynx::starlight::LayoutObject *child =
+      static_cast<lynx::starlight::LayoutObject *>(node->FirstChild());
+  while (child) {
+    SLNodeMarkNotDirtyRecursive(child);
+    child = static_cast<lynx::starlight::LayoutObject *>(child->Next());
   }
 }
 
-void CalculateLayout(SLNodeRef node) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  layout_object->ReLayout();
-  MarkUpdated(node);
+bool SLNodeIsRTL(const SLNodeRef node) {
+  return GET_INNER_LAYOUT_NODE(node)->GetCSSStyle()->IsRtl();
 }
 
-void SetMeasureDelegate(SLNodeRef node, MeasureDelegate *delegate) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
+static void SLNodeHandleRTLRecursive(lynx::starlight::LayoutObject *const node,
+                                     bool is_rtl) {
+  const auto style = node->GetCSSMutableStyle();
+  if (style->GetDirection() == lynx::starlight::DirectionType::kNormal ||
+      !style->HasExplicitDirectionStyle()) {
+    auto direction = is_rtl ? lynx::starlight::DirectionType::kRtl
+                            : lynx::starlight::DirectionType::kLtr;
+    style->SetDirection(direction);
+  }
+  lynx::starlight::LayoutObject *child =
+      static_cast<lynx::starlight::LayoutObject *>(node->FirstChild());
+  while (child) {
+    SLNodeHandleRTLRecursive(child, is_rtl);
+    child = static_cast<lynx::starlight::LayoutObject *>(child->Next());
+  }
+}
 
-  layout_object->SetContext(delegate);
+void SLNodeCalculateLayout(const SLNodeRef node, float owner_width,
+                           float owner_height, SLDirection owner_direction) {
+  // containing block
+  lynx::starlight::Constraints owner_constraints;
+  owner_constraints[SLHorizontal] =
+      owner_width == SLUndefined
+          ? lynx::starlight::OneSideConstraint::Indefinite()
+          : lynx::starlight::OneSideConstraint::Definite(owner_width);
+  owner_constraints[SLVertical] =
+      owner_height == SLUndefined
+          ? lynx::starlight::OneSideConstraint::Indefinite()
+          : lynx::starlight::OneSideConstraint::Definite(owner_height);
+
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  inner_node->MarkDirty();
+  inner_node->GetBoxInfo()->InitializeBoxInfo(owner_constraints, *inner_node,
+                                              inner_node->GetLayoutConfigs());
+  lynx::starlight::Constraints constraints =
+      lynx::starlight::property_utils::GenerateDefaultConstraints(
+          *inner_node, owner_constraints);
+
+  // handle RTL, if the direction of node is not setting, set the
+  // owner_direction to the node.
+  SLNodeHandleRTLRecursive(inner_node,
+                           owner_direction == SLDirection::SLDirectionRTL);
+
+  inner_node->ReLayoutWithConstraints(constraints);
+  SLNodeMarkNotDirtyRecursive(inner_node);
+}
+
+StarlightMeasureDelegate *SLNodeGetContext(const SLNodeRef node) {
+  return static_cast<StarlightMeasureDelegate *>(
+      GET_INNER_LAYOUT_NODE(node)->GetContext());
+}
+
+void SLNodeSetContext(const SLNodeRef node,
+                      StarlightMeasureDelegate *const delegate) {
+  GET_INNER_LAYOUT_NODE(node)->SetContext(static_cast<void *>(delegate));
+}
+
+void SLNodeSetMeasureFunc(const SLNodeRef node,
+                          StarlightMeasureDelegate *const delegate) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  inner_node->SetContext(delegate);
   if (delegate) {
-    layout_object->SetSLMeasureFunc(
+    inner_node->SetSLMeasureFunc(
         [](void *context, const lynx::starlight::Constraints &constraints,
            bool final_measure) {
-          MeasureDelegate *measure_delegate =
-              static_cast<MeasureDelegate *>(context);
-          SLConstraints &constraints_ =
-              *((SLConstraints *)(&const_cast<lynx::starlight::Constraints &>(
-                  constraints)));
-          SLSize size = measure_delegate->Measure(constraints_);
-          float baseline = measure_delegate->Baseline(constraints_);
-          return FloatSize(size.width_, size.height_, baseline);
+          StarlightMeasureDelegate *const measure_delegate =
+              static_cast<StarlightMeasureDelegate *>(context);
+          const SLNodeMeasureMode width_mode =
+              static_cast<SLNodeMeasureMode>(constraints[SLHorizontal].Mode());
+          const float width =
+              width_mode == SLNodeMeasureMode::SLNodeMeasureModeUndefined
+                  ? 0.f
+                  : constraints[SLHorizontal].Size();
+          const SLNodeMeasureMode height_mode =
+              static_cast<SLNodeMeasureMode>(constraints[SLVertical].Mode());
+          const float height =
+              height_mode == SLNodeMeasureMode::SLNodeMeasureModeUndefined
+                  ? 0.f
+                  : constraints[SLVertical].Size();
+          const struct StarlightSize size = measure_delegate->measure_func_(
+              measure_delegate->instance_, width, width_mode, height,
+              height_mode);
+          float baseline = 0.f;
+          if (measure_delegate->baseline_func_) {
+            baseline = measure_delegate->baseline_func_(
+                measure_delegate->instance_, width, width_mode, height,
+                height_mode);
+          }
+          return FloatSize{size.width_, size.height_, baseline};
         });
-    layout_object->SetSLAlignmentFunc([](void *context) {
-      MeasureDelegate *measure_delegate =
-          static_cast<MeasureDelegate *>(context);
-      measure_delegate->Alignment();
-    });
   } else {
-    layout_object->SetSLMeasureFunc(nullptr);
-    layout_object->SetSLAlignmentFunc(nullptr);
+    inner_node->SetSLMeasureFunc(nullptr);
   }
 }
 
-bool HasMeasureDelegate(SLNodeRef node) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  return layout_object->GetContext() != nullptr;
+bool SLNodeHasMeasureFunc(const SLNodeRef node) {
+  return GET_INNER_LAYOUT_NODE(node)->GetSLMeasureFunc() != nullptr;
 }
 
-// flex
-void SetFlexGrow(const SLNodeRef node, float value) {
-  SetValueTypeByPropertyID(node, lynx::tasm::kPropertyIDFlexGrow, value);
+// Styles
+void SLNodeStyleSetDirection(const SLNodeRef node, SLDirection type) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  if (inner_node->GetCSSMutableStyle()->SetDirection(
+          static_cast<lynx::starlight::DirectionType>(type))) {
+    inner_node->GetCSSMutableStyle()->SetHasExplicitDirectionStyle(true);
+    inner_node->MarkDirty();
+  }
 }
 
-void SetFlexShrink(const SLNodeRef node, float value) {
-  SetValueTypeByPropertyID(node, lynx::tasm::kPropertyIDFlexShrink, value);
+#define SET_ENUM_STYLE(type_name, enum_type, inner_enum_type, set_method) \
+  void SLNodeStyleSet##type_name(const SLNodeRef node, enum_type value) { \
+    lynx::starlight::LayoutObject *const inner_node =                     \
+        GET_INNER_LAYOUT_NODE(node);                                      \
+    if (inner_node->GetCSSMutableStyle()->set_method(                     \
+            static_cast<lynx::starlight::inner_enum_type>(value))) {      \
+      inner_node->MarkDirty();                                            \
+    }                                                                     \
+  }
+
+#define SUPPORTED_ENUM_STYLE_SETTER(V)                                   \
+  V(FlexDirection, SLFlexDirection, FlexDirectionType, SetFlexDirection) \
+  V(AlignContent, SLAlignContent, AlignContentType, SetAlignContent)     \
+  V(AlignSelf, SLFlexAlign, FlexAlignType, SetAlignSelf)                 \
+  V(PositionType, SLPositionType, PositionType, SetPosition)             \
+  V(FlexWrap, SLFlexWrap, FlexWrapType, SetFlexWrap)                     \
+  V(Display, SLDisplay, DisplayType, SetDisplay)                         \
+  V(BoxSizing, SLBoxSizing, BoxSizingType, SetBoxSizing)
+
+SUPPORTED_ENUM_STYLE_SETTER(SET_ENUM_STYLE)
+
+#undef SUPPORTED_ENUM_STYLE_SETTER
+#undef SET_ENUM_STYLE
+
+// alignment
+void SLNodeStyleSetJustifyContent(const SLNodeRef node,
+                                  SLJustifyContent value) {
+  lynx::starlight::JustifyContentType type;
+  switch (value) {
+    case SLJustifyContent::SLJustifyContentFlexStart:
+      type = lynx::starlight::JustifyContentType::kFlexStart;
+      break;
+    case SLJustifyContent::SLJustifyContentCenter:
+      type = lynx::starlight::JustifyContentType::kCenter;
+      break;
+    case SLJustifyContent::SLJustifyContentFlexEnd:
+      type = lynx::starlight::JustifyContentType::kFlexEnd;
+      break;
+    case SLJustifyContent::SLJustifyContentSpaceBetween:
+      type = lynx::starlight::JustifyContentType::kSpaceBetween;
+      break;
+    case SLJustifyContent::SLJustifyContentSpaceAround:
+      type = lynx::starlight::JustifyContentType::kSpaceAround;
+      break;
+    case SLJustifyContent::SLJustifyContentSpaceEvenly:
+      type = lynx::starlight::JustifyContentType::kSpaceEvenly;
+      break;
+    case SLJustifyContent::SLJustifyContentStart:
+      type = lynx::starlight::JustifyContentType::kFlexStart;
+      break;
+    case SLJustifyContent::SLJustifyContentEnd:
+      type = lynx::starlight::JustifyContentType::kFlexEnd;
+      break;
+    default:
+      type = lynx::starlight::JustifyContentType::kFlexStart;
+      break;
+  }
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  if (inner_node->GetCSSMutableStyle()->SetJustifyContent(type)) {
+    inner_node->MarkDirty();
+  }
 }
 
-void SetFlexBasis(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDFlexBasis, value);
+void SLNodeStyleSetAlignItems(const SLNodeRef node, SLFlexAlign value) {
+  // auto is not supported in align-items
+  if (value == SLFlexAlign::SLFlexAlignAuto) {
+    return;
+  }
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  if (inner_node->GetCSSMutableStyle()->SetAlignItems(
+          static_cast<lynx::starlight::FlexAlignType>(value))) {
+    inner_node->MarkDirty();
+  }
 }
 
-void SetFlexWrap(const SLNodeRef node, SLFlexWrapType type) {
-  SetEnumTypeByPropertyID(node, lynx::tasm::kPropertyIDFlexWrap, type);
+void SLNodeStyleSetAspectRatio(const SLNodeRef node, float value) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  if (inner_node->GetCSSMutableStyle()->SetAspectRatio(value)) {
+    inner_node->MarkDirty();
+  }
 }
 
-// align
-void SetJustifyContent(const SLNodeRef node, SLJustifyContentType type) {
-  SetEnumTypeByPropertyID(node, lynx::tasm::kPropertyIDJustifyContent, type);
+void SLNodeStyleSetOrder(const SLNodeRef node, int32_t value) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  if (inner_node->GetCSSMutableStyle()->SetOrder(value)) {
+    inner_node->MarkDirty();
+  }
 }
 
-void SetAlignContent(const SLNodeRef node, SLAlignContentType type) {
-  SetEnumTypeByPropertyID(node, lynx::tasm::kPropertyIDAlignContent, type);
+void SLNodeStyleSetFlexGrow(const SLNodeRef node, float value) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  if (inner_node->GetCSSMutableStyle()->SetFlexGrow(value)) {
+    inner_node->MarkDirty();
+  }
 }
 
-void SetAlignSelf(const SLNodeRef node, SLFlexAlignType type) {
-  SetEnumTypeByPropertyID(node, lynx::tasm::kPropertyIDAlignSelf, type);
+void SLNodeStyleSetFlexShrink(const SLNodeRef node, float value) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  if (inner_node->GetCSSMutableStyle()->SetFlexShrink(value)) {
+    inner_node->MarkDirty();
+  }
 }
 
-void SetAlignItems(const SLNodeRef node, SLFlexAlignType type) {
-  SetEnumTypeByPropertyID(node, lynx::tasm::kPropertyIDAlignItems, type);
+void SLNodeStyleSetFlex(const SLNodeRef node, float value) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  bool need_mark_dirty = false;
+  need_mark_dirty = inner_node->GetCSSMutableStyle()->SetFlexGrow(value);
+  need_mark_dirty |= inner_node->GetCSSMutableStyle()->SetFlexShrink(1);
+  need_mark_dirty |= inner_node->GetCSSMutableStyle()->SetFlexBasis(
+      lynx::starlight::NLength::MakeUnitNLength(0));
+  if (need_mark_dirty) {
+    inner_node->MarkDirty();
+  }
 }
 
-void SetDirection(const SLNodeRef node, SLDirectionType type) {
-  SetEnumTypeByPropertyID(node, lynx::tasm::kPropertyIDDirection, type);
+#define DEFINE_EDGE_STYLE_SETTER(func_suffix, css_method_prefix,          \
+                                 nlength_maker)                           \
+  void SLNodeStyleSet##func_suffix(const SLNodeRef node, SLEdge edge,     \
+                                   float value) {                         \
+    bool need_mark_dirty = false;                                         \
+    lynx::starlight::LayoutObject *const inner_node =                     \
+        GET_INNER_LAYOUT_NODE(node);                                      \
+    auto *css_style = inner_node->GetCSSMutableStyle();                   \
+    const bool is_rtl = inner_node->GetCSSStyle()->IsRtl();               \
+                                                                          \
+    switch (edge) {                                                       \
+      case SLEdgeLeft:                                                    \
+        need_mark_dirty = css_style->Set##css_method_prefix##Left(        \
+            lynx::starlight::NLength::nlength_maker(value));              \
+        break;                                                            \
+      case SLEdgeRight:                                                   \
+        need_mark_dirty = css_style->Set##css_method_prefix##Right(       \
+            lynx::starlight::NLength::nlength_maker(value));              \
+        break;                                                            \
+      case SLEdgeTop:                                                     \
+        need_mark_dirty = css_style->Set##css_method_prefix##Top(         \
+            lynx::starlight::NLength::nlength_maker(value));              \
+        break;                                                            \
+      case SLEdgeBottom:                                                  \
+        need_mark_dirty = css_style->Set##css_method_prefix##Bottom(      \
+            lynx::starlight::NLength::nlength_maker(value));              \
+        break;                                                            \
+      case SLEdgeStart:                                                   \
+        need_mark_dirty =                                                 \
+            is_rtl ? css_style->Set##css_method_prefix##Right(            \
+                         lynx::starlight::NLength::nlength_maker(value))  \
+                   : css_style->Set##css_method_prefix##Left(             \
+                         lynx::starlight::NLength::nlength_maker(value)); \
+        break;                                                            \
+      case SLEdgeEnd:                                                     \
+        need_mark_dirty =                                                 \
+            is_rtl ? css_style->Set##css_method_prefix##Left(             \
+                         lynx::starlight::NLength::nlength_maker(value))  \
+                   : css_style->Set##css_method_prefix##Right(            \
+                         lynx::starlight::NLength::nlength_maker(value)); \
+        break;                                                            \
+      case SLEdgeHorizontal:                                              \
+        need_mark_dirty |= css_style->Set##css_method_prefix##Left(       \
+            lynx::starlight::NLength::nlength_maker(value));              \
+        need_mark_dirty |= css_style->Set##css_method_prefix##Right(      \
+            lynx::starlight::NLength::nlength_maker(value));              \
+        break;                                                            \
+      case SLEdgeVertical:                                                \
+        need_mark_dirty |= css_style->Set##css_method_prefix##Top(        \
+            lynx::starlight::NLength::nlength_maker(value));              \
+        need_mark_dirty |= css_style->Set##css_method_prefix##Bottom(     \
+            lynx::starlight::NLength::nlength_maker(value));              \
+        break;                                                            \
+      case SLEdgeAll:                                                     \
+        need_mark_dirty |= css_style->Set##css_method_prefix##Left(       \
+            lynx::starlight::NLength::nlength_maker(value));              \
+        need_mark_dirty |= css_style->Set##css_method_prefix##Right(      \
+            lynx::starlight::NLength::nlength_maker(value));              \
+        need_mark_dirty |= css_style->Set##css_method_prefix##Top(        \
+            lynx::starlight::NLength::nlength_maker(value));              \
+        need_mark_dirty |= css_style->Set##css_method_prefix##Bottom(     \
+            lynx::starlight::NLength::nlength_maker(value));              \
+        break;                                                            \
+      default:                                                            \
+        break;                                                            \
+    }                                                                     \
+    if (need_mark_dirty) {                                                \
+      inner_node->MarkDirty();                                            \
+    }                                                                     \
+  }
+
+// top, bottom, left, right
+// SLNodeStyleSetPosition
+DEFINE_EDGE_STYLE_SETTER(Position, , MakeUnitNLength)
+// SLNodeStyleSetPositionPercent
+DEFINE_EDGE_STYLE_SETTER(PositionPercent, , MakePercentageNLength)
+// SLNodeStyleSetMargin
+DEFINE_EDGE_STYLE_SETTER(Margin, Margin, MakeUnitNLength)
+// SLNodeStyleSetMarginPercent
+DEFINE_EDGE_STYLE_SETTER(MarginPercent, Margin, MakePercentageNLength)
+// SLNodeStyleSetPadding
+DEFINE_EDGE_STYLE_SETTER(Padding, Padding, MakeUnitNLength)
+// SLNodeStyleSetPaddingPercent
+DEFINE_EDGE_STYLE_SETTER(PaddingPercent, Padding, MakePercentageNLength)
+
+#undef DEFINE_EDGE_STYLE_SETTER
+
+void SLNodeStyleSetMarginAuto(const SLNodeRef node, SLEdge edge) {
+  bool need_mark_dirty = false;
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  auto *css_style = inner_node->GetCSSMutableStyle();
+  switch (edge) {
+    case SLEdgeLeft:
+      if (css_style->SetMarginLeft(
+              lynx::starlight::NLength::MakeAutoNLength())) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeRight:
+      if (css_style->SetMarginRight(
+              lynx::starlight::NLength::MakeAutoNLength())) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeTop:
+      if (css_style->SetMarginTop(
+              lynx::starlight::NLength::MakeAutoNLength())) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeBottom:
+      if (css_style->SetMarginBottom(
+              lynx::starlight::NLength::MakeAutoNLength())) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeStart:
+      if (inner_node->GetCSSStyle()->IsRtl()) {
+        need_mark_dirty = css_style->SetMarginRight(
+            lynx::starlight::NLength::MakeAutoNLength());
+      } else {
+        need_mark_dirty = css_style->SetMarginLeft(
+            lynx::starlight::NLength::MakeAutoNLength());
+      }
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeEnd:
+      if (inner_node->GetCSSStyle()->IsRtl()) {
+        need_mark_dirty = css_style->SetMarginLeft(
+            lynx::starlight::NLength::MakeAutoNLength());
+      } else {
+        need_mark_dirty = css_style->SetMarginRight(
+            lynx::starlight::NLength::MakeAutoNLength());
+      }
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeHorizontal:
+      need_mark_dirty =
+          css_style->SetMarginLeft(lynx::starlight::NLength::MakeAutoNLength());
+      need_mark_dirty |= css_style->SetMarginRight(
+          lynx::starlight::NLength::MakeAutoNLength());
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeVertical:
+      need_mark_dirty =
+          css_style->SetMarginTop(lynx::starlight::NLength::MakeAutoNLength());
+      need_mark_dirty |= css_style->SetMarginBottom(
+          lynx::starlight::NLength::MakeAutoNLength());
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeAll:
+      need_mark_dirty =
+          css_style->SetMarginLeft(lynx::starlight::NLength::MakeAutoNLength());
+      need_mark_dirty |= css_style->SetMarginRight(
+          lynx::starlight::NLength::MakeAutoNLength());
+      need_mark_dirty |=
+          css_style->SetMarginTop(lynx::starlight::NLength::MakeAutoNLength());
+      need_mark_dirty |= css_style->SetMarginBottom(
+          lynx::starlight::NLength::MakeAutoNLength());
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    default:
+      break;
+  }
 }
 
-void SetFlexDirection(const SLNodeRef node, SLFlexDirection type) {
-  SetEnumTypeByPropertyID(node, lynx::tasm::kPropertyIDFlexDirection, type);
+void SLNodeStyleSetPositionAuto(const SLNodeRef node, SLEdge edge) {
+  bool need_mark_dirty = false;
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  auto *css_style = inner_node->GetCSSMutableStyle();
+  switch (edge) {
+    case SLEdgeLeft:
+      if (css_style->SetLeft(lynx::starlight::NLength::MakeAutoNLength())) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeRight:
+      if (css_style->SetRight(lynx::starlight::NLength::MakeAutoNLength())) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeTop:
+      if (css_style->SetTop(lynx::starlight::NLength::MakeAutoNLength())) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeBottom:
+      if (css_style->SetBottom(lynx::starlight::NLength::MakeAutoNLength())) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeStart:
+      if (inner_node->GetCSSStyle()->IsRtl()) {
+        need_mark_dirty =
+            css_style->SetRight(lynx::starlight::NLength::MakeAutoNLength());
+      } else {
+        need_mark_dirty =
+            css_style->SetLeft(lynx::starlight::NLength::MakeAutoNLength());
+      }
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeEnd:
+      if (inner_node->GetCSSStyle()->IsRtl()) {
+        need_mark_dirty =
+            css_style->SetLeft(lynx::starlight::NLength::MakeAutoNLength());
+      } else {
+        need_mark_dirty =
+            css_style->SetRight(lynx::starlight::NLength::MakeAutoNLength());
+      }
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeHorizontal:
+      need_mark_dirty =
+          css_style->SetLeft(lynx::starlight::NLength::MakeAutoNLength());
+      need_mark_dirty |=
+          css_style->SetRight(lynx::starlight::NLength::MakeAutoNLength());
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeVertical:
+      need_mark_dirty =
+          css_style->SetTop(lynx::starlight::NLength::MakeAutoNLength());
+      need_mark_dirty |=
+          css_style->SetBottom(lynx::starlight::NLength::MakeAutoNLength());
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeAll:
+      need_mark_dirty =
+          css_style->SetLeft(lynx::starlight::NLength::MakeAutoNLength());
+      need_mark_dirty |=
+          css_style->SetRight(lynx::starlight::NLength::MakeAutoNLength());
+      need_mark_dirty |=
+          css_style->SetTop(lynx::starlight::NLength::MakeAutoNLength());
+      need_mark_dirty |=
+          css_style->SetBottom(lynx::starlight::NLength::MakeAutoNLength());
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    default:
+      break;
+  }
 }
 
-void SetDisplay(const SLNodeRef node, SLDisplayType type) {
-  SetEnumTypeByPropertyID(node, lynx::tasm::kPropertyIDDisplay, type);
+// border width
+void SLNodeStyleSetBorder(const SLNodeRef node, SLEdge edge, float value) {
+  bool need_mark_dirty = false;
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  auto *css_style = inner_node->GetCSSMutableStyle();
+  switch (edge) {
+    case SLEdgeLeft:
+      if (css_style->SetBorderLeftWidth(value)) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeRight:
+      if (css_style->SetBorderRightWidth(value)) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeTop:
+      if (css_style->SetBorderTopWidth(value)) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeBottom:
+      if (css_style->SetBorderBottomWidth(value)) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeStart:
+      if (inner_node->GetCSSStyle()->IsRtl()) {
+        need_mark_dirty = css_style->SetBorderRightWidth(value);
+      } else {
+        need_mark_dirty = css_style->SetBorderLeftWidth(value);
+      }
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeEnd:
+      if (inner_node->GetCSSStyle()->IsRtl()) {
+        need_mark_dirty = css_style->SetBorderLeftWidth(value);
+      } else {
+        need_mark_dirty = css_style->SetBorderRightWidth(value);
+      }
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeHorizontal:
+      need_mark_dirty = css_style->SetBorderLeftWidth(value);
+      need_mark_dirty |= css_style->SetBorderRightWidth(value);
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeVertical:
+      need_mark_dirty = css_style->SetBorderTopWidth(value);
+      need_mark_dirty |= css_style->SetBorderBottomWidth(value);
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLEdgeAll:
+      need_mark_dirty = css_style->SetBorderTopWidth(value);
+      need_mark_dirty |= css_style->SetBorderBottomWidth(value);
+      need_mark_dirty |= css_style->SetBorderLeftWidth(value);
+      need_mark_dirty |= css_style->SetBorderRightWidth(value);
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    default:
+      break;
+  }
 }
 
-void SetAspectRatio(const SLNodeRef node, float value) {
-  SetValueTypeByPropertyID(node, lynx::tasm::kPropertyIDAspectRatio, value);
+void SLNodeStyleSetGap(const SLNodeRef node, SLGap gap, float value) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  switch (gap) {
+    case SLGapColumn:
+      if (inner_node->GetCSSMutableStyle()->SetColumnGap(
+              lynx::starlight::NLength::MakeUnitNLength(value))) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLGapRow:
+      if (inner_node->GetCSSMutableStyle()->SetRowGap(
+              lynx::starlight::NLength::MakeUnitNLength(value))) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLGapAll: {
+      bool need_mark_dirty = false;
+      need_mark_dirty = inner_node->GetCSSMutableStyle()->SetColumnGap(
+          lynx::starlight::NLength::MakeUnitNLength(value));
+      need_mark_dirty |= inner_node->GetCSSMutableStyle()->SetRowGap(
+          lynx::starlight::NLength::MakeUnitNLength(value));
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+      break;
+    }
+  }
 }
 
-// length
-SLSize GetLayoutSize(SLNodeRef node) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  const auto &result = layout_object->GetLayoutResult();
-  return SLSize(result.size_.width_, result.size_.height_);
+void SLNodeStyleSetGapPercent(const SLNodeRef node, SLGap gap, float value) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  switch (gap) {
+    case SLGapColumn:
+      if (inner_node->GetCSSMutableStyle()->SetColumnGap(
+              lynx::starlight::NLength::MakePercentageNLength(value))) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLGapRow:
+      if (inner_node->GetCSSMutableStyle()->SetRowGap(
+              lynx::starlight::NLength::MakePercentageNLength(value))) {
+        inner_node->MarkDirty();
+      }
+      break;
+    case SLGapAll: {
+      bool need_mark_dirty = false;
+      need_mark_dirty = inner_node->GetCSSMutableStyle()->SetColumnGap(
+          lynx::starlight::NLength::MakePercentageNLength(value));
+      need_mark_dirty |= inner_node->GetCSSMutableStyle()->SetRowGap(
+          lynx::starlight::NLength::MakePercentageNLength(value));
+      if (need_mark_dirty) {
+        inner_node->MarkDirty();
+      }
+    } break;
+  }
 }
 
-SLPoint GetLayoutOffset(SLNodeRef node) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  const auto &result = layout_object->GetLayoutResult();
-  return SLPoint(result.offset_.X(), result.offset_.Y());
+// set size styles with value, e.g., width: 100%, height: max-content,
+// min-width: 10%.
+#define SET_SIZE_STYLE_WITH_VALUE(type_name, type_pre_fix, length_type)  \
+  void SLNodeStyleSet##type_pre_fix(const SLNodeRef node, float value) { \
+    lynx::starlight::LayoutObject *const inner_node =                    \
+        GET_INNER_LAYOUT_NODE(node);                                     \
+    if (inner_node->GetCSSMutableStyle()->Set##type_name(                \
+            lynx::starlight::NLength::Make##length_type(value))) {       \
+      inner_node->MarkDirty();                                           \
+    }                                                                    \
+  }
+
+#define SUPPORTED_SIZE_STYLE_WITH_VALUE_SETTER(V)   \
+  V(Width, Width, UnitNLength)                      \
+  V(Width, WidthPercent, PercentageNLength)         \
+  V(MinWidth, MinWidth, UnitNLength)                \
+  V(MinWidth, MinWidthPercent, PercentageNLength)   \
+  V(MaxWidth, MaxWidth, UnitNLength)                \
+  V(MaxWidth, MaxWidthPercent, PercentageNLength)   \
+  V(Height, Height, UnitNLength)                    \
+  V(Height, HeightPercent, PercentageNLength)       \
+  V(MinHeight, MinHeight, UnitNLength)              \
+  V(MinHeight, MinHeightPercent, PercentageNLength) \
+  V(MaxHeight, MaxHeight, UnitNLength)              \
+  V(MaxHeight, MaxHeightPercent, PercentageNLength) \
+  V(FlexBasis, FlexBasis, UnitNLength)              \
+  V(FlexBasis, FlexBasisPercent, PercentageNLength)
+
+SUPPORTED_SIZE_STYLE_WITH_VALUE_SETTER(SET_SIZE_STYLE_WITH_VALUE)
+
+#undef SUPPORTED_SIZE_STYLE_WITH_VALUE_SETTER
+#undef SET_SIZE_STYLE_WITH_VALUE
+
+// set size styles with no value param, e.g., width: auto, height: max-content,
+// flex-basis: auto.
+#define SET_SIZE_STYLE_WITH_NO_VALUE_PARAM(type_name, type_pre_fix, \
+                                           length_type)             \
+  void SLNodeStyleSet##type_pre_fix(const SLNodeRef node) {         \
+    lynx::starlight::LayoutObject *const inner_node =               \
+        GET_INNER_LAYOUT_NODE(node);                                \
+    if (inner_node->GetCSSMutableStyle()->Set##type_name(           \
+            lynx::starlight::NLength::Make##length_type())) {       \
+      inner_node->MarkDirty();                                      \
+    }                                                               \
+  }
+
+#define SUPPORTED_SIZE_STYLE_WITH_VALUE_WITH_NO_VALUE_PARAM_SETTER(V) \
+  V(Width, WidthAuto, AutoNLength)                                    \
+  V(Width, WidthMaxContent, MaxContentNLength)                        \
+  V(Width, WidthFitContent, FitContentNLength)                        \
+  V(Height, HeightAuto, AutoNLength)                                  \
+  V(Height, HeightMaxContent, MaxContentNLength)                      \
+  V(Height, HeightFitContent, FitContentNLength)                      \
+  V(FlexBasis, FlexBasisAuto, AutoNLength)
+
+SUPPORTED_SIZE_STYLE_WITH_VALUE_WITH_NO_VALUE_PARAM_SETTER(
+    SET_SIZE_STYLE_WITH_NO_VALUE_PARAM)
+
+#undef SUPPORTED_SIZE_STYLE_WITH_VALUE_WITH_NO_VALUE_PARAM_SETTER
+#undef SET_SIZE_STYLE_WITH_NO_VALUE_PARAM
+
+// get styles with eunm type getter, e.g., flex-direction, justify-content.
+#define GET_ENUM_STYLE(type_name, return_type, get_expr)                  \
+  return_type SLNodeStyleGet##type_name(const SLNodeRef node) {           \
+    lynx::starlight::LayoutObject *const inner_node =                     \
+        GET_INNER_LAYOUT_NODE(node);                                      \
+    return static_cast<return_type>(inner_node->GetCSSStyle()->get_expr); \
+  }
+
+#define SUPPORTED_ENUM_STYLE_GETTER(V)                     \
+  V(FlexDirection, SLFlexDirection, GetFlexDirection())    \
+  V(JustifyContent, SLJustifyContent, GetJustifyContent()) \
+  V(AlignContent, SLAlignContent, GetAlignContent())       \
+  V(AlignItems, SLFlexAlign, GetAlignItems())              \
+  V(AlignSelf, SLFlexAlign, GetAlignSelf())                \
+  V(PositionType, SLPositionType, GetPosition())           \
+  V(FlexWrap, SLFlexWrap, GetFlexWrap())                   \
+  V(Display, SLDisplay, display_)                          \
+  V(BoxSizing, SLBoxSizing, box_sizing_)
+
+SUPPORTED_ENUM_STYLE_GETTER(GET_ENUM_STYLE)
+
+#undef SUPPORTED_ENUM_STYLE_GETTER
+#undef GET_ENUM_STYLE
+
+// get styles with basic type getter, e.g., aspect-ratio, order.
+#define GET_BASIC_TYPE_STYLE(type_name, return_type, get_expr)  \
+  return_type SLNodeStyleGet##type_name(const SLNodeRef node) { \
+    lynx::starlight::LayoutObject *const inner_node =           \
+        GET_INNER_LAYOUT_NODE(node);                            \
+    return inner_node->GetCSSStyle()->get_expr;                 \
+  }
+
+#define SUPPORTED_BASIC_TYPE_STYLE_GETTER(V)      \
+  V(AspectRatio, float, box_data_->aspect_ratio_) \
+  V(Order, int32_t, GetOrder())                   \
+  V(FlexGrow, float, GetFlexGrow())               \
+  V(FlexShrink, float, GetFlexShrink())
+
+SUPPORTED_BASIC_TYPE_STYLE_GETTER(GET_BASIC_TYPE_STYLE)
+
+#undef SUPPORTED_ENUM_STYLE_GETTER
+#undef GET_BASIC_TYPE_STYLE
+
+// get styles with length type getter, e.g., width, height.
+#define GET_LENGTH_STYLE(type_name, get_expr)                             \
+  struct StarlightValue SLNodeStyleGet##type_name(const SLNodeRef node) { \
+    lynx::starlight::LayoutObject *const inner_node =                     \
+        GET_INNER_LAYOUT_NODE(node);                                      \
+    return NLengthToStarlightValue(inner_node->GetCSSStyle()->get_expr);  \
+  }
+
+#define SUPPORTED_LENGTH_STYLE_GETTER(V) \
+  V(FlexBasis, GetFlexBasis())           \
+  V(Width, GetWidth())                   \
+  V(Height, GetHeight())                 \
+  V(MinWidth, GetMinWidth())             \
+  V(MaxWidth, GetMaxWidth())             \
+  V(MinHeight, GetMinHeight())           \
+  V(MaxHeight, GetMaxHeight())
+
+SUPPORTED_LENGTH_STYLE_GETTER(GET_LENGTH_STYLE)
+
+#undef SUPPORTED_LENGTH_STYLE_GETTER
+#undef GET_LENGTH_STYLE
+
+// get padding, margin, position styles with edge type getter.
+#define DEFINE_EDGE_STYLE_GETTER(StyleType, GetterPrefix)                   \
+  struct StarlightValue SLNodeStyleGet##StyleType(const SLNodeRef node,     \
+                                                  SLEdge edge) {            \
+    lynx::starlight::LayoutObject *const inner_node =                       \
+        GET_INNER_LAYOUT_NODE(node);                                        \
+    switch (edge) {                                                         \
+      case SLEdgeLeft:                                                      \
+        return NLengthToStarlightValue(                                     \
+            inner_node->GetCSSStyle()->GetterPrefix##Left());               \
+      case SLEdgeRight:                                                     \
+        return NLengthToStarlightValue(                                     \
+            inner_node->GetCSSStyle()->GetterPrefix##Right());              \
+      case SLEdgeTop:                                                       \
+        return NLengthToStarlightValue(                                     \
+            inner_node->GetCSSStyle()->GetterPrefix##Top());                \
+      case SLEdgeBottom:                                                    \
+        return NLengthToStarlightValue(                                     \
+            inner_node->GetCSSStyle()->GetterPrefix##Bottom());             \
+      case SLEdgeStart:                                                     \
+        return SLNodeIsRTL(node)                                            \
+                   ? NLengthToStarlightValue(                               \
+                         inner_node->GetCSSStyle()->GetterPrefix##Right())  \
+                   : NLengthToStarlightValue(                               \
+                         inner_node->GetCSSStyle()->GetterPrefix##Left());  \
+      case SLEdgeEnd:                                                       \
+        return SLNodeIsRTL(node)                                            \
+                   ? NLengthToStarlightValue(                               \
+                         inner_node->GetCSSStyle()->GetterPrefix##Left())   \
+                   : NLengthToStarlightValue(                               \
+                         inner_node->GetCSSStyle()->GetterPrefix##Right()); \
+      default:                                                              \
+        return (struct StarlightValue){0.0f, SLUnitPoint};                  \
+    }                                                                       \
+  }
+
+DEFINE_EDGE_STYLE_GETTER(Position, Get)
+DEFINE_EDGE_STYLE_GETTER(Margin, GetMargin)
+DEFINE_EDGE_STYLE_GETTER(Padding, GetPadding)
+
+#undef DEFINE_EDGE_STYLE_GETTER
+
+struct StarlightValue SLNodeStyleGetGap(const SLNodeRef node, SLGap gap) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  switch (gap) {
+    case SLGapColumn:
+      return NLengthToStarlightValue(
+          inner_node->GetCSSStyle()->GetGridColumnGap());
+    case SLGapRow:
+      return NLengthToStarlightValue(
+          inner_node->GetCSSStyle()->GetGridRowGap());
+    case SLGapAll:
+      return NLengthToStarlightValue(
+          inner_node->GetCSSStyle()->GetGridRowGap());
+    default:
+      return (struct StarlightValue){0.0f, SLUnitPoint};
+  }
 }
 
-float GetLayoutMargin(SLNodeRef node, SLEdge edge) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  const auto &result = layout_object->GetLayoutResult();
-  float margin_edge = result.margin_[ResolveEdgeToDirection(node, edge)];
-  return margin_edge;
+float SLNodeStyleGetBorder(const SLNodeRef node, SLEdge edge) {
+  return SLNodeLayoutGetBorder(node, edge);
 }
 
-float GetLayoutPadding(SLNodeRef node, SLEdge edge) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  const auto &result = layout_object->GetLayoutResult();
-  float padding_edge = result.padding_[ResolveEdgeToDirection(node, edge)];
-  return padding_edge;
+float SLNodeLayoutGetLeft(const SLNodeRef node) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  const auto &result = inner_node->GetLayoutResult();
+  return result.offset_.X();
 }
 
-float GetLayoutBorder(SLNodeRef node, SLEdge edge) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  const auto &result = layout_object->GetLayoutResult();
-  float border_edge = result.border_[ResolveEdgeToDirection(node, edge)];
-  return border_edge;
+float SLNodeLayoutGetTop(const SLNodeRef node) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  const auto &result = inner_node->GetLayoutResult();
+  return result.offset_.Y();
 }
 
-void SetWidth(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDWidth, value);
+// TODO
+// float SLNodeLayoutGetRight(lynx::starlight::LayoutObject * const node) {
+//   const auto &result = node->GetLayoutResult();
+//   return result.offset_.X();
+// }
+
+// TODO
+// float SLNodeLayoutGetBottom(lynx::starlight::LayoutObject * const node) {
+//   const auto &result = node->GetLayoutResult();
+//   return result.offset_.Y();
+// }
+
+float SLNodeLayoutGetWidth(const SLNodeRef node) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  const auto &result = inner_node->GetLayoutResult();
+  return result.size_.width_;
 }
 
-SLLength GetWidth(const SLNodeRef node) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  const lynx::starlight::NLength &width =
-      layout_object->GetCSSStyle()->GetWidth();
-  return NLengthToSLLength(width);
+float SLNodeLayoutGetHeight(const SLNodeRef node) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  const auto &result = inner_node->GetLayoutResult();
+  return result.size_.height_;
 }
 
-void SetHeight(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDHeight, value);
+float SLNodeLayoutGetMargin(const SLNodeRef node, SLEdge edge) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  const auto &result = inner_node->GetLayoutResult();
+  return result.margin_[ResolveEdgeToDirection(inner_node, edge)];
 }
 
-SLLength GetHeight(const SLNodeRef node) {
-  LayoutObject *layout_object = GET_LAYOUT_NODE(node);
-  const lynx::starlight::NLength &width =
-      layout_object->GetCSSStyle()->GetHeight();
-  return NLengthToSLLength(width);
+float SLNodeLayoutGetPadding(const SLNodeRef node, SLEdge edge) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  const auto &result = inner_node->GetLayoutResult();
+  return result.padding_[ResolveEdgeToDirection(inner_node, edge)];
 }
 
-void SetMinWidth(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMinWidth, value);
+float SLNodeLayoutGetBorder(const SLNodeRef node, SLEdge edge) {
+  lynx::starlight::LayoutObject *const inner_node = GET_INNER_LAYOUT_NODE(node);
+  const auto &result = inner_node->GetLayoutResult();
+  return result.border_[ResolveEdgeToDirection(inner_node, edge)];
 }
-
-void SetMinHeight(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMinHeight, value);
-}
-
-void SetMaxWidth(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMaxWidth, value);
-}
-
-void SetMaxHeight(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMaxHeight, value);
-}
-
-void SetLeft(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDLeft, value);
-}
-
-void SetRight(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDRight, value);
-}
-
-void SetBottom(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDBottom, value);
-}
-
-void SetTop(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDTop, value);
-}
-
-void SetInlineStart(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDInsetInlineStart,
-                            value);
-}
-
-void SetInlineEnd(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDInsetInlineEnd, value);
-}
-
-void SetMarginLeft(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMarginLeft, value);
-}
-
-void SetMarginRight(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMarginRight, value);
-}
-
-void SetMarginTop(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMarginTop, value);
-}
-
-void SetMarginBottom(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMarginBottom, value);
-}
-
-void SetMarginInlineStart(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMarginInlineStart,
-                            value);
-}
-
-void SetMarginInlineEnd(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMarginInlineEnd,
-                            value);
-}
-
-void SetMargin(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMarginLeft, value);
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMarginRight, value);
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMarginTop, value);
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDMarginBottom, value);
-}
-
-void SetPaddingLeft(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDPaddingLeft, value);
-}
-
-void SetPaddingRight(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDPaddingRight, value);
-}
-
-void SetPaddingTop(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDPaddingTop, value);
-}
-
-void SetPaddingBottom(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDPaddingBottom, value);
-}
-
-void SetPaddingInlineStart(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDPaddingInlineStart,
-                            value);
-}
-
-void SetPaddingInlineEnd(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDPaddingInlineEnd,
-                            value);
-}
-
-void SetPadding(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDPaddingLeft, value);
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDPaddingRight, value);
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDPaddingTop, value);
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDPaddingBottom, value);
-}
-
-void SetBorderLeft(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDBorderLeftWidth,
-                            value);
-}
-
-void SetBorderRight(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDBorderRightWidth,
-                            value);
-}
-
-void SetBorderTop(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDBorderTopWidth, value);
-}
-
-void SetBorderBottom(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDBorderBottomWidth,
-                            value);
-}
-
-void SetBorder(const SLNodeRef node, const SLLength value) {
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDBorderLeftWidth,
-                            value);
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDBorderRightWidth,
-                            value);
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDBorderTopWidth, value);
-  SetLengthTypeByPropertyID(node, lynx::tasm::kPropertyIDBorderBottomWidth,
-                            value);
-}
-
-void SetPosition(const SLNodeRef node, SLPositionType type) {
-  SetEnumTypeByPropertyID(node, lynx::tasm::kPropertyIDPosition, type);
-}
-
-}  // namespace starlight

@@ -20,7 +20,9 @@ class BoxData : public fml::RefCountedThreadSafeStorage {
   }
 
   BoxData();
-  BoxData(const BoxData& other);
+  // TODO(yuanzhiwen): The exported functions will be moved to a unified
+  // location.
+  BASE_EXPORT BoxData(const BoxData& other);
   ~BoxData() = default;
   void Reset();
   NLength width_;

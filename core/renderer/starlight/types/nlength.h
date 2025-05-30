@@ -81,13 +81,15 @@ class __attribute__((packed, aligned(4))) NLength {
     bool has_percentage_ = false;
   };
 
-  static NLength MakeAutoNLength();
-  static NLength MakeMaxContentNLength();
-  static NLength MakeFitContentNLength() { return NLength(kNLengthFitContent); }
+  BASE_EXPORT static NLength MakeAutoNLength();
+  BASE_EXPORT static NLength MakeMaxContentNLength();
+  BASE_EXPORT static NLength MakeFitContentNLength() {
+    return NLength(kNLengthFitContent);
+  }
   static NLength MakeFitContentNLength(const BaseLength& nLength);
-  static NLength MakeUnitNLength(float value);
+  BASE_EXPORT static NLength MakeUnitNLength(float value);
   static NLength MakeFrNLength(float value);
-  static NLength MakePercentageNLength(float value);
+  BASE_EXPORT static NLength MakePercentageNLength(float value);
   static NLength MakeCalcNLength(float fixed) {
     return NLength(BaseLength(fixed), NLengthType::kNLengthCalc);
   }
@@ -131,8 +133,8 @@ class __attribute__((packed, aligned(4))) NLength {
     return numeric_length_.ContainsPercentage();
   }
 
-  bool operator==(const NLength& o) const;
-  bool operator!=(const NLength& o) const;
+  BASE_EXPORT bool operator==(const NLength& o) const;
+  BASE_EXPORT bool operator!=(const NLength& o) const;
 
  private:
   NLength(NLengthType type) : type_(type) {}

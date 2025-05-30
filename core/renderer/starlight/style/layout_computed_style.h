@@ -7,7 +7,6 @@
 
 #include <vector>
 
-#include "base/include/debug/lynx_assert.h"
 #include "core/renderer/starlight/style/box_data.h"
 #include "core/renderer/starlight/style/data_ref.h"
 #include "core/renderer/starlight/style/default_layout_style.h"
@@ -25,8 +24,8 @@ namespace starlight {
 
 class LayoutComputedStyle {
  public:
-  LayoutComputedStyle(double physical_pixels_per_layout_unit);
-  LayoutComputedStyle(const LayoutComputedStyle& o);
+  BASE_EXPORT LayoutComputedStyle(double physical_pixels_per_layout_unit);
+  BASE_EXPORT LayoutComputedStyle(const LayoutComputedStyle& o);
   ~LayoutComputedStyle() = default;
 
   void Reset();
@@ -38,13 +37,21 @@ class LayoutComputedStyle {
   bool IsFlexRow(const LayoutConfigs& configs,
                  const AttributesMap& attributes) const;
   bool IsBorderBox(const LayoutConfigs& configs) const;
-  bool IsRtl() const { return direction_ == DirectionType::kRtl; }
+  BASE_EXPORT bool IsRtl() const { return direction_ == DirectionType::kRtl; }
   bool IsLynxRtl() const { return direction_ == DirectionType::kLynxRtl; }
   bool IsAnyRtl() const { return IsRtl() || IsLynxRtl(); }
 
+  DirectionType GetDirection() const { return direction_; }
   PositionType GetPosition() const { return position_; }
   DisplayType GetDisplay(const LayoutConfigs& configs,
                          const AttributesMap& attributes) const;
+  BASE_EXPORT bool HasExplicitDirectionStyle() const {
+    return has_explicit_direction_style_;
+  }
+  BASE_EXPORT void SetHasExplicitDirectionStyle(
+      bool has_explicit_direction_style) {
+    has_explicit_direction_style_ = has_explicit_direction_style;
+  }
 
   DataRef<BoxData> box_data_;
   DataRef<FlexData> flex_data_;
@@ -61,6 +68,7 @@ class LayoutComputedStyle {
   DisplayType display_{DefaultLayoutStyle::SL_DEFAULT_DISPLAY};
   PositionType position_{DefaultLayoutStyle::SL_DEFAULT_POSITION};
   DirectionType direction_{DefaultLayoutStyle::SL_DEFAULT_DIRECTION};
+  bool has_explicit_direction_style_{false};
 
   // BoxData
   const NLength& GetWidth() const { return box_data_->width_; }
@@ -287,26 +295,28 @@ class LayoutComputedStyle {
         list_cross_axis_gap_.GetRawValue(), physical_pixels_per_layout_unit_);
   }
 
-#define SUPPORTED_LAYOUT_PROPERTY(V)                                  \
-  V(Width, NLength, box_data_.Access()->width_, WIDTH)                \
-  V(Height, NLength, box_data_.Access()->height_, HEIGHT)             \
-  V(MinWidth, NLength, box_data_.Access()->min_width_, MIN_WIDTH)     \
-  V(MinHeight, NLength, box_data_.Access()->min_height_, MIN_HEIGHT)  \
-  V(MaxWidth, NLength, box_data_.Access()->max_width_, MAX_WIDTH)     \
-  V(MaxHeight, NLength, box_data_.Access()->max_height_, MAX_HEIGHT)  \
-  V(FlexBasis, NLength, flex_data_.Access()->flex_basis_, FLEX_BASIS) \
-  V(Left, NLength, surround_data_.left_, FOUR_POSITION)               \
-  V(Right, NLength, surround_data_.right_, FOUR_POSITION)             \
-  V(Top, NLength, surround_data_.top_, FOUR_POSITION)                 \
-  V(Bottom, NLength, surround_data_.bottom_, FOUR_POSITION)           \
-  V(PaddingLeft, NLength, surround_data_.padding_left_, PADDING)      \
-  V(PaddingRight, NLength, surround_data_.padding_right_, PADDING)    \
-  V(PaddingTop, NLength, surround_data_.padding_top_, PADDING)        \
-  V(PaddingBottom, NLength, surround_data_.padding_bottom_, PADDING)  \
-  V(MarginLeft, NLength, surround_data_.margin_left_, MARGIN)         \
-  V(MarginRight, NLength, surround_data_.margin_right_, MARGIN)       \
-  V(MarginTop, NLength, surround_data_.margin_top_, MARGIN)           \
-  V(MarginBottom, NLength, surround_data_.margin_bottom_, MARGIN)
+#define SUPPORTED_LAYOUT_PROPERTY(V)                                     \
+  V(Width, NLength, box_data_.Access()->width_, WIDTH)                   \
+  V(Height, NLength, box_data_.Access()->height_, HEIGHT)                \
+  V(MinWidth, NLength, box_data_.Access()->min_width_, MIN_WIDTH)        \
+  V(MinHeight, NLength, box_data_.Access()->min_height_, MIN_HEIGHT)     \
+  V(MaxWidth, NLength, box_data_.Access()->max_width_, MAX_WIDTH)        \
+  V(MaxHeight, NLength, box_data_.Access()->max_height_, MAX_HEIGHT)     \
+  V(FlexBasis, NLength, flex_data_.Access()->flex_basis_, FLEX_BASIS)    \
+  V(Left, NLength, surround_data_.left_, FOUR_POSITION)                  \
+  V(Right, NLength, surround_data_.right_, FOUR_POSITION)                \
+  V(Top, NLength, surround_data_.top_, FOUR_POSITION)                    \
+  V(Bottom, NLength, surround_data_.bottom_, FOUR_POSITION)              \
+  V(PaddingLeft, NLength, surround_data_.padding_left_, PADDING)         \
+  V(PaddingRight, NLength, surround_data_.padding_right_, PADDING)       \
+  V(PaddingTop, NLength, surround_data_.padding_top_, PADDING)           \
+  V(PaddingBottom, NLength, surround_data_.padding_bottom_, PADDING)     \
+  V(MarginLeft, NLength, surround_data_.margin_left_, MARGIN)            \
+  V(MarginRight, NLength, surround_data_.margin_right_, MARGIN)          \
+  V(MarginTop, NLength, surround_data_.margin_top_, MARGIN)              \
+  V(MarginBottom, NLength, surround_data_.margin_bottom_, MARGIN)        \
+  V(ColumnGap, NLength, grid_data_.Access()->grid_column_gap_, GRID_GAP) \
+  V(RowGap, NLength, grid_data_.Access()->grid_row_gap_, GRID_GAP)
 
 #define SUPPORTED_ENUM_LAYOUT_PROPERTY(V)                                      \
   V(FlexDirection, FlexDirectionType, flex_data_.Access()->flex_direction_,    \
@@ -324,11 +334,10 @@ class LayoutComputedStyle {
   V(Position, PositionType, position_, POSITION)                               \
   V(Direction, DirectionType, direction_, DIRECTION)                           \
   V(Display, DisplayType, display_, DISPLAY)                                   \
-  V(BorderLeftWidth, float, surround_data_.border_data_->width_left, BORDER)   \
-  V(BorderTopWidth, float, surround_data_.border_data_->width_top, BORDER)     \
-  V(BorderRightWidth, float, surround_data_.border_data_->width_right, BORDER) \
-  V(BorderBottomWidth, float, surround_data_.border_data_->width_bottom,       \
-    BORDER)                                                                    \
+  V(BoxSizing, BoxSizingType, box_sizing_, BOX_SIZING)                         \
+  V(Order, int32_t, flex_data_.Access()->order_, ORDER)                        \
+  V(LinearOrientation, LinearOrientationType,                                  \
+    linear_data_.Access()->linear_orientation_, LINEAR_ORIENTATION)            \
   V(LinearLayoutGravity, LinearLayoutGravityType,                              \
     linear_data_.Access()->linear_layout_gravity_, LINEAR_LAYOUT_GRAVITY)      \
   V(LinearGravity, LinearGravityType, linear_data_.Access()->linear_gravity_,  \
@@ -337,7 +346,8 @@ class LayoutComputedStyle {
     linear_data_.Access()->linear_cross_gravity_, LINEAR_CROSS_GRAVITY)
 
 #define SET_ENUM_LAYOUT_PROPERTY(type_name, enum_type, css_type, default_type) \
-  bool Set##type_name(const enum_type value, const bool reset = false) {       \
+  BASE_EXPORT bool Set##type_name(const enum_type value,                       \
+                                  const bool reset = false) {                  \
     enum_type old_value = css_type;                                            \
     css_type = reset ? DefaultLayoutStyle::SL_DEFAULT_##default_type : value;  \
     return old_value != css_type;                                              \
@@ -346,7 +356,8 @@ class LayoutComputedStyle {
 #undef SET_ENUM_LAYOUT_PROPERTY
 
 #define SET_LAYOUT_PROPERTY(type_name, enum_type, css_type, default_type) \
-  bool Set##type_name(const enum_type& value, const bool reset = false) { \
+  BASE_EXPORT bool Set##type_name(const enum_type& value,                 \
+                                  const bool reset = false) {             \
     enum_type old_value = css_type;                                       \
     css_type =                                                            \
         reset ? DefaultLayoutStyle::SL_DEFAULT_##default_type() : value;  \
@@ -370,6 +381,28 @@ class LayoutComputedStyle {
   void SetCssAlignLegacyWithW3c(bool value) {
     css_align_with_legacy_w3c_ = value;
   }
+
+  // Only for Starlight standalone, and supports setting floating-point values
+  // only.
+#define SET_BORDER_WIDTH_PROPERTY(direction, field)                   \
+  bool SetBorder##direction##Width(float value, bool reset = false) { \
+    if (!surround_data_.border_data_) {                               \
+      surround_data_.border_data_ = BordersData();                    \
+    }                                                                 \
+    const float old_value = surround_data_.border_data_->field;       \
+    surround_data_.border_data_->field =                              \
+        reset ? DefaultLayoutStyle::SL_DEFAULT_BORDER : value;        \
+    return old_value != surround_data_.border_data_->field;           \
+  }
+#define SUPPORTED_BORDER_WIDTH_PROPERTY(V) \
+  V(Left, width_left)                      \
+  V(Top, width_top)                        \
+  V(Right, width_right)                    \
+  V(Bottom, width_bottom)
+
+  SUPPORTED_BORDER_WIDTH_PROPERTY(SET_BORDER_WIDTH_PROPERTY)
+#undef SUPPORTED_BORDER_WIDTH_PROPERTY
+#undef SET_BORDER_WIDTH_PROPERTY
 
  private:
   float physical_pixels_per_layout_unit_;

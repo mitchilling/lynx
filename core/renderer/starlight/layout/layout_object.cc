@@ -329,13 +329,13 @@ const BoxInfo* LayoutObject::GetBoxInfo() const { return &box_info_; }
 void LayoutObject::ReLayout(const SLNodeSet* fixed_node_set) {
   Constraints constraints;
   UpdateConstraintsForViewport(constraints);
+  MarkDirty();
+  box_info_.InitializeBoxInfo(constraints, *this, GetLayoutConfigs());
   ReLayoutWithConstraints(constraints, fixed_node_set);
 }
 
 void LayoutObject::ReLayoutWithConstraints(Constraints& constraints,
                                            const SLNodeSet* fixed_node_set) {
-  MarkDirty();
-  box_info_.InitializeBoxInfo(constraints, *this, GetLayoutConfigs());
   MarkHasNewLayout();
   SendLayoutEvent(LayoutEventType::UpdateMeasureBegin);
   UpdateMeasure(constraints, true, fixed_node_set);
@@ -452,6 +452,13 @@ bool LayoutObject::IsDirty() { return is_dirty_; }
 
 void LayoutObject::MarkUpdated() {
   current_node_has_new_layout_ = false;
+  is_dirty_ = false;
+  is_layout_occurred = true;
+}
+
+// different from MarkUpdated, this function will not reset
+// current_node_has_new_layout_
+void LayoutObject::MarkNotDirty() {
   is_dirty_ = false;
   is_layout_occurred = true;
 }

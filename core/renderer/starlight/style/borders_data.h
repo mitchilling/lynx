@@ -16,7 +16,9 @@ namespace lynx {
 namespace starlight {
 class BordersData {
  public:
-  explicit BordersData(bool css_align_with_legacy_w3c = false);
+  // TODO(yuanzhiwen): The exported functions will be moved to a unified
+  // location.
+  explicit BASE_EXPORT BordersData(bool css_align_with_legacy_w3c = false);
   void Reset();
 
   float width_top;

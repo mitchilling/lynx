@@ -34,9 +34,11 @@ class BoxInfo {
   BoxInfo();
   void SetBoxInfoPropsModified();
   void ResetBoxInfo();
-
-  void InitializeBoxInfo(const Constraints& constraints, LayoutObject& obj,
-                         const LayoutConfigs& layout_config);
+  // TODO(yuanzhiwen): The exported functions will be moved to a unified
+  // location.
+  BASE_EXPORT void InitializeBoxInfo(const Constraints& constraints,
+                                     LayoutObject& obj,
+                                     const LayoutConfigs& layout_config);
 
   void ResolveBoxInfoForAbsoluteAndFixed(const Constraints& constraints,
                                          LayoutObject& obj,
