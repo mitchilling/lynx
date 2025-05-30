@@ -784,8 +784,11 @@ public class LynxTemplateRender implements ILynxEngine, ILynxErrorReceiver {
     }
     mIntersectionObserverManager = new LynxIntersectionObserverManager(mLynxContext, mJSProxy);
     mLynxContext.setIntersectionObserverManager(mIntersectionObserverManager);
-    mLynxContext.getEventEmitter().addObserver(mIntersectionObserverManager);
-    mLynxContext.getEventEmitter().registerEventReporter(mNativeFacade);
+    EventEmitter eventEmitter = mLynxContext.getEventEmitter();
+    if (eventEmitter != null) {
+      eventEmitter.addObserver(mIntersectionObserverManager);
+      eventEmitter.registerEventReporter(mNativeFacade);
+    }
 
     setThemeInternal(mTheme);
 
