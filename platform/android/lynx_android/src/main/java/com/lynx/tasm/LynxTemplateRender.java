@@ -736,6 +736,8 @@ public class LynxTemplateRender implements ILynxEngine, ILynxErrorReceiver {
       LynxEventReporter.moveExtraParams(lastInstanceId, mLynxContext.getInstanceId());
     }
 
+    mIntersectionObserverManager = new LynxIntersectionObserverManager(mLynxContext, mJSProxy);
+    mLynxContext.setIntersectionObserverManager(mIntersectionObserverManager);
     if (!"none".equals(BuildConfig.JS_ENGINE_TYPE)
         && (null != mLynxContext && !mLynxContext.isEmbeddedModeOn())) {
       if (mRuntime != null) {
@@ -781,11 +783,9 @@ public class LynxTemplateRender implements ILynxEngine, ILynxErrorReceiver {
       }
       mLynxContext.setEventEmitter(new LynxEventEmitter(mEngineProxy));
       mLynxContext.setJSProxy(mJSProxy);
+      mLynxContext.getEventEmitter().addObserver(mIntersectionObserverManager);
+      mLynxContext.getEventEmitter().registerEventReporter(mNativeFacade);
     }
-    mIntersectionObserverManager = new LynxIntersectionObserverManager(mLynxContext, mJSProxy);
-    mLynxContext.setIntersectionObserverManager(mIntersectionObserverManager);
-    mLynxContext.getEventEmitter().addObserver(mIntersectionObserverManager);
-    mLynxContext.getEventEmitter().registerEventReporter(mNativeFacade);
 
     setThemeInternal(mTheme);
 

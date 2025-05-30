@@ -181,11 +181,13 @@ void LynxShell::Destroy() {
     layout = nullptr;
     tasm::report::FeatureCounter::Instance()->ClearAndReport(instance_id);
   });
-  runtime_actor_->ActAsync(
-      [runtime_actor = runtime_actor_,
-       js_group_thread_name = js_group_thread_name_](auto& runtime) {
-        TriggerDestroyRuntime(runtime_actor, js_group_thread_name);
-      });
+  if (runtime_actor_) {
+    runtime_actor_->ActAsync(
+        [runtime_actor = runtime_actor_,
+         js_group_thread_name = js_group_thread_name_](auto& runtime) {
+          TriggerDestroyRuntime(runtime_actor, js_group_thread_name);
+        });
+  }
 
   if (enable_async_hydration_) {
     {
@@ -296,21 +298,23 @@ void LynxShell::AttachRuntime(
   layout_mediator_->SetRuntimeActor(runtime_actor_);
   // timing_mediator_ will be handled inside RuntimeMediator::AttachToLynxShell
 
-  runtime_actor_->ActAsync(
-      [facade_actor = facade_actor_, engine_actor = engine_actor_,
-       card_cached_data_mgr = card_cached_data_mgr_,
-       weak_js_bundle_holder = GetWeakJsBundleHolder()](auto& runtime) mutable {
-        runtime->TransitionToFullRuntime();
-        runtime->SetJsBundleHolder(weak_js_bundle_holder);
-        static_cast<RuntimeMediator*>(runtime->GetDelegate())
-            ->AttachToLynxShell(std::move(facade_actor),
-                                std::move(engine_actor),
-                                std::move(card_cached_data_mgr));
-      });
+  if (runtime_actor_) {
+    runtime_actor_->ActAsync([facade_actor = facade_actor_,
+                              engine_actor = engine_actor_,
+                              card_cached_data_mgr = card_cached_data_mgr_,
+                              weak_js_bundle_holder = GetWeakJsBundleHolder()](
+                                 auto& runtime) mutable {
+      runtime->TransitionToFullRuntime();
+      runtime->SetJsBundleHolder(weak_js_bundle_holder);
+      static_cast<RuntimeMediator*>(runtime->GetDelegate())
+          ->AttachToLynxShell(std::move(facade_actor), std::move(engine_actor),
+                              std::move(card_cached_data_mgr));
+    });
+  }
 }
 
 void LynxShell::StartJsRuntime() {
-  if (!is_destroyed_ && start_js_runtime_task_ != nullptr) {
+  if (!is_destroyed_ && start_js_runtime_task_ != nullptr && runtime_actor_) {
     TRACE_EVENT(LYNX_TRACE_CATEGORY, LYNX_SHELL_START_JS_RUNTIME);
     runtime_actor_->ActAsync(std::move(start_js_runtime_task_));
   }
@@ -319,6 +323,9 @@ void LynxShell::StartJsRuntime() {
 void LynxShell::TriggerDestroyRuntime(
     const std::shared_ptr<LynxActor<runtime::LynxRuntime>>& runtime_actor,
     std::string js_group_thread_name) {
+  if (!runtime_actor) {
+    return;
+  }
   auto instance_id = runtime_actor->GetInstanceId();
   auto runtime = runtime_actor->Impl();
   if (runtime->TryToDestroy()) {
@@ -821,6 +828,9 @@ void LynxShell::SendBubbleEvent(const std::string& name, int32_t tag,
 
 void LynxShell::SendSsrGlobalEvent(const std::string& name,
                                    const lepus_value& params) {
+  if (!runtime_actor_) {
+    return;
+  }
   runtime_actor_->ActAsync([name, params](auto& runtime) {
     runtime->SendSsrGlobalEvent(name, params);
   });
@@ -1136,6 +1146,9 @@ void LynxShell::RegisterLazyBundle(std::string url,
 
 void LynxShell::SetEnableBytecode(bool enable,
                                   std::string bytecode_source_url) {
+  if (!runtime_actor_) {
+    return;
+  }
   runtime_actor_->ActAsync([enable, bytecode_source_url = std::move(
                                         bytecode_source_url)](auto& runtime) {
     runtime->SetEnableBytecode(enable, bytecode_source_url);
@@ -1175,9 +1188,11 @@ void LynxShell::DispatchMessageEvent(runtime::MessageEvent event) {
       engine->OnReceiveMessageEvent(std::move(event));
     });
   } else if (event.IsSendingToJSThread()) {
-    runtime_actor_->Act([event = std::move(event)](auto& runtime) mutable {
-      runtime->OnReceiveMessageEvent(std::move(event));
-    });
+    if (runtime_actor_) {
+      runtime_actor_->Act([event = std::move(event)](auto& runtime) mutable {
+        runtime->OnReceiveMessageEvent(std::move(event));
+      });
+    }
   }
 }
 
@@ -1271,8 +1286,9 @@ void LynxShell::SetHierarchyObserver(
 }
 
 void LynxShell::OnRuntimeCreate() {
-  DCHECK(runtime_actor_);
-  runtime_actor_->Act([](auto& runtime) { runtime->OnRuntimeActorCreate(); });
+  if (runtime_actor_) {
+    runtime_actor_->Act([](auto& runtime) { runtime->OnRuntimeActorCreate(); });
+  }
 }
 
 std::weak_ptr<piper::JsBundleHolder> LynxShell::GetWeakJsBundleHolder() {
