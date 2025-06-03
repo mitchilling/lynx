@@ -312,7 +312,7 @@
 #pragma mark - Override
 
 - (void)layoutSubviews {
-  TRACE_EVENT(LYNX_TRACE_CATEGORY, LYNX_VIEW_LAYOUT_SUBVIEWS, "instanceId",
+  TRACE_EVENT(LYNX_TRACE_CATEGORY, LYNX_VIEW_LAYOUT_SUBVIEWS, INSTANCE_ID,
               [_templateRender instanceId]);
   if (_enableSyncFlush && [self.subviews count] > 0) {
     [self syncFlush];

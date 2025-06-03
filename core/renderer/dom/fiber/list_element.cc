@@ -150,7 +150,7 @@ int32_t ListElement::ComponentAtIndex(uint32_t index, int64_t operationId,
               [this, instance_id = tasm_->GetInstanceId()](
                   lynx::perfetto::EventContext ctx) {
                 UpdateTraceDebugInfo(ctx.event());
-                ctx.event()->add_debug_annotations("instance_id",
+                ctx.event()->add_debug_annotations(INSTANCE_ID,
                                                    std::to_string(instance_id));
               });
 

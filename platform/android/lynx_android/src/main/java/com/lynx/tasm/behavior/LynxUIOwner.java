@@ -635,7 +635,7 @@ public class LynxUIOwner {
   private void traceBeginWithInstanceId(String traceEvent) {
     if (mContext != null) {
       HashMap<String, String> args = new HashMap<>();
-      args.put("instance_id", String.valueOf(mContext.getInstanceId()));
+      args.put(TraceEventDef.INSTANCE_ID, String.valueOf(mContext.getInstanceId()));
       TraceEvent.beginSection(traceEvent, args);
     } else {
       TraceEvent.beginSection(traceEvent);

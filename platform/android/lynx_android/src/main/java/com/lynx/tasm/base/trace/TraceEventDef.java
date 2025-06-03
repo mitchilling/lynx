@@ -166,4 +166,5 @@ public class TraceEventDef {
 
   public static final String FLUENCY_TRACER_START = "StartFluencyTrace";
   public static final String FLUENCY_TRACER_STOP = "StopFluencyTrace";
+  public static final String INSTANCE_ID = "instance_id";
 }

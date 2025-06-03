@@ -2230,7 +2230,7 @@ LYNX_NOT_IMPLEMENTED(-(instancetype)initWithCoder : (NSCoder*)aDecoder)
 }
 
 - (BOOL)processRender:(LynxView* _Nonnull)lynxView {
-  TRACE_EVENT(LYNX_TRACE_CATEGORY, TEMPLATE_RENDER_PROCESS_RENDER, "instanceId", [self instanceId]);
+  TRACE_EVENT(LYNX_TRACE_CATEGORY, TEMPLATE_RENDER_PROCESS_RENDER, INSTANCE_ID, [self instanceId]);
   if (shell_ == nullptr || shell_->IsDestroyed()) {
     return NO;
   }

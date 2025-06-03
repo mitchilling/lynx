@@ -1801,7 +1801,7 @@ public class LynxTemplateRender implements ILynxEngine, ILynxErrorReceiver {
     }
     HashMap map = new HashMap<String, String>();
     if (mLynxContext != null) {
-      map.put("instance_id", String.valueOf(mLynxContext.getInstanceId()));
+      map.put(TraceEventDef.INSTANCE_ID, String.valueOf(mLynxContext.getInstanceId()));
     }
     TraceEvent.beginSection(TraceEvent.CATEGORY_VITALS, eventName, map);
   }

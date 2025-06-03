@@ -64,7 +64,7 @@ void ElementVsyncProxy::RequestNextFrame() {
           TRACE_EVENT(LYNX_TRACE_CATEGORY, ELEMENT_VSYNC_PROXY_FRAME_TIME,
                       [instance_id](lynx::perfetto::EventContext ctx) {
                         ctx.event()->add_debug_annotations(
-                            "instance_id", std::to_string(instance_id));
+                            INSTANCE_ID, std::to_string(instance_id));
                       });
           // TODO(WUJINTIAN): Access animation vsync proxy and element manager
           // through engine actor, instead of accessing them directly.

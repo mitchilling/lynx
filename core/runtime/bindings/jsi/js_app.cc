@@ -2918,7 +2918,7 @@ piper::Value App::setTimeout(piper::Function func, int time) {
   }
 
   TRACE_EVENT(LYNX_TRACE_CATEGORY, BACKGROUND_THREAD_SET_TIMEOUT, "delay", time,
-              "instance_id", rt->getRuntimeId());
+              INSTANCE_ID, rt->getRuntimeId());
   return js_task_adapter_->SetTimeout(std::move(func), time);
 }
 
@@ -2928,7 +2928,7 @@ piper::Value App::setInterval(piper::Function func, int time) {
     return piper::Value::undefined();
   }
   TRACE_EVENT(LYNX_TRACE_CATEGORY, BACKGROUND_THREAD_SET_INTERVAL, "delay",
-              time, "instance_id", rt->getRuntimeId());
+              time, INSTANCE_ID, rt->getRuntimeId());
   return js_task_adapter_->SetInterval(std::move(func), time);
 }
 

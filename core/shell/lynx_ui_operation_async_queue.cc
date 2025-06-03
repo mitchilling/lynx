@@ -120,7 +120,7 @@ void LynxUIOperationAsyncQueue::FlushOnTASMThread() {
 void LynxUIOperationAsyncQueue::FlushInterval() {
   TRACE_EVENT(LYNX_TRACE_CATEGORY, UI_OPERATION_ASYNC_QUEUE_FLUSH,
               [instance_id = instance_id_](lynx::perfetto::EventContext ctx) {
-                ctx.event()->add_debug_annotations("instance_id",
+                ctx.event()->add_debug_annotations(INSTANCE_ID,
                                                    std::to_string(instance_id));
               });
 

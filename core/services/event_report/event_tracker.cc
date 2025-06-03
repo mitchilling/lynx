@@ -171,7 +171,7 @@ void EventTracker::Flush(int32_t instance_id) {
   TRACE_EVENT(LYNX_TRACE_CATEGORY, EVENT_TRACKER_FLUSH,
               [&](perfetto::EventContext ctx) {
                 auto* debug = ctx.event()->add_debug_annotations();
-                debug->set_name("instance_id");
+                debug->set_name(INSTANCE_ID);
                 debug->set_string_value(std::to_string(instance_id));
               });
   EventTracker* instance = EventTracker::Instance();

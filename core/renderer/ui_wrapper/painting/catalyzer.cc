@@ -138,7 +138,7 @@ void Catalyzer::DumpElementTree() {
                 ctx.event()->add_debug_annotations("content",
                                                    buffer.GetString());
                 ctx.event()->add_debug_annotations(
-                    "instance_id", std::to_string(this->GetInstanceId()));
+                    INSTANCE_ID, std::to_string(this->GetInstanceId()));
                 ctx.event()->add_terminating_flow_ids(flow_id);
               });
         });

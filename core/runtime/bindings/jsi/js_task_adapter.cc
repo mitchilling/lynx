@@ -11,6 +11,7 @@
 #include "base/include/fml/make_copyable.h"
 #include "base/include/fml/message_loop.h"
 #include "base/trace/native/trace_event.h"
+#include "core/runtime/trace/runtime_trace_event_def.h"
 #include "core/services/long_task_timing/long_task_monitor.h"
 
 namespace lynx {
@@ -104,7 +105,7 @@ base::closure JsTaskAdapter::MakeTask(Function func, TaskType task_type) {
           task_name = tasm::timing::kTaskNameJsTaskAdapterQueueMicrotask;
           break;
       }
-      TRACE_EVENT("lynx", task_name, "instance_id",
+      TRACE_EVENT("lynx", task_name, INSTANCE_ID,
                   static_cast<int32_t>(rt->getRuntimeId()));
 
       tasm::timing::LongTaskMonitor::Scope long_task_scope(

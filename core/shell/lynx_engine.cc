@@ -79,7 +79,7 @@ void LynxEngine::LoadTemplate(
     std::shared_ptr<tasm::PipelineOptions> pipeline_options,
     const bool enable_pre_painting, bool enable_recycle_template_bundle) {
   TRACE_EVENT(LYNX_TRACE_CATEGORY, LYNX_ENGINE_LOAD_TEMPLATE, "url", url,
-              "instance_id", instance_id_);
+              INSTANCE_ID, instance_id_);
   tasm::TimingCollector::Scope<Delegate> scope(delegate_.get(),
                                                pipeline_options);
   tasm::TimingCollector::Instance()->Mark(tasm::timing::kFfiEnd);
@@ -96,7 +96,7 @@ void LynxEngine::LoadTemplateBundle(
     std::shared_ptr<tasm::PipelineOptions> pipeline_options,
     const bool enable_pre_painting, bool enable_dump_element_tree) {
   TRACE_EVENT(LYNX_TRACE_CATEGORY, LYNX_ENGINE_LOAD_TEMPLATE_BUNDLE, "url", url,
-              "instance_id", instance_id_);
+              INSTANCE_ID, instance_id_);
   tasm::TimingCollector::Scope<Delegate> scope(delegate_.get(),
                                                pipeline_options);
   tasm::TimingCollector::Instance()->Mark(tasm::timing::kFfiEnd);

@@ -893,7 +893,7 @@ void TemplateAssembler::LoadTemplateInternal(
       LYNX_TRACE_CATEGORY_VITALS, LYNX_LOAD_TEMPLATE,
       [&url, instance_id = instance_id_](lynx::perfetto::EventContext ctx) {
         ctx.event()->add_debug_annotations("url", url);
-        ctx.event()->add_debug_annotations("instance_id",
+        ctx.event()->add_debug_annotations(INSTANCE_ID,
                                            std::to_string(instance_id));
       });
 
@@ -1278,7 +1278,7 @@ void TemplateAssembler::LoadComponentWithCallbackInfo(
                 auto* url_debug = ctx.event()->add_debug_annotations();
                 url_debug->set_name("url");
                 url_debug->set_string_value(url);
-                ctx.event()->add_debug_annotations("instance_id",
+                ctx.event()->add_debug_annotations(INSTANCE_ID,
                                                    std::to_string(instance_id));
               });
 #if ENABLE_TESTBENCH_RECORDER
@@ -1547,7 +1547,7 @@ void TemplateAssembler::UpdateComponentData(
                stacks = task.stacks_](lynx::perfetto::EventContext ctx) {
                 ctx.event()->add_debug_annotations(
                     "update_data_type", std::to_string(update_data_type));
-                ctx.event()->add_debug_annotations("instance_id",
+                ctx.event()->add_debug_annotations(INSTANCE_ID,
                                                    std::to_string(instance_id));
                 ctx.event()->add_debug_annotations("stacks", stacks);
               });
@@ -2131,7 +2131,7 @@ void TemplateAssembler::UpdateDataByJS(
                   lynx::perfetto::EventContext ctx) {
                 ctx.event()->add_debug_annotations(
                     "update_data_type", std::to_string(update_data_type));
-                ctx.event()->add_debug_annotations("instance_id",
+                ctx.event()->add_debug_annotations(INSTANCE_ID,
                                                    std::to_string(instance_id));
                 ctx.event()->add_debug_annotations("stacks", stacks);
               });

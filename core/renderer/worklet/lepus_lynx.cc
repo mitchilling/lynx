@@ -34,14 +34,14 @@ LepusLynx::LepusLynx(Napi::Env env, const std::string& entry_name,
 uint32_t LepusLynx::SetTimeout(std::unique_ptr<NapiFuncCallback> callback,
                                int64_t delay) {
   TRACE_EVENT(LYNX_TRACE_CATEGORY, LEPUS_MAIN_THREAD_SET_TIMEOUT, "delay",
-              delay, "instance_id", tasm_->GetInstanceId());
+              delay, INSTANCE_ID, tasm_->GetInstanceId());
   EnsureTimeTaskInvoker();
   auto callback_id = task_handler_->StoreTimedTask(std::move(callback));
 
   auto task_id = timer_->SetTimeout(
       fml::MakeCopyable([env = NapiEnv(), callback_id, this]() {
         TRACE_EVENT(LYNX_TRACE_CATEGORY, LEPUS_MAIN_THREAD_INVOKE_TIMEOUT_TASK,
-                    "instance_id", tasm_->GetInstanceId());
+                    INSTANCE_ID, tasm_->GetInstanceId());
         tasm::timing::LongTaskMonitor::Scope long_task_scope(
             tasm_->GetPageOptions(), tasm::timing::kTimerTask,
             tasm::timing::kTaskNameLepusLynxSetTimeout);
@@ -61,13 +61,13 @@ uint32_t LepusLynx::SetTimeout(std::unique_ptr<NapiFuncCallback> callback,
 uint32_t LepusLynx::SetInterval(std::unique_ptr<NapiFuncCallback> callback,
                                 int64_t delay) {
   TRACE_EVENT(LYNX_TRACE_CATEGORY, LEPUS_MAIN_THREAD_SET_INTERVAL, "delay",
-              delay, "instance_id", tasm_->GetInstanceId());
+              delay, INSTANCE_ID, tasm_->GetInstanceId());
   EnsureTimeTaskInvoker();
   auto callback_id = task_handler_->StoreTimedTask(std::move(callback));
   auto task_id = timer_->SetInterval(
       [callback_id, this]() {
         TRACE_EVENT(LYNX_TRACE_CATEGORY, LEPUS_MAIN_THREAD_INVOKE_INTERVAL_TASK,
-                    "instance_id", tasm_->GetInstanceId());
+                    INSTANCE_ID, tasm_->GetInstanceId());
         tasm::timing::LongTaskMonitor::Scope long_task_scope(
             tasm_->GetPageOptions(), tasm::timing::kTimerTask,
             tasm::timing::kTaskNameLepusLynxSetInterval);

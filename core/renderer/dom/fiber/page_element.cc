@@ -120,7 +120,7 @@ void PageElement::PostResolveTaskToThreadPool(
                     [instance_id](lynx::perfetto::EventContext ctx) {
                       if (instance_id != tasm::report::kUnknownInstanceId) {
                         ctx.event()->add_debug_annotations(
-                            "instance_id", std::to_string(instance_id));
+                            INSTANCE_ID, std::to_string(instance_id));
                       }
                     });
         promise.set_value(std::move(task));

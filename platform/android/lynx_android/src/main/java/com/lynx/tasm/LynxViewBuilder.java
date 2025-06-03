@@ -510,7 +510,8 @@ public class LynxViewBuilder {
     if (TraceEvent.enableTrace()) {
       HashMap<String, String> args = new HashMap<>();
       if (lynxView.getLynxContext() != null) {
-        args.put("instance_id", String.valueOf(lynxView.getLynxContext().getInstanceId()));
+        args.put(
+            TraceEventDef.INSTANCE_ID, String.valueOf(lynxView.getLynxContext().getInstanceId()));
       }
       TraceEvent.endSection(
           TraceEvent.CATEGORY_DEFAULT, TraceEventDef.LYNXVIEW_BUILDER_BUILD, args);

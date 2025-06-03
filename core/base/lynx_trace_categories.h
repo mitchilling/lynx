@@ -17,4 +17,6 @@ static constexpr const char* const LYNX_TRACE_CATEGORY_DEVTOOL_TIMELINE =
     "disabled-by-default-devtools.timeline";
 static constexpr const char* const LYNX_TRACE_CATEGORY_JSB = "jsb";
 static constexpr const char* const LYNX_TRACE_CATEGORY_ATRACE = "system";
+static constexpr const char* const INSTANCE_ID = "instance_id";
+
 #endif  // CORE_BASE_LYNX_TRACE_CATEGORIES_H_

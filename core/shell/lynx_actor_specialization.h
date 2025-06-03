@@ -54,7 +54,7 @@ class LynxActorMixin<C, T, typename std::enable_if_t<kIsLynxActor<T>>> {
                           .append(std::to_string(instance_id)),
                       [instance_id](lynx::perfetto::EventContext ctx) {
                         ctx.event()->add_debug_annotations(
-                            "instance_id", std::to_string(instance_id));
+                            INSTANCE_ID, std::to_string(instance_id));
                       });
     tasm::report::FeatureCounter::Instance()->UpdateAndBackupCurrentInstanceId(
         instance_id);
@@ -68,7 +68,7 @@ class LynxActorMixin<C, T, typename std::enable_if_t<kIsLynxActor<T>>> {
                static_cast<std::add_pointer_t<C>>(this)->GetInstanceId()](
               lynx::perfetto::EventContext ctx) {
             ctx.event()->set_name(std::string(kTag).append("::AfterInvoked"));
-            ctx.event()->add_debug_annotations("instance_id",
+            ctx.event()->add_debug_annotations(INSTANCE_ID,
                                                std::to_string(instance_id));
           });
       auto* impl = static_cast<std::add_pointer_t<C>>(this)->Impl();

@@ -1680,7 +1680,7 @@ void FiberElement::PostResolveTaskToThreadPool(
             [target](lynx::perfetto::EventContext ctx) {
               if (target->element_manager()) {
                 ctx.event()->add_debug_annotations(
-                    "instance_id",
+                    INSTANCE_ID,
                     std::to_string(target->element_manager()->GetInstanceId()));
               }
             });

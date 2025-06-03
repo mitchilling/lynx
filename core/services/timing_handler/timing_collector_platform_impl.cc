@@ -28,7 +28,7 @@ void TimingCollectorPlatformImpl::SetTiming(const tasm::PipelineID& pipeline_id,
           ctx.event()->add_debug_annotations("pipeline_id", pipeline_id);
           ctx.event()->add_debug_annotations("timestamp",
                                              std::to_string(us_timestamp));
-          ctx.event()->add_debug_annotations("instance_id",
+          ctx.event()->add_debug_annotations(INSTANCE_ID,
                                              std::to_string(instance_id));
         });
     timing_actor_->ActAsync([timing_key, us_timestamp,

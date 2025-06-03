@@ -89,7 +89,7 @@ void TimingMediator::OnPerformanceEvent(
     facade_reporter_actor_->ActAsync(
         [entry = lepus_entry, instance_id = instance_id_](auto& facade) {
           TRACE_EVENT(LYNX_TRACE_CATEGORY,
-                      PERFORMANCE_MEDIATOR_ON_PERFORMANCE_EVENT, "instance_id",
+                      PERFORMANCE_MEDIATOR_ON_PERFORMANCE_EVENT, INSTANCE_ID,
                       instance_id);
           (void)instance_id;  // Explicitly reference `instance_id` to suppress
                               // the compiler warning.
@@ -101,7 +101,7 @@ void TimingMediator::OnPerformanceEvent(
     runtime_actor_->ActAsync([entry = std::move(lepus_entry)](auto& runtime) {
       TRACE_EVENT(LYNX_TRACE_CATEGORY,
                   PERFORMANCE_MEDIATOR_ON_PERFORMANCE_EVENT_BTS_ENGINE,
-                  "instance_id", runtime->GetRuntimeId());
+                  INSTANCE_ID, runtime->GetRuntimeId());
       auto args = lepus::CArray::Create();
       args->emplace_back(BASE_STATIC_STRING(kPerformanceRuntimeCallback));
       args->emplace_back((lepus_value::ShallowCopy(entry)));
@@ -155,7 +155,7 @@ void TimingMediator::TriggerSetupRuntimeCallback(
   if (runtime_actor_ && enable_js_runtime_) {
     runtime_actor_->ActAsync([timing = std::move(lepus_timing)](auto& runtime) {
       TRACE_EVENT(LYNX_TRACE_CATEGORY,
-                  TIMING_MEDIATOR_TRIGGER_SETUP_RUNTIME_CALLBACK, "instance_id",
+                  TIMING_MEDIATOR_TRIGGER_SETUP_RUNTIME_CALLBACK, INSTANCE_ID,
                   runtime->GetRuntimeId());
       auto args = lepus::CArray::Create();
       args->emplace_back(BASE_STATIC_STRING(kSetupRuntimeCallback));
@@ -173,7 +173,7 @@ void TimingMediator::TriggerSetupRuntimeCallback(
       (void)instance_id;  // Explicitly reference `instance_id` to suppress the
                           // compiler warning.
       TRACE_EVENT(LYNX_TRACE_CATEGORY,
-                  TIMING_MEDIATOR_TRIGGER_SETUP_ENGINE_CALLBACK, "instance_id",
+                  TIMING_MEDIATOR_TRIGGER_SETUP_ENGINE_CALLBACK, INSTANCE_ID,
                   instance_id);
       auto arguments = lepus::CArray::Create();
       arguments->emplace_back(std::move(timing));
@@ -185,7 +185,7 @@ void TimingMediator::TriggerSetupRuntimeCallback(
 
 void TimingMediator::ReportSetupEvent(const TimingInfo& timing_info) const {
   TRACE_EVENT(LYNX_TRACE_CATEGORY, TIMING_MEDIATOR_REPORT_SETUP_EVENT,
-              "instance_id", instance_id_);
+              INSTANCE_ID, instance_id_);
   tasm::report::MoveOnlyEvent event;
   event.SetName(kLynxSDKSetupTiming);
   auto timing = timing_info.GetAllTimingInfoAsMicrosecond();
@@ -355,7 +355,7 @@ void TimingMediator::TriggerUpdateClientCallback(
           LYNX_TRACE_CATEGORY, TIMING_MEDIATOR_REPORT_UPDATE_CLIENT_CALLBACK,
           [&update_flag, instance_id_in](lynx::perfetto::EventContext ctx) {
             ctx.event()->add_debug_annotations("timing_flag", update_flag);
-            ctx.event()->add_debug_annotations("instance_id",
+            ctx.event()->add_debug_annotations(INSTANCE_ID,
                                                std::to_string(instance_id_in));
           });
       facade->OnTimingUpdate(timing, update_timing, update_flag);
@@ -386,7 +386,7 @@ void TimingMediator::TriggerUpdateRuntimeCallback(
           [&update_flag, instance_id = runtime->GetRuntimeId()](
               lynx::perfetto::EventContext ctx) {
             ctx.event()->add_debug_annotations("timing_flag", update_flag);
-            ctx.event()->add_debug_annotations("instance_id",
+            ctx.event()->add_debug_annotations(INSTANCE_ID,
                                                std::to_string(instance_id));
           });
       auto args = lepus::CArray::Create();
@@ -421,7 +421,7 @@ void TimingMediator::ReportUpdateEvent(const TimingInfo& timing_info,
               [&update_flag,
                instance_id = instance_id_](lynx::perfetto::EventContext ctx) {
                 ctx.event()->add_debug_annotations("timing_flag", update_flag);
-                ctx.event()->add_debug_annotations("instance_id",
+                ctx.event()->add_debug_annotations(INSTANCE_ID,
                                                    std::to_string(instance_id));
               });
   tasm::report::MoveOnlyEvent event;

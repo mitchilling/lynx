@@ -117,7 +117,7 @@ void ListItemSchedulerAdapter::ResolveElementTree(
                       lynx::perfetto::EventContext ctx) {
                     if (render_root->element_manager()) {
                       ctx.event()->add_debug_annotations(
-                          "instance_id",
+                          INSTANCE_ID,
                           std::to_string(
                               render_root->element_manager()->GetInstanceId()));
                     }

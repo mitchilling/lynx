@@ -200,7 +200,7 @@ public class UIBody extends UIGroup<UIBodyView> {
     protected void dispatchDraw(final Canvas canvas) {
       if (TraceEvent.enableTrace()) {
         HashMap<String, String> map = new HashMap<>();
-        map.put("instance_id", String.valueOf(mInstanceId));
+        map.put(TraceEventDef.INSTANCE_ID, String.valueOf(mInstanceId));
         TraceEvent.beginSection(TraceEventDef.LYNX_TEMPLATE_RENDER_DRAW, map);
       }
       boolean needLongTaskMonitor = false;
