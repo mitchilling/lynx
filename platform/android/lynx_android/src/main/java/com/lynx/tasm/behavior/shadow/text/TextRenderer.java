@@ -404,9 +404,9 @@ public class TextRenderer {
     handleWhiteSpaceWrap(textContext);
     buildTextLayout(textContext, context);
     handleAutoSize(textContext, context);
-    handleMaxWidthMode();
     handleHeightOverflowByLineCount(textContext, context);
     handleEllipsisBidiAndColorConvert(textContext, context);
+    handleMaxWidthMode();
     calcTextTranslateTopOffset();
   }
 
