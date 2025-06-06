@@ -36,7 +36,6 @@ class LynxEngine {
     Delegate() = default;
     ~Delegate() override = default;
 
-    virtual void Init() {}
     virtual void NotifyJSUpdatePageData() = 0;
     virtual void BindPipelineIDWithTimingFlag(
         const tasm::PipelineID& pipeline_id,

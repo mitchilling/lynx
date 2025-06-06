@@ -40,15 +40,12 @@ class TasmMediator : public LynxEngine::Delegate {
   TasmMediator(
       const std::shared_ptr<LynxActor<NativeFacade>>& facade_actor,
       const std::shared_ptr<LynxCardCacheDataManager>& card_cached_data_mgr,
-      const std::shared_ptr<base::VSyncMonitor>& vsync_monitor,
       const std::shared_ptr<LynxActor<tasm::LayoutContext>>& layout_actor,
       std::unique_ptr<TasmPlatformInvoker> tasm_platform_invoker,
       const std::shared_ptr<LynxActor<tasm::timing::TimingHandler>>&
           timing_actor);
 
   ~TasmMediator() override;
-
-  void Init() override;
 
   void SetRuntimeActor(
       const std::shared_ptr<LynxActor<runtime::LynxRuntime>>& actor) {
@@ -249,6 +246,7 @@ class TasmMediator : public LynxEngine::Delegate {
   }
 
  private:
+  void InitVSyncMonitorIfNeeded();
   bool IsEmbeddedModeOn() const { return page_options_.IsEmbeddedModeOn(); }
   std::shared_ptr<LynxActor<NativeFacade>> facade_actor_;
 

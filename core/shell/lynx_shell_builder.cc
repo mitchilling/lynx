@@ -242,11 +242,9 @@ LynxShell* LynxShellBuilder::build() {
   TRACE_EVENT_BEGIN(LYNX_TRACE_CATEGORY,
                     LYNX_SHELL_BUILDER_CREATE_ENGINE_ACTOR);
   // create engine actor
-  auto vsync_monitor = base::VSyncMonitor::Create();
   auto tasm_mediator = std::make_unique<TasmMediator>(
-      shell->facade_actor_, shell->card_cached_data_mgr_, vsync_monitor,
-      shell->layout_actor_, std::move(tasm_platform_invoker_),
-      shell->timing_actor_);
+      shell->facade_actor_, shell->card_cached_data_mgr_, shell->layout_actor_,
+      std::move(tasm_platform_invoker_), shell->timing_actor_);
   tasm_mediator->SetPageOptions(shell_option_.page_options_);
   shell->tasm_mediator_ = tasm_mediator.get();
   shell->engine_actor_ = std::make_shared<LynxActor<LynxEngine>>(
@@ -301,10 +299,7 @@ LynxShell* LynxShellBuilder::build() {
         element_manager->node_manager(), element_manager->air_node_manager(),
         element_manager->catalyzer());
     // @note(tangyongjie): avoid crash when lynx_shell_builder_unittest
-    if (vsync_monitor) {
-      vsync_monitor->BindTaskRunner(shell->runners_.GetTASMTaskRunner());
-      shell->engine_actor_->Act([](auto& engine) { engine->Init(); });
-    }
+    shell->engine_actor_->Act([](auto& engine) { engine->Init(); });
 
     auto painting_context = element_manager->painting_context();
     if (use_invoke_ui_method_func_) {

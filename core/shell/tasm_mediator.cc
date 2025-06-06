@@ -26,7 +26,6 @@ namespace shell {
 TasmMediator::TasmMediator(
     const std::shared_ptr<LynxActor<NativeFacade>>& facade_actor,
     const std::shared_ptr<LynxCardCacheDataManager>& card_cached_data_mgr,
-    const std::shared_ptr<base::VSyncMonitor>& vsync_monitor,
     const std::shared_ptr<LynxActor<tasm::LayoutContext>>& layout_actor,
     std::unique_ptr<TasmPlatformInvoker> tasm_platform_invoker,
     const std::shared_ptr<LynxActor<tasm::timing::TimingHandler>>& timing_actor)
@@ -34,15 +33,9 @@ TasmMediator::TasmMediator(
       layout_actor_(layout_actor),
       timing_actor_(timing_actor),
       card_cached_data_mgr_(card_cached_data_mgr),
-      vsync_monitor_(vsync_monitor),
       tasm_platform_invoker_(std::move(tasm_platform_invoker)) {}
 
 TasmMediator::~TasmMediator() = default;
-
-void TasmMediator::Init() {
-  vsync_monitor_->BindToCurrentThread();
-  vsync_monitor_->Init();
-}
 
 void TasmMediator::OnDataUpdated() {
   facade_actor_->Act([](auto& facade) { facade->OnDataUpdated(); });
@@ -232,11 +225,18 @@ void TasmMediator::OnCardConfigDataChanged(const lepus::Value& data) {
       });
 }
 
+void TasmMediator::InitVSyncMonitorIfNeeded() {
+  if (!vsync_monitor_) {
+    vsync_monitor_ = base::VSyncMonitor::Create();
+    vsync_monitor_->BindTaskRunner(GetLepusTimedTaskRunner());
+    vsync_monitor_->BindToCurrentThread();
+    vsync_monitor_->Init();
+  }
+}
+
 void TasmMediator::RequestVsync(
     uintptr_t id, base::MoveOnlyClosure<void, int64_t, int64_t> callback) {
-  if (!vsync_monitor_) {
-    return;
-  }
+  InitVSyncMonitorIfNeeded();
   vsync_monitor_->ScheduleVSyncSecondaryCallback(id, std::move(callback));
 }
 

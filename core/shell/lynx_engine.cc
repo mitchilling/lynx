@@ -61,8 +61,6 @@ LynxEngine::~LynxEngine() {
 }
 
 void LynxEngine::Init() {
-  delegate_->Init();
-
   auto& client = tasm_->page_proxy()->element_manager();
   /**
    * Init vsync_monitor here to ensure CADisplayLink on iOS platform
