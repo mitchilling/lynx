@@ -728,6 +728,9 @@ class TemplateAssembler final
   // Start pixel pipeline process;
   void RunPixelPipeline();
 
+  // Called After Layout Ends;
+  void OnLayoutAfter();
+
   // In Embedded mode, we disable event reporter by now.
   bool EnableEventReporter() const { return !IsEmbeddedModeOn(); }
 

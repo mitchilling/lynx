@@ -134,6 +134,12 @@ void LayoutMediator::OnLayoutAfter(
                         page_options = page_options_](auto &engine) mutable {
       options->has_layout = has_layout;
       HandlePendingLayoutTask(queue, catalyzer, options, page_options);
+
+      // TODO(chennengshi): Refactor this with LayoutResult;
+      engine->GetTasm()->OnLayoutAfter();
+
+      // TODO(nihao.royal): pipeline ends here, Considering Timing Info for list
+      // first screen.
       HandleListOrComponentUpdated(node_manager, options);
 
       // In EmbeddedMode, we're still exploring new client callback approaches.

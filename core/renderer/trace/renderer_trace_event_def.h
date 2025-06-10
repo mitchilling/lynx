@@ -239,6 +239,8 @@ inline constexpr const char* const DATA_PROCESSOR = "dataProcessor";
 
 /** PIPELINE_START  */
 inline constexpr const char* const LYNX_PIPELINE_RUN_PIXEL = "RunPixelPipeline";
+inline constexpr const char* const LYNX_PIPELINE_ON_LAYOUT_AFTER =
+    "OnLayoutAfter";
 inline constexpr const char* const LYNX_PIPELINE_TRIGGER_RESOLVE =
     "TriggerResolve";
 inline constexpr const char* const LYNX_PIPELINE_TRIGGER_LAYOUT =

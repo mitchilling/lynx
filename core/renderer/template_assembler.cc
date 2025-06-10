@@ -3270,6 +3270,35 @@ void TemplateAssembler::RunPixelPipeline() {
     current_pipeline_context->ResetLayoutRequested();
   }
 
+  // Trigger DataUpdated If Needed;
+  if (pipeline_option->need_trigger_data_updated_) {
+    // Currently, only client updateData, client resetData, and JS root
+    // component setData updates trigger the OnDataUpdated callback, and only
+    // when the page has actually changed. Other data updates, such as client
+    // reloadTemplate and JS child components setData, do not trigger
+    // OnDataUpdated. In order to align with this logic, the timing of
+    // OnDataUpdated is moved to the end of FiberFlushElementTree, and it is
+    // controlled by LepusRuntime through triggerDataUpdated.
+    delegate_.OnDataUpdated();
+  }
+}
+
+void TemplateAssembler::OnLayoutAfter() {
+  auto* current_pipeline_context = GetCurrentPipelineContext();
+  if (!current_pipeline_context ||
+      !current_pipeline_context->GetOptions()->enable_unified_pixel_pipeline) {
+    // quick rejection for pixel pipeline;
+    pipeline_context_manager_->ResetCurrentPipelineContext();
+    return;
+  }
+
+  auto pipeline_option = current_pipeline_context->GetOptions();
+  TRACE_EVENT(LYNX_TRACE_CATEGORY, LYNX_PIPELINE_ON_LAYOUT_AFTER,
+              [&pipeline_option](lynx::perfetto::EventContext ctx) {
+                ctx.event()->add_debug_annotations(
+                    "pipeline_id", pipeline_option->pipeline_id);
+              });
+
   // TODO(@yangguangzhao.solace): Advance Pipeline Lifecycle State;
   // Execute Flush UI OP;
   if (current_pipeline_context->IsFlushUIOperationRequested()) {
@@ -3286,20 +3315,9 @@ void TemplateAssembler::RunPixelPipeline() {
 
   // TODO(@yangguangzhao.solace): Advance Pipeline Lifecycle State;
 
-  // Trigger DataUpdated If Needed;
-  if (pipeline_option->need_trigger_data_updated_) {
-    // Currently, only client updateData, client resetData, and JS root
-    // component setData updates trigger the OnDataUpdated callback, and only
-    // when the page has actually changed. Other data updates, such as client
-    // reloadTemplate and JS child components setData, do not trigger
-    // OnDataUpdated. In order to align with this logic, the timing of
-    // OnDataUpdated is moved to the end of FiberFlushElementTree, and it is
-    // controlled by LepusRuntime through triggerDataUpdated.
-    delegate_.OnDataUpdated();
-  }
-
   // current pipeline ends, reset current pipeline context to nullptr;
   pipeline_context_manager_->ResetCurrentPipelineContext();
 }
+
 }  // namespace tasm
 }  // namespace lynx
