@@ -2518,6 +2518,20 @@ public interface com::lynx::tasm::performance::IPerformanceObserver {
   public void com.lynx.tasm.performance.IPerformanceObserver.onPerformanceEvent(@NonNull PerformanceEntry entry);
 }
 
+public interface com::lynx::tasm::behavior::ui::IProcessViewInfoHook {
+  public void com.lynx.tasm.behavior.ui.IProcessViewInfoHook.processViewInfo();
+  public void com.lynx.tasm.behavior.ui.IProcessViewInfoHook.dispatchProcessViewInfo();
+  public void com.lynx.tasm.behavior.ui.IProcessViewInfoHook.processChildViewInfo(IProcessViewInfoHook child);
+  public void com.lynx.tasm.behavior.ui.IProcessViewInfoHook.beforeProcessViewInfo(ViewInfo info);
+  public void com.lynx.tasm.behavior.ui.IProcessViewInfoHook.beforeDispatchProcessViewInfo(ViewInfo info);
+  public void com.lynx.tasm.behavior.ui.IProcessViewInfoHook.beforeProcessChildViewInfo(ViewInfo info, View child, long drawingTime);
+  public void com.lynx.tasm.behavior.ui.IProcessViewInfoHook.afterProcessChildViewInfo(ViewInfo info, View child, long drawingTime);
+  public void com.lynx.tasm.behavior.ui.IProcessViewInfoHook.afterDispatchProcessViewInfo(ViewInfo info);
+  public void com.lynx.tasm.behavior.ui.IProcessViewInfoHook.afterProcessViewInfo(ViewInfo info);
+  public void com.lynx.tasm.behavior.ui.IProcessViewInfoHook.processLayoutChildren();
+  public void com.lynx.tasm.behavior.ui.IProcessViewInfoHook.processMeasureChildren();
+}
+
 public interface com::lynx::tasm::behavior::ui::scroll::IScrollSticky {
   public void com.lynx.tasm.behavior.ui.scroll.IScrollSticky.setEnableSticky();
 }
@@ -8109,6 +8123,10 @@ public class com::lynx::tasm::behavior::StylesDiffMap :  {
   public Dynamic com.lynx.tasm.behavior.StylesDiffMap.getDynamic(String key);
   public MapBuffer com.lynx.tasm.behavior.StylesDiffMap.getStyleMap();
   public String com.lynx.tasm.behavior.StylesDiffMap.toString();
+}
+
+public class com::lynx::tasm::behavior::ui::ViewInfo::SubDrawInfo :  {
+  public com.lynx.tasm.behavior.ui.ViewInfo.SubDrawInfo.SubDrawInfo(boolean isView, Rect bound, RenderNodeCompat renderNode);
 }
 
 public class com::lynx::tasm::behavior::ui::swiper::SwiperShadowNode : com.lynx.tasm.behavior.shadow.CustomLayoutShadowNode, com.lynx.tasm.behavior.shadow.CustomMeasureFunc {
