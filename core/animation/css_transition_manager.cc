@@ -264,14 +264,14 @@ void CSSTransitionManager::TickAllAnimation(fml::TimePoint& frame_time) {
   // After traversing the set, the final_animator_maps_ is now assembled.
 }
 
-tasm::CSSKeyframesContent& CSSTransitionManager::GetKeyframesStyleMap(
+const tasm::CSSKeyframesContent& CSSTransitionManager::GetKeyframesStyleMap(
     const base::String& animation_name) {
   auto it = keyframe_tokens_.find(animation_name);
   if (it != keyframe_tokens_.end()) {
     return it->second;
   }
 
-  return empty_keyframe_map();
+  return GetEmptyKeyframeMap();
 }
 
 void CSSTransitionManager::TryToStopTransitionAnimator(

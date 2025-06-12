@@ -78,7 +78,7 @@ class CSSKeyframeManager : public AnimationDelegate {
   bool InitCurveAndModelAndKeyframe(
       AnimationCurve::CurveType type, Animation* animation, double offset,
       std::unique_ptr<TimingFunction> timing_function,
-      std::pair<tasm::CSSPropertyID, tasm::CSSValue> css_value_pair);
+      const std::pair<tasm::CSSPropertyID, tasm::CSSValue>& css_value_pair);
 
   KeyframeModel* ConstructModel(std::unique_ptr<AnimationCurve> curve,
                                 AnimationCurve::CurveType type,
@@ -86,12 +86,10 @@ class CSSKeyframeManager : public AnimationDelegate {
   bool SetKeyframeValue(
       const std::pair<tasm::CSSPropertyID, tasm::CSSValue>& css_value_pair);
 
-  virtual tasm::CSSKeyframesContent& GetKeyframesStyleMap(
+  virtual const tasm::CSSKeyframesContent& GetKeyframesStyleMap(
       const base::String& animation_name);
 
-  tasm::CSSKeyframesContent& empty_keyframe_map() {
-    return empty_keyframe_map_;
-  }
+  static const tasm::CSSKeyframesContent& GetEmptyKeyframeMap();
 
   static tasm::CSSValue GetDefaultValue(starlight::AnimationPropertyType type);
 
@@ -118,7 +116,6 @@ class CSSKeyframeManager : public AnimationDelegate {
 
  private:
   std::shared_ptr<base::VSyncMonitor> vsync_monitor_{nullptr};
-  tasm::CSSKeyframesContent empty_keyframe_map_;
 };
 
 }  // namespace animation

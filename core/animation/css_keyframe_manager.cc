@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "base/include/log/logging.h"
+#include "base/include/no_destructor.h"
 #include "core/animation/animation.h"
 #include "core/animation/animation_delegate.h"
 #include "core/animation/animation_trace_event_def.h"
@@ -64,7 +65,7 @@ KeyframeModel* CSSKeyframeManager::ConstructModel(
 bool CSSKeyframeManager::InitCurveAndModelAndKeyframe(
     AnimationCurve::CurveType type, Animation* animation, double offset,
     std::unique_ptr<TimingFunction> timing_function,
-    std::pair<tasm::CSSPropertyID, tasm::CSSValue> css_value_pair) {
+    const std::pair<tasm::CSSPropertyID, tasm::CSSValue>& css_value_pair) {
   KeyframeModel* keyframe_model =
       animation->keyframe_effect()->GetKeyframeModelByCurveType(type);
   bool has_model = (keyframe_model != nullptr);
@@ -121,7 +122,7 @@ bool CSSKeyframeManager::InitCurveAndModelAndKeyframe(
     keyframe_model = ConstructModel(std::move(new_curve), type, animation);
   }
   // set css_value to keyframe
-  if (!keyframe.get()->SetValue(css_value_pair, element_)) {
+  if (!keyframe->SetValue(css_value_pair, element_)) {
     return false;
   }
   // add keyframe into AnimationCurve
@@ -211,7 +212,7 @@ std::shared_ptr<Animation> CSSKeyframeManager::CreateAnimation(
   return animation;
 }
 
-tasm::CSSKeyframesContent& CSSKeyframeManager::GetKeyframesStyleMap(
+const tasm::CSSKeyframesContent& CSSKeyframeManager::GetKeyframesStyleMap(
     const base::String& animation_name) {
   DCHECK(element() != nullptr);
   const auto& keyframes_map = element()->keyframes_map();
@@ -226,7 +227,7 @@ tasm::CSSKeyframesContent& CSSKeyframeManager::GetKeyframesStyleMap(
   if (tokens) {
     return tokens->GetKeyframesContent();
   }
-  return empty_keyframe_map();
+  return GetEmptyKeyframeMap();
 }
 
 void CSSKeyframeManager::MakeKeyframeModel(Animation* animation,
@@ -374,6 +375,11 @@ const tasm::CssMeasureContext& CSSKeyframeManager::GetLengthContext(
     return *sDefaultLengthContext;
   }
   return element->computed_css_style()->GetMeasureContext();
+}
+
+const tasm::CSSKeyframesContent& CSSKeyframeManager::GetEmptyKeyframeMap() {
+  static base::NoDestructor<tasm::CSSKeyframesContent> kEmptyKeyframeMap;
+  return *kEmptyKeyframeMap.get();
 }
 
 tasm::CSSValue CSSKeyframeManager::GetDefaultValue(

@@ -27,7 +27,7 @@ class CSSTransitionManager : public CSSKeyframeManager {
   void setTransitionData(
       const base::Vector<starlight::TransitionData>& transition_data);
 
-  tasm::CSSKeyframesContent& GetKeyframesStyleMap(
+  const tasm::CSSKeyframesContent& GetKeyframesStyleMap(
       const base::String& animation_name) override;
 
   void TickAllAnimation(fml::TimePoint& time) override;
