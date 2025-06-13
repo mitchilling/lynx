@@ -145,7 +145,7 @@ std::string JsCacheManager::GetCacheDir() {
   return cache_path_;
 
 #else
-  std::string cache_dir = GetPlatformCacheDir();
+  static std::string cache_dir = GetPlatformCacheDir();
   std::string cache_path =
       base::PathUtils::JoinPaths({cache_dir, CacheDirName()});
   if (access(cache_path.c_str(), R_OK) == 0) {

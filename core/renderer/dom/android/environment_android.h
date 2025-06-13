@@ -13,10 +13,11 @@ namespace base {
 namespace android {
 class EnvironmentAndroid {
  public:
+  // TODO(liyanbo.monster): If this method is called from multiple places,
+  // thread-safe caching logic should be added to ensure performance. Currently,
+  // it is only called in js_cache_manager, so there is no need to worry about
+  // it.
   static std::string GetCacheDir();
-
- private:
-  static std::string s_cache_dir_;
 };
 
 }  // namespace android

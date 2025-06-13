@@ -15,20 +15,18 @@ bool RegisterJNIForEnvUtils(JNIEnv* env) { return RegisterNativesImpl(env); }
 namespace lynx {
 namespace base {
 namespace android {
-std::string EnvironmentAndroid::s_cache_dir_;
 
 std::string EnvironmentAndroid::GetCacheDir() {
-  if (s_cache_dir_.empty()) {
-    JNIEnv* env = base::android::AttachCurrentThread();
-    lynx::base::android::ScopedLocalJavaRef<jstring> dir =
-        Java_EnvUtils_getCacheDir(env);
-    const char* str = env->GetStringUTFChars(dir.Get(), JNI_FALSE);
-    if (str) {
-      s_cache_dir_ = std::string(str);
-    }
-    env->ReleaseStringUTFChars(dir.Get(), str);
+  JNIEnv* env = base::android::AttachCurrentThread();
+  lynx::base::android::ScopedLocalJavaRef<jstring> dir =
+      Java_EnvUtils_getCacheDir(env);
+  const char* str = env->GetStringUTFChars(dir.Get(), JNI_FALSE);
+  std::string path;
+  if (str) {
+    path = std::string(str);
   }
-  return s_cache_dir_;
+  env->ReleaseStringUTFChars(dir.Get(), str);
+  return path;
 }
 
 }  // namespace android
