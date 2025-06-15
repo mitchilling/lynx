@@ -238,9 +238,13 @@ jlong Create(JNIEnv* env, jclass jcaller, jlong runtime_wrapper_ptr,
              jlong white_board_ptr, jlong ui_delegate_ptr,
              jboolean use_invoke_ui_method, jboolean long_task_monitor_disabled,
              jboolean force_layout_on_background_thread,
-             jboolean enable_unified_pipeline, jint embedded_mode) {
+             jboolean enable_unified_pipeline, jint embedded_mode,
+             jlong engine_wrapper_ptr) {
   auto* ui_delegate =
       reinterpret_cast<lynx::tasm::UIDelegate*>(ui_delegate_ptr);
+
+  auto* engine_wrapper =
+      reinterpret_cast<lynx::shell::LynxEngineWrapper*>(engine_wrapper_ptr);
 
   auto lynx_env_config =
       ui_delegate->UsesLogicalPixels()
@@ -286,7 +290,10 @@ jlong Create(JNIEnv* env, jclass jcaller, jlong runtime_wrapper_ptr,
           .SetUseInvokeUIMethodFunction(use_invoke_ui_method)
           .SetNativeFacade(std::make_unique<lynx::shell::NativeFacadeAndroid>(
               env, native_facade))
-          .SetPaintingContextPlatformImpl(ui_delegate->CreatePaintingContext())
+          .SetPaintingContextPlatformImpl(
+              (engine_wrapper && engine_wrapper->HasInit())
+                  ? nullptr
+                  : ui_delegate->CreatePaintingContext())
           .SetLynxEnvConfig(lynx_env_config)
           .SetEnableElementManagerVsyncMonitor(true)
           .SetEnableLayoutOnly(enable_layout_only)
@@ -295,11 +302,15 @@ jlong Create(JNIEnv* env, jclass jcaller, jlong runtime_wrapper_ptr,
           .SetEnableUnifiedPipeline(enable_unified_pipeline)
           .SetTasmLocale(JNIConvertHelper::ConvertToString(env, locale))
           .SetEnablePreUpdateData(enable_pre_update_data)
-          .SetLayoutContextPlatformImpl(ui_delegate->CreateLayoutContext())
+          .SetLayoutContextPlatformImpl(
+              (engine_wrapper && engine_wrapper->HasInit())
+                  ? nullptr
+                  : ui_delegate->CreateLayoutContext())
           .SetStrategy(static_cast<lynx::base::ThreadStrategyForRendering>(
               thread_strategy))
           .SetEngineActor(
               [loader](auto& actor) { loader->SetEngineActor(actor); })
+          .SetLynxEngineWrapper(engine_wrapper)
           .SetRuntimeActor((runtime_wrapper != nullptr)
                                ? runtime_wrapper->GetRuntimeActor()
                                : nullptr)
@@ -1378,6 +1389,17 @@ void SetContextHasAttached(JNIEnv* env, jobject jcaller, jlong ptr,
 
   auto* shell = reinterpret_cast<LynxShell*>(ptr);
   shell->SetContextHasAttached();
+  AtomicLifecycle::TryFree(lifecycle_ptr);
+}
+
+void DetachLynxEngineWrapper(JNIEnv* env, jobject jcaller, jlong ptr,
+                             jlong lifecycle) {
+  AtomicLifecycle* lifecycle_ptr =
+      reinterpret_cast<AtomicLifecycle*>(lifecycle);
+  if (!AtomicLifecycle::TryLock(lifecycle_ptr)) {
+    return;
+  }
+  // TODO(huangweiwu): Support active unbinding from LynxEngine
   AtomicLifecycle::TryFree(lifecycle_ptr);
 }
 

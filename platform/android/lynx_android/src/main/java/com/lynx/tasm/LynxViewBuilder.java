@@ -53,6 +53,7 @@ public class LynxViewBuilder {
   boolean enableVSyncAlignedMessageLoop = false;
   boolean forceDarkAllowed = false;
   boolean enableUnifiedPipeline = false;
+  TemplateBundle templateBundle;
 
   /**
    * enable async hydration of ssr.
@@ -671,6 +672,15 @@ public class LynxViewBuilder {
     if ((embeddedMode & EmbeddedMode.EMBEDDED_MODE_BASE) > 0) {
       behaviorRegistry.setBuiltInBehaviors(BuiltInUIRegistry.getInstance().getBuiltInUIBehaviors());
     }
+    return this;
+  }
+
+  public TemplateBundle getTemplateBundle() {
+    return templateBundle;
+  }
+
+  public LynxViewBuilder setTemplateBundle(TemplateBundle templateBundle) {
+    this.templateBundle = templateBundle;
     return this;
   }
 }

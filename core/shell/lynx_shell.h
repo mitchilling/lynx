@@ -36,6 +36,7 @@
 #include "core/shell/lynx_actor_specialization.h"
 #include "core/shell/lynx_card_cache_data_manager.h"
 #include "core/shell/lynx_engine.h"
+#include "core/shell/lynx_engine_wrapper.h"
 #include "core/shell/native_facade.h"
 #include "core/shell/tasm_mediator.h"
 #include "core/shell/tasm_operation_queue.h"
@@ -438,6 +439,7 @@ class LynxShell {
   std::shared_ptr<LayoutResultManager> layout_result_manager_;
 
  private:
+  friend class LynxEngineWrapper;
   std::weak_ptr<piper::JsBundleHolder> GetWeakJsBundleHolder();
 };
 

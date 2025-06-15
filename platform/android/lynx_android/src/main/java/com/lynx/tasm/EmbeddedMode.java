@@ -58,4 +58,8 @@ public final class EmbeddedMode {
    * Note: When adding new optimization options, update this value
    */
   public static final int EMBEDDED_MODE_ALL = EMBEDDED_MODE_BASE | ENGINE_POOL | LAYOUT_IN_ELEMENT;
+
+  public static boolean isEnginePoolEnable(@EmbeddedMode.Mode int mode) {
+    return (mode & EmbeddedMode.ENGINE_POOL) > 0;
+  }
 }

@@ -104,6 +104,7 @@ public class TraceEventDef {
       "UIOwner.AfterCreateAsyncViewRunnable.";
   public static final String UI_OWNER_CREATE_VIEW_ASYNC_AFTER = "UIOwner.AfterCreateViewAsync.";
   public static final String UI_OWNER_UPDATE_FLATTEN = "UIOwner.updateFlatten.";
+  public static final String UI_OWNER_REBUILD_VIEW_TREE = "UIOwner.rebuildViewTree";
   public static final String UI_OWNER_REMOVE = "UIOwner.remove.";
   public static final String UI_OWNER_DESTORY = "UIOwner.destroy";
   public static final String UI_OWNER_LAYOUT_FINISH = "UIOwner.layoutFinish.";

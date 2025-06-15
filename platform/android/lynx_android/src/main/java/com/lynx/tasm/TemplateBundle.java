@@ -43,6 +43,16 @@ public final class TemplateBundle {
     this.pageConfig = new PageConfig(pageConfigMap);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    TemplateBundle that = (TemplateBundle) o;
+    return nativePtr == that.nativePtr && templateSize == that.templateSize;
+  }
+
   private static TemplateBundle internalBuildTemplate(byte[] template, String url) {
     TemplateBundle result = null;
     if (template != null) {

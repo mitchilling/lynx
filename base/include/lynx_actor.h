@@ -126,6 +126,35 @@ class LynxActor : public LynxActorMixin<LynxActor<T>, T>,
 
   fml::RefPtr<fml::TaskRunner>& GetRunner() { return runner_; }
 
+  // Create a new LynxActor instance using current impl.
+  // Retaining existing IDs during reuse facilitates precise identification of
+  // corresponding Engine objects.
+  std::shared_ptr<LynxActor<T>> TransferToNewActor(
+      fml::RefPtr<fml::TaskRunner> new_runner, bool new_enable = true) {
+    if (!enable_ || !impl_) {
+      return nullptr;
+    }
+    std::shared_ptr<LynxActor<T>> new_actor;
+    if (runner_->RunsTasksOnCurrentThread()) {
+      if (impl_) {
+        new_actor = std::make_shared<LynxActor<T>>(
+            std::move(impl_), std::move(new_runner), instance_id_, new_enable);
+      }
+    } else {
+      runner_->PostSyncTask([this, &new_runner, new_enable, &new_actor]() {
+        if (impl_) {
+          new_actor = std::make_shared<LynxActor<T>>(std::move(impl_),
+                                                     std::move(new_runner),
+                                                     instance_id_, new_enable);
+        }
+      });
+    }
+    return new_actor;
+    // TODO(huangweiwu): If more aggressive technical solutions are required in
+    // the future, we will consider whether to support actively pausing the
+    // runner here.
+  }
+
  private:
   template <typename F>
   void Invoke(F&& func) {

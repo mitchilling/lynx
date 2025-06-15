@@ -33,6 +33,7 @@ com/lynx/tasm/base/LLog.java
 com/lynx/tasm/core/resource/LynxResourceLoader.java
 com/lynx/tasm/core/JSProxy.java
 com/lynx/tasm/core/LynxEngineProxy.java
+com/lynx/tasm/LynxEngine.java
 com/lynx/tasm/core/ResourceLoader.java
 com/lynx/tasm/utils/TextUtils.java
 com/lynx/tasm/base/LynxNativeMemoryTracer.java

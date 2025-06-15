@@ -22,6 +22,7 @@
 #include "core/services/recorder/recorder_controller.h"
 #include "core/services/timing_handler/timing_constants_deprecated.h"
 #include "core/shell/common/shell_trace_event_def.h"
+#include "core/shell/lynx_engine_wrapper.h"
 #include "core/shell/lynx_runtime_actor_holder.h"
 #include "core/shell/runtime_mediator.h"
 #include "core/shell/runtime_standalone_helper.h"
@@ -239,9 +240,9 @@ void LynxShell::InitRuntime(
   TRACE_EVENT(LYNX_TRACE_CATEGORY, LYNX_SHELL_INIT_RUNTIME);
 #if ENABLE_TESTBENCH_RECORDER
   int64_t record_id = reinterpret_cast<int64_t>(this);
-  engine_actor_->Act(
+  engine_actor_->ActLite(
       [record_id](auto& engine) { engine->SetRecordID(record_id); });
-  layout_actor_->Act(
+  layout_actor_->ActLite(
       [record_id](auto& layout) { layout->SetRecordId(record_id); });
   module_manager->SetRecordID(record_id);
   tasm::recorder::LynxViewInitRecorder::GetInstance().RecordThreadStrategy(
@@ -1178,7 +1179,7 @@ void LynxShell::SetEnableBytecode(bool enable,
 }
 
 void LynxShell::SetPageOptions(const tasm::PageOptions& page_options) {
-  engine_actor_->Act([page_options](auto& engine) {
+  engine_actor_->ActLite([page_options](auto& engine) {
     const auto tasm = engine->GetTasm();
     if (tasm) {
       tasm->SetPageOptions(page_options);
@@ -1189,7 +1190,7 @@ void LynxShell::SetPageOptions(const tasm::PageOptions& page_options) {
       runtime->SetPageOptions(page_options);
     });
   }
-  layout_actor_->Act(
+  layout_actor_->ActLite(
       [page_options](auto& layout) { layout->SetPageOptions(page_options); });
   ui_operation_queue_->SetPageOptions(page_options);
 }

@@ -95,6 +95,7 @@ public class LynxUIRenderer implements ILynxUIRenderer {
   private boolean mEnableMultiTouch;
   private boolean mEnableFiberArc;
   private boolean mEnableNewGesture;
+  private boolean mHasInited;
 
   public static synchronized void startPixelCopyHandlerThreadIfNecessary() {
     if (mPixelCopyHandlerThread == null && LynxEnv.inst().isLynxDebugEnabled()) {
@@ -110,18 +111,22 @@ public class LynxUIRenderer implements ILynxUIRenderer {
   public void onInitLynxTemplateRender(LynxContext lynxContext, BehaviorRegistry behaviorRegistry,
       @Nullable UIBodyView body, LynxBooleanOption longTaskMonitorEnabled) {
     // Prepare owner to manage ui and shadow node
-    mLynxUIOwner = new LynxUIOwner(lynxContext, behaviorRegistry, body);
+    if (!mHasInited) {
+      mLynxUIOwner = new LynxUIOwner(lynxContext, behaviorRegistry, body);
+    }
     if (body == null) {
       // TODO(huangweiwu): Centralize the config within LynxContext
       mLynxUIOwner.setContextFree(true);
     }
     lynxContext.setLynxUIOwner(mLynxUIOwner);
+    lynxContext.setUIBody(mLynxUIOwner.getRootUI());
     mLynxContext = new WeakReference<>(lynxContext);
     mLongTaskMonitorEnabled = longTaskMonitorEnabled;
 
     // Check if the handler thread is required and start it if it hasn't been started already.
     // This is necessary for the devtool to take screenshot.
     LynxUIRenderer.startPixelCopyHandlerThreadIfNecessary();
+    mHasInited = true;
   }
 
   @Override

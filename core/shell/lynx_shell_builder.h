@@ -33,6 +33,9 @@ class LynxShellBuilder {
       const std::function<std::unique_ptr<shell::LynxEngine>(
           std::unique_ptr<TasmMediator>)>& lynx_engine_creator);
 
+  LynxShellBuilder& SetLynxEngineWrapper(
+      shell::LynxEngineWrapper* engine_wrapper);
+
   LynxShellBuilder& SetPaintingContextCreator(
       const std::function<std::unique_ptr<lynx::tasm::PaintingCtxPlatformImpl>(
           LynxShell*)>& painting_context_creator);
@@ -102,6 +105,8 @@ class LynxShellBuilder {
       base::TaskRunnerManufactor& runners,
       const std::shared_ptr<LynxCardCacheDataManager>& card_cached_data_mgr,
       int32_t instance_id, LynxShell* shell);
+  void AttachLynxEngine(LynxShell* shell);
+  //  void DetachLynxEngine()
 
   std::unique_ptr<shell::NativeFacade> native_facade_;
 
@@ -143,6 +148,7 @@ class LynxShellBuilder {
       perf_controller_actor_{};
   std::unique_ptr<tasm::performance::PerformanceControllerPlatformImpl>
       performance_controller_platform_;
+  shell::LynxEngineWrapper* lynx_engine_wrapper_{nullptr};
 
   ShellOption shell_option_;
 

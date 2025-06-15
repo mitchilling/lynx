@@ -100,6 +100,8 @@ inline constexpr const char* const LYNX_SHELL_DESTRUCTOR =
     "LynxShell::~LynxShell";
 inline constexpr const char* const LYNX_SHELL_BUILDER_CREATE_ENGINE_ACTOR =
     "LynxShell::Create::CreateEngineActor";
+inline constexpr const char* const LYNX_SHELL_BUILDER_ATTACH_ENGINE =
+    "LynxShell::Create::AttachEngine";
 inline constexpr const char* const LYNX_SHELL_INIT_RUNTIME =
     "LynxShell::InitRuntime";
 inline constexpr const char* const LYNX_SHELL_START_JS_RUNTIME =

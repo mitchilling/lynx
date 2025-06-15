@@ -128,6 +128,12 @@ LynxShellBuilder& LynxShellBuilder::SetEngineActor(
   return *this;
 }
 
+LynxShellBuilder& LynxShellBuilder::SetLynxEngineWrapper(
+    shell::LynxEngineWrapper* engine_wrapper) {
+  lynx_engine_wrapper_ = engine_wrapper;
+  return *this;
+}
+
 LynxShellBuilder& LynxShellBuilder::SetRuntimeActor(
     const std::shared_ptr<LynxActor<runtime::LynxRuntime>>& runtime_actor) {
   this->runtime_actor_ = runtime_actor;
@@ -226,43 +232,52 @@ LynxShell* LynxShellBuilder::build() {
         std::move(this->performance_controller_platform_));
   }
 
-  // create layout actor
-  std::unique_ptr<LayoutMediator> layout_mediator;
-
-  if (force_layout_on_background_thread_) {
-    shell->layout_result_manager_ = std::make_shared<LayoutResultManager>();
-
-    layout_mediator = std::make_unique<lynx::shell::LayoutMediator>(
-        shell->layout_result_manager_);
+  if (lynx_engine_wrapper_ && lynx_engine_wrapper_->HasInit()) {
+    TRACE_EVENT_BEGIN(LYNX_TRACE_CATEGORY, LYNX_SHELL_BUILDER_ATTACH_ENGINE);
+    // Indicates that a reusable LynxEngine object has been obtained.
+    AttachLynxEngine(shell);
+    LOGI("get Engine by pool");
   } else {
-    layout_mediator = std::make_unique<lynx::shell::LayoutMediator>(
-        shell->tasm_operation_queue_);
+    // create layout actor
+    std::unique_ptr<LayoutMediator> layout_mediator;
+
+    if (force_layout_on_background_thread_) {
+      shell->layout_result_manager_ = std::make_shared<LayoutResultManager>();
+
+      layout_mediator = std::make_unique<lynx::shell::LayoutMediator>(
+          shell->layout_result_manager_);
+    } else {
+      layout_mediator = std::make_unique<lynx::shell::LayoutMediator>(
+          shell->tasm_operation_queue_);
+    }
+
+    layout_mediator->SetPageOptions(shell_option_.page_options_);
+    shell->layout_mediator_ = layout_mediator.get();
+    if (layout_context_) {
+      layout_context_->SetLynxShell(shell);
+    }
+    shell->layout_actor_ = std::make_shared<LynxActor<tasm::LayoutContext>>(
+        std::make_unique<lynx::tasm::LayoutContext>(
+            std::move(layout_mediator), std::move(this->layout_context_),
+            this->lynx_env_config_, shell_option_.page_options_),
+        shell->runners_.GetLayoutTaskRunner(), shell->instance_id_);
+
+    TRACE_EVENT_BEGIN(LYNX_TRACE_CATEGORY,
+                      LYNX_SHELL_BUILDER_CREATE_ENGINE_ACTOR);
+    // create engine actor
+    auto tasm_mediator = std::make_unique<TasmMediator>(
+        shell->facade_actor_, shell->card_cached_data_mgr_,
+        shell->layout_actor_, std::move(tasm_platform_invoker_),
+        shell->perf_controller_actor_);
+    tasm_mediator->SetPageOptions(shell_option_.page_options_);
+    shell->tasm_mediator_ = tasm_mediator.get();
+    shell->engine_actor_ = std::make_shared<LynxActor<LynxEngine>>(
+        CreateLynxEngine(std::move(tasm_mediator), shell->runners_,
+                         shell->card_cached_data_mgr_, shell->instance_id_,
+                         shell),
+        shell->runners_.GetTASMTaskRunner(), shell->instance_id_);
   }
 
-  layout_mediator->SetPageOptions(shell_option_.page_options_);
-  shell->layout_mediator_ = layout_mediator.get();
-  if (layout_context_) {
-    layout_context_->SetLynxShell(shell);
-  }
-  shell->layout_actor_ = std::make_shared<LynxActor<tasm::LayoutContext>>(
-      std::make_unique<lynx::tasm::LayoutContext>(
-          std::move(layout_mediator), std::move(this->layout_context_),
-          this->lynx_env_config_, shell_option_.page_options_),
-      shell->runners_.GetLayoutTaskRunner(), shell->instance_id_);
-
-  TRACE_EVENT_BEGIN(LYNX_TRACE_CATEGORY,
-                    LYNX_SHELL_BUILDER_CREATE_ENGINE_ACTOR);
-  // create engine actor
-  auto tasm_mediator = std::make_unique<TasmMediator>(
-      shell->facade_actor_, shell->card_cached_data_mgr_, shell->layout_actor_,
-      std::move(tasm_platform_invoker_), shell->perf_controller_actor_);
-  tasm_mediator->SetPageOptions(shell_option_.page_options_);
-  shell->tasm_mediator_ = tasm_mediator.get();
-  shell->engine_actor_ = std::make_shared<LynxActor<LynxEngine>>(
-      CreateLynxEngine(std::move(tasm_mediator), shell->runners_,
-                       shell->card_cached_data_mgr_, shell->instance_id_,
-                       shell),
-      shell->runners_.GetTASMTaskRunner(), shell->instance_id_);
   this->on_engine_actor_created_(shell->engine_actor_);
   TRACE_EVENT_END(LYNX_TRACE_CATEGORY);
   shell->tasm_mediator_->SetEngineActor(shell->engine_actor_);
@@ -305,7 +320,7 @@ LynxShell* LynxShellBuilder::build() {
         shell->perf_controller_actor_, element_manager->node_manager(),
         element_manager->air_node_manager(), element_manager->catalyzer());
     // @note(tangyongjie): avoid crash when lynx_shell_builder_unittest
-    shell->engine_actor_->Act([](auto& engine) { engine->Init(); });
+    shell->engine_actor_->ActLite([](auto& engine) { engine->Init(); });
 
     auto painting_context = element_manager->painting_context();
     if (use_invoke_ui_method_func_) {
@@ -324,7 +339,20 @@ LynxShell* LynxShellBuilder::build() {
 
   shell->runtime_actor_ = runtime_actor_;
   shell->SetPageOptions(shell_option_.page_options_);
+  if (lynx_engine_wrapper_) {
+    // After creating the EngineWrapper for the first time or reusing it, the
+    // internal objects need to be updated.
+    lynx_engine_wrapper_->SetupCore(shell->engine_actor_, shell->layout_actor_,
+                                    shell->tasm_mediator_,
+                                    shell->layout_mediator_);
+  }
   return shell;
+}
+
+void LynxShellBuilder::AttachLynxEngine(LynxShell* shell) {
+  if (lynx_engine_wrapper_ && lynx_engine_wrapper_->HasInit()) {
+    lynx_engine_wrapper_->BindShell(shell);
+  }
 }
 
 std::unique_ptr<lynx::shell::LynxEngine> LynxShellBuilder::CreateLynxEngine(

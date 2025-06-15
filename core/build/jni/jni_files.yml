@@ -45,6 +45,7 @@ inputs:
   - java: com/lynx/tasm/core/JSProxy.java
   - java: com/lynx/tasm/core/LynxEngineProxy.java
   - java: com/lynx/tasm/core/LynxLayoutProxy.java
+  - java: com/lynx/tasm/LynxEngine.java
   - java: com/lynx/tasm/utils/TextUtils.java
   - java: com/lynx/tasm/base/LynxNativeMemoryTracer.java
     macro: MEMORY_TRACING

@@ -164,9 +164,7 @@ public class LynxUIOwner {
    * @param view
    */
   public void attachUIBodyView(@Nullable UIBodyView view) {
-    if (mUIBody.getBodyView() == null) {
-      mUIBody.attachUIBodyView(view);
-    }
+    mUIBody.attachUIBodyView(view);
     if (isContextFree()) {
       while (!mCreateNodeAsyncTasks.isEmpty()) {
         FutureTask<Runnable> task = mCreateNodeAsyncTasks.poll();
@@ -330,7 +328,15 @@ public class LynxUIOwner {
   }
 
   public void rebuildViewTree() {
+    String traceEvent = null;
+    if (TraceEvent.isTracingStarted()) {
+      traceEvent = TraceEventDef.UI_OWNER_REBUILD_VIEW_TREE;
+      TraceEvent.beginSection(traceEvent);
+    }
     mUIBody.rebuildViewTree();
+    if (TraceEvent.isTracingStarted()) {
+      TraceEvent.endSection(traceEvent);
+    }
   }
 
   public void updateLayout(int tag, int x, int y, int width, int height, int paddingLeft,

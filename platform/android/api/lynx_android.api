@@ -1402,12 +1402,16 @@ public class com::lynx::tasm::EmbeddedMode :  {
   public final int com.lynx.tasm.EmbeddedMode.ENGINE_POOL ENGINE_POOL;
   public final int com.lynx.tasm.EmbeddedMode.LAYOUT_IN_ELEMENT LAYOUT_IN_ELEMENT;
   public final int com.lynx.tasm.EmbeddedMode.EMBEDDED_MODE_ALL EMBEDDED_MODE_ALL;
+  public static boolean com.lynx.tasm.EmbeddedMode.isEnginePoolEnable(@EmbeddedMode.Mode int mode);
 }
 
 public enum com::lynx::tasm::behavior::event::EventTarget::EnableStatus {
   public com.lynx.tasm.behavior.event.EventTarget.EnableStatus.Enable Enable;
   public com.lynx.tasm.behavior.event.EventTarget.EnableStatus.Disable Disable;
   public com.lynx.tasm.behavior.event.EventTarget.EnableStatus.Undefined Undefined;
+}
+
+public class com::lynx::tasm::LynxEngine::EnginePlatformContext :  {
 }
 
 public interface com::lynx::react::bridge::mapbuffer::CompactArrayBuffer::Entry {
@@ -3791,6 +3795,7 @@ public class abstract com::lynx::tasm::behavior::LynxContext : com.lynx.tasm.beh
   public boolean com.lynx.tasm.behavior.LynxContext.enableTiming();
   public boolean com.lynx.tasm.behavior.LynxContext.isEmbeddedModeOn();
   public boolean com.lynx.tasm.behavior.LynxContext.isLayoutInElementModeOn();
+  public boolean com.lynx.tasm.behavior.LynxContext.isEnginePoolEnabled();
   public void com.lynx.tasm.behavior.LynxContext.setEmbeddedMode(@EmbeddedMode.Mode int embeddedMode);
   public void com.lynx.tasm.behavior.LynxContext.setEnableAsyncLoadImage(boolean b);
   public boolean com.lynx.tasm.behavior.LynxContext.isEnableAsyncLoadImage();
@@ -4081,6 +4086,14 @@ public class com::lynx::tasm::core::LynxEngineProxy :  {
   public void com.lynx.tasm.core.LynxEngineProxy.startEventCapture(long eventID);
   public void com.lynx.tasm.core.LynxEngineProxy.startEventBubble(long eventID);
   public void com.lynx.tasm.core.LynxEngineProxy.startEventFire(boolean isStop, long eventID);
+}
+
+public enum com::lynx::tasm::LynxEngine::LynxEngineState {
+  public com.lynx.tasm.LynxEngine.LynxEngineState.UN_LOADED UN_LOADED;
+  public com.lynx.tasm.LynxEngine.LynxEngineState.READY_BE_REUSED READY_BE_REUSED;
+  public com.lynx.tasm.LynxEngine.LynxEngineState.ON_REUSING ON_REUSING;
+  public com.lynx.tasm.LynxEngine.LynxEngineState.FREEZED FREEZED;
+  public com.lynx.tasm.LynxEngine.LynxEngineState.DESTROYED DESTROYED;
 }
 
 public class com::lynx::tasm::LynxEnv :  {
@@ -5692,8 +5705,11 @@ public class com::lynx::tasm::LynxTemplateRender : com.lynx.tasm.ILynxEngine, co
   public void com.lynx.tasm.LynxTemplateRender.scrollToPosition(int containerSign, int position, float offset, int align, boolean smooth);
   public void com.lynx.tasm.LynxTemplateRender.scrollStopped(int containerSign);
   public ILynxUIRenderer com.lynx.tasm.LynxTemplateRender.lynxUIRenderer();
+  public void com.lynx.tasm.LynxTemplateRender.tryRegisterLynxEngineReused();
+  public void com.lynx.tasm.LynxTemplateRender.DetachLynxEngineWrapper();
   public void com.lynx.tasm.LynxTemplateRender.setAttachLynxPageUICallback(UIBody.UIBodyView.attachLynxPageUICallback callback);
   public void com.lynx.tasm.LynxTemplateRender.addRuntimeLifecycleListener(@NonNull RuntimeLifecycleListener listener);
+  public native void com.lynx.tasm.LynxTemplateRender.nativeDetachLynxEngineWrapper(long ptr, long lifecycle);
 }
 
 public class abstract com::lynx::tasm::resourceprovider::template::LynxTemplateResourceFetcher :  {
@@ -6271,6 +6287,8 @@ public class com::lynx::tasm::LynxViewBuilder :  {
   public Map< String, String > com.lynx.tasm.LynxViewBuilder.getLynxViewConfig();
   public LynxViewBuilder com.lynx.tasm.LynxViewBuilder.insertLynxViewConfig(String key, String value);
   public LynxViewBuilder com.lynx.tasm.LynxViewBuilder.setEmbeddedMode(@EmbeddedMode.Mode int embeddedMode);
+  public TemplateBundle com.lynx.tasm.LynxViewBuilder.getTemplateBundle();
+  public LynxViewBuilder com.lynx.tasm.LynxViewBuilder.setTemplateBundle(TemplateBundle templateBundle);
   public static void com.lynx.tasm.LynxViewBuilder.setDefaultDensity(Float density);
 }
 
@@ -8342,8 +8360,7 @@ public class com::lynx::tasm::TemplateAssembler :  {
 }
 
 public class com::lynx::tasm::TemplateBundle :  {
-  public static TemplateBundle com.lynx.tasm.TemplateBundle.fromTemplate(byte[] template);
-  public static TemplateBundle com.lynx.tasm.TemplateBundle.fromTemplate(byte[] template, TemplateBundleOption option);
+  public boolean com.lynx.tasm.TemplateBundle.equals(Object o);
   public Map< String, Object > com.lynx.tasm.TemplateBundle.getExtraInfo();
   public boolean com.lynx.tasm.TemplateBundle.isElementBundleValid();
   public int com.lynx.tasm.TemplateBundle.getTemplateSize();
@@ -8357,6 +8374,8 @@ public class com::lynx::tasm::TemplateBundle :  {
   public boolean com.lynx.tasm.TemplateBundle.constructContext(int count);
   public PageConfig com.lynx.tasm.TemplateBundle.getPageConfig();
   public boolean com.lynx.tasm.TemplateBundle.constructContext();
+  public static TemplateBundle com.lynx.tasm.TemplateBundle.fromTemplate(byte[] template);
+  public static TemplateBundle com.lynx.tasm.TemplateBundle.fromTemplate(byte[] template, TemplateBundleOption option);
 }
 
 public class com::lynx::tasm::TemplateBundleOption :  {
@@ -8764,6 +8783,7 @@ public class com::lynx::tasm::base::trace::TraceEventDef :  {
   public final String com.lynx.tasm.base.trace.TraceEventDef.UI_OWNER_CREATE_VIEW_ASYNC_RUNNABLE_AFTER UI_OWNER_CREATE_VIEW_ASYNC_RUNNABLE_AFTER;
   public final String com.lynx.tasm.base.trace.TraceEventDef.UI_OWNER_CREATE_VIEW_ASYNC_AFTER UI_OWNER_CREATE_VIEW_ASYNC_AFTER;
   public final String com.lynx.tasm.base.trace.TraceEventDef.UI_OWNER_UPDATE_FLATTEN UI_OWNER_UPDATE_FLATTEN;
+  public final String com.lynx.tasm.base.trace.TraceEventDef.UI_OWNER_REBUILD_VIEW_TREE UI_OWNER_REBUILD_VIEW_TREE;
   public final String com.lynx.tasm.base.trace.TraceEventDef.UI_OWNER_REMOVE UI_OWNER_REMOVE;
   public final String com.lynx.tasm.base.trace.TraceEventDef.UI_OWNER_DESTORY UI_OWNER_DESTORY;
   public final String com.lynx.tasm.base.trace.TraceEventDef.UI_OWNER_LAYOUT_FINISH UI_OWNER_LAYOUT_FINISH;

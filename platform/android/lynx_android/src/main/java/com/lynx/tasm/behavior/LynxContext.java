@@ -202,6 +202,13 @@ public abstract class LynxContext extends LynxBaseContext implements ExceptionHa
   }
 
   /**
+   * @brief check whether engine pool is enabled
+   */
+  public boolean isEnginePoolEnabled() {
+    return EmbeddedMode.isEnginePoolEnable(embeddedMode);
+  }
+
+  /**
    * @brief embedMode setter
    * @param embeddedMode switch, normally set from LynxViewBuilder
    */

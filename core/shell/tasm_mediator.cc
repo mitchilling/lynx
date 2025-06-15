@@ -166,6 +166,14 @@ void TasmMediator::OnPipelineStart(
   });
 }
 
+void TasmMediator::ResetMediatorActor(
+    const std::shared_ptr<LynxActor<NativeFacade>>& facade_actor,
+    const std::shared_ptr<LynxActor<tasm::performance::PerformanceController>>&
+        perf_actor) {
+  facade_actor_ = facade_actor;
+  perf_actor_ = perf_actor;
+}
+
 lepus::Value TasmMediator::TriggerLepusMethod(const std::string& method_name,
                                               const lepus::Value& arguments) {
   return tasm_platform_invoker_->TriggerLepusMethod(method_name, arguments);

@@ -60,6 +60,11 @@ class TasmMediator : public LynxEngine::Delegate {
     invoke_ui_method_func_ = std::move(func);
   }
 
+  void ResetMediatorActor(
+      const std::shared_ptr<LynxActor<NativeFacade>>& facade_actor,
+      const std::shared_ptr<
+          LynxActor<tasm::performance::PerformanceController>>& perf_actor);
+
   void OnDataUpdated() override;
 
   void OnTasmFinishByNative() override;
