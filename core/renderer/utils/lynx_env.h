@@ -100,6 +100,7 @@ class BASE_EXPORT_FOR_DEVTOOL LynxEnv {
     FIX_INSERT_BEFORE_FIXED_BUG,
     OPT_DESTROY_JS_APP_EARLY,
     OPT_AVOID_DESTROY_RUNTIME_WAIT,
+    ENABLE_REPORT_BTS_CONTEXT_EVENT,
     ENABLE_FIBER_ELEMENT_MEMORY_REPORT,
     // Please add new enum values above
     END_MARK,  // Keep this as the last enum value, and do not use
@@ -211,6 +212,8 @@ class BASE_EXPORT_FOR_DEVTOOL LynxEnv {
             {Key::OPT_DESTROY_JS_APP_EARLY, "opt_destroy_js_app_early"},
             {Key::FIX_PARALLEL_Z_INDEX_CRASH, "fix_parallel_z_index_crash"},
             {Key::FIX_INSERT_BEFORE_FIXED_BUG, "fix_insert_before_fixed_bug"},
+            {Key::ENABLE_REPORT_BTS_CONTEXT_EVENT,
+             "enable_report_mts_context_event"},
             {Key::ENABLE_FIBER_ELEMENT_MEMORY_REPORT,
              "enable_fiber_element_memory_report"},
         });
@@ -336,6 +339,7 @@ class BASE_EXPORT_FOR_DEVTOOL LynxEnv {
   bool EnableUnifiedPixelPipeline();
   bool FixParallelZIndexCrash();
   bool FixInsertBeforeFixedBug();
+  bool EnableReportMTSContextEvent();
   bool EnableFiberElementMemoryReport();
 
   LynxEnv(const LynxEnv&) = delete;

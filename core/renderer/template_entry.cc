@@ -72,18 +72,20 @@ bool TemplateEntry::ConstructContext(TemplateAssembler* assembler,
       source_type =
           vm_context_ ? LepusContextSourceType::kFromGlobalPool : source_type;
     }
-    if (assembler->EnableEventReporter()) {
-      tasm::report::EventTracker::OnEvent(
-          [source_type](tasm::report::MoveOnlyEvent& event) {
-            event.SetName("quick_context_pre_create");
-            event.SetProps(
-                "use_global_context_pool",
-                source_type == LepusContextSourceType::kFromGlobalPool);
-            event.SetProps(
-                "use_bundle_context_pool",
-                source_type == LepusContextSourceType::kFromLocalPool);
-          });
-    }
+  }
+  static const bool enable_report_mts_context_event =
+      LynxEnv::GetInstance().EnableReportMTSContextEvent();
+  if (enable_report_mts_context_event && assembler->EnableEventReporter()) {
+    tasm::report::EventTracker::OnEvent(
+        [source_type, is_lepusng_binary,
+         enable_bundle_context_pool = template_bundle().EnableUseContextPool()](
+            tasm::report::MoveOnlyEvent& event) {
+          event.SetName("lynxsdk_create_mts_context");
+          event.SetProps("source_type", static_cast<int32_t>(source_type));
+          event.SetProps("is_lepusng", is_lepusng_binary ? 1 : 0);
+          event.SetProps("enable_bundle_context_pool",
+                         enable_bundle_context_pool ? 1 : 0);
+        });
   }
 
   // 3. construct a context at runtime

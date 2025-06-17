@@ -442,6 +442,10 @@ bool LynxEnv::EnableUnifiedPixelPipeline() {
   return GetBoolEnv(Key::ENABLE_UNIFIED_PIXEL_PIPELINE, false);
 }
 
+bool LynxEnv::EnableReportMTSContextEvent() {
+  return GetBoolEnv(Key::ENABLE_REPORT_BTS_CONTEXT_EVENT, false);
+}
+
 bool LynxEnv::EnableFiberElementMemoryReport() {
   return GetBoolEnv(Key::ENABLE_FIBER_ELEMENT_MEMORY_REPORT, true);
 }
