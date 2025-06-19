@@ -68,10 +68,22 @@ public class LynxRecorderActivity
       getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
     } else {
       setContentView(R.layout.recorder_activity);
-      setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
       ActionBar actionBar = getSupportActionBar();
-      if (actionBar != null) {
+      Toolbar toolbar = findViewById(R.id.toolbar);
+      if (actionBar == null) {
+        setSupportActionBar(toolbar);
+        actionBar = getSupportActionBar();
+        if (actionBar != null) {
+          actionBar.setDisplayShowTitleEnabled(false);
+        }
+      } else {
+        ViewGroup parent = (ViewGroup) toolbar.getParent();
+        if (parent != null) {
+          parent.removeView(toolbar);
+        }
         actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setCustomView(R.layout.recorder_toolbar_content);
+        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
       }
     }
     if (queryMap.getBoolean("landscape", false)) {

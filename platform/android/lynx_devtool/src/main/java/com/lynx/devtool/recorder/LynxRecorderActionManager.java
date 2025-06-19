@@ -638,7 +638,7 @@ public class LynxRecorderActionManager {
         });
       }
     } else {
-      LynxEnv.inst().getTemplateProvider().loadTemplate(mUrl, new InnerCallback());
+      (new LynxRecorderTemplateProvider()).loadTemplate(mUrl, new InnerCallback());
     }
   }
 
