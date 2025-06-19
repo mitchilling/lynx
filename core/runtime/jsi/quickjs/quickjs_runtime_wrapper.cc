@@ -5,6 +5,7 @@
 #include "core/runtime/jsi/quickjs/quickjs_runtime_wrapper.h"
 
 #include <mutex>
+#include <utility>
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,10 +27,12 @@ using detail::QuickjsHostObjectProxy;
 
 LEPUSClassID QuickjsRuntimeInstance::s_function_id_ = 0;
 LEPUSClassID QuickjsRuntimeInstance::s_object_id_ = 0;
+inline constexpr char kRawRuntimeMemoryInfo[] = "raw_memory_info_json_str";
 
 QuickjsRuntimeInstance::~QuickjsRuntimeInstance() {
   LOGE("LYNX free quickjs runtime start");
   if (rt_) {
+    LEPUS_SetGCObserver(rt_, nullptr);
     LEPUS_FreeRuntime(rt_);
   }
   GetFunctionIdContainer().erase(rt_);
@@ -48,9 +51,10 @@ LepusIdContainer& QuickjsRuntimeInstance::GetFunctionIdContainer() {
   return sFunctionIdContainer;
 }
 
-void QuickjsRuntimeInstance::InitQuickjsRuntime(bool is_sync) {
+void QuickjsRuntimeInstance::InitQuickjsRuntime(bool is_sync,
+                                                uint32_t runtime_mode) {
   LEPUSRuntime* rt;
-  rt = LEPUS_NewRuntimeWithMode(0);
+  rt = LEPUS_NewRuntimeWithMode(runtime_mode);
   if (!rt) {
     LOGE("init quickjs runtime failed!");
     return;
@@ -66,6 +70,8 @@ void QuickjsRuntimeInstance::InitQuickjsRuntime(bool is_sync) {
                 trig_mem_info_event_));
   }
   rt_ = rt;
+
+  LEPUS_SetGCObserver(rt_, static_cast<GCObserver*>(this));
 
   static std::once_flag s_init_id_flag;
   static LEPUSClassDef s_function_class_def;
@@ -112,6 +118,35 @@ void QuickjsRuntimeInstance::InitQuickjsRuntime(bool is_sync) {
   LEPUS_SetGCThreshold(rt_, INT_MAX);
 #endif
   LOGI("lynx InitQuickjsRuntime success");
+}
+
+void QuickjsRuntimeInstance::OnGC(std::string mem_info) {
+  if (!obs_set_ptr_ || obs_set_ptr_->empty()) {
+    return;
+  }
+  for (auto& observer : *obs_set_ptr_) {
+    observer->OnRuntimeGC({{kRawRuntimeMemoryInfo, mem_info}});
+  }
+}
+
+void QuickjsRuntimeInstance::AddObserver(JSIObserver* obs) {
+  if (!obs) {
+    return;
+  }
+  if (!obs_set_ptr_) {
+    obs_set_ptr_ = std::make_unique<std::unordered_set<JSIObserver*>>();
+  }
+  obs_set_ptr_->emplace(obs);
+}
+
+void QuickjsRuntimeInstance::RemoveObserver(JSIObserver* obs) {
+  if (!obs) {
+    return;
+  }
+  if (!obs_set_ptr_) {
+    obs_set_ptr_ = std::make_unique<std::unordered_set<JSIObserver*>>();
+  }
+  obs_set_ptr_->erase(obs);
 }
 
 void QuickjsRuntimeInstance::AddToIdContainer() {

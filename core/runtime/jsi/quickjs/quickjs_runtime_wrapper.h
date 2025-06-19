@@ -12,21 +12,29 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+#include <memory>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "base/include/log/logging.h"
 #include "base/include/no_destructor.h"
 #include "core/runtime/jsi/jsi.h"
+#ifdef OS_IOS
+#include "gc/trace-gc.h"
+#else
+#include "quickjs/include/trace-gc.h"
+#endif
 
 namespace lynx {
 namespace piper {
 using LepusIdContainer = std::unordered_map<LEPUSRuntime*, LEPUSClassID>;
-class QuickjsRuntimeInstance : public VMInstance {
+class QuickjsRuntimeInstance : public VMInstance, public GCObserver {
  public:
   QuickjsRuntimeInstance() = default;
   virtual ~QuickjsRuntimeInstance();
 
-  void InitQuickjsRuntime(bool is_sync = true);
+  void InitQuickjsRuntime(bool is_sync = true, uint32_t runtime_mode = 0);
   inline LEPUSRuntime* Runtime() { return rt_; }
   LEPUSClassID getFunctionId() { return s_function_id_; }
   LEPUSClassID getObjectId() { return s_object_id_; }
@@ -61,13 +69,31 @@ class QuickjsRuntimeInstance : public VMInstance {
   static LepusIdContainer& GetObjectIdContainer();
   static LepusIdContainer& GetFunctionIdContainer();
 
-  JSRuntimeType GetRuntimeType() { return piper::JSRuntimeType::quickjs; }
+  /**
+   * @brief Called when the garbage collection (GC) operation is completed to
+   * handle the post-GC memory information.
+   *
+   * This method is a concrete implementation of the `GCObserver` interface. It
+   * will receive a string containing memory-related information after the
+   * garbage collection operation ends.
+   *
+   * @param mem_info A string containing post-GC memory information. Its format
+   * could be JSON or a specific custom format.
+   */
+  void OnGC(std::string mem_info) override;
+  void AddObserver(JSIObserver* obs);
+  void RemoveObserver(JSIObserver* obs);
+
+  JSRuntimeType GetRuntimeType() override {
+    return piper::JSRuntimeType::quickjs;
+  }
 
   // Must exec in use thread.
   void AddToIdContainer();
 
  private:
   LEPUSRuntime* rt_;
+  std::unique_ptr<std::unordered_set<JSIObserver*>> obs_set_ptr_;
   static LEPUSClassID s_function_id_;
   static LEPUSClassID s_object_id_;
 };

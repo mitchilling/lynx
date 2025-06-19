@@ -26,6 +26,7 @@
 #include "core/runtime/profile/quickjs/quickjs_runtime_profiler.h"
 #include "core/runtime/trace/runtime_trace_event_def.h"
 #include "core/services/event_report/event_tracker.h"
+#include "core/services/performance/memory_monitor/memory_monitor.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,6 +77,9 @@ QuickjsRuntime::QuickjsRuntime() : quickjs_runtime_wrapper_(nullptr) {
 lynx::piper::QuickjsRuntime::~QuickjsRuntime() {
   *is_runtime_destroyed_ = true;
   ClearHostContainers();
+  if (quickjs_runtime_wrapper_) {
+    quickjs_runtime_wrapper_->RemoveObserver(this);
+  }
   context_->Release();
   context_.reset();
   LOGI("LYNX free quickjs context");
@@ -89,6 +93,7 @@ void QuickjsRuntime::InitRuntime(std::shared_ptr<JSIContext> sharedContext,
           sharedContext->getVM());
   context_ = std::static_pointer_cast<QuickjsContextWrapper>(sharedContext);
   gc_flag_ = LEPUS_IsGCMode(getJSContext());
+  quickjs_runtime_wrapper_->AddObserver(this);
 }
 
 std::shared_ptr<VMInstance> QuickjsRuntime::getSharedVM() {
@@ -112,7 +117,8 @@ std::shared_ptr<VMInstance> QuickjsRuntime::CreateVM(const StartupData *,
                                                      bool sync) {
   auto quickjs_runtime_wrapper =
       std::make_shared<lynx::piper::QuickjsRuntimeInstance>();
-  quickjs_runtime_wrapper->InitQuickjsRuntime(sync);
+  uint32_t mode = tasm::performance::MemoryMonitor::ScriptingEngineMode();
+  quickjs_runtime_wrapper->InitQuickjsRuntime(sync, mode);
   return quickjs_runtime_wrapper;
 }
 
@@ -137,6 +143,18 @@ LEPUSClassID QuickjsRuntime::getFunctionClassID() const {
 LEPUSClassID QuickjsRuntime::getObjectClassID() const {
   return quickjs_runtime_wrapper_->getObjectId();
 };
+
+void QuickjsRuntime::OnRuntimeGC(
+    std::unordered_map<std::string, std::string> mem_info) {
+  if (!observer_) {
+    return;
+  }
+  mem_info.emplace(tasm::performance::kCategory,
+                   tasm::performance::kCategoryBTSEngine);
+  mem_info.emplace(tasm::performance::kRuntimeId, std::to_string(runtime_id_));
+  mem_info.emplace(tasm::performance::kRuntimeGroupId, group_id_);
+  observer_->OnRuntimeGC(std::move(mem_info));
+}
 
 base::expected<Value, JSINativeException> QuickjsRuntime::evaluateJavaScript(
     const std::shared_ptr<const Buffer> &buffer,

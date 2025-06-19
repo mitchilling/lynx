@@ -67,10 +67,14 @@ struct UpdateDataTask {
   std::string stacks_;
 };
 
-class TemplateDelegate : public ContextProxy::Delegate {
+class TemplateDelegate : public ContextProxy::Delegate,
+                         public piper::JSIObserver {
  public:
   TemplateDelegate() {}
   virtual ~TemplateDelegate() override = default;
+
+  virtual void OnRuntimeGC(
+      std::unordered_map<std::string, std::string> mem_info) override = 0;
 
   virtual void UpdateDataByJS(UpdateDataTask task) = 0;
   virtual void UpdateBatchedDataByJS(std::vector<UpdateDataTask> tasks,

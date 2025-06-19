@@ -153,6 +153,9 @@ class TasmMediator : public LynxEngine::Delegate {
   void ReportElementMemoryInfo(float memory_size_byte,
                                int element_count) override;
 
+  void OnRuntimeGC(
+      std::unordered_map<std::string, std::string> mem_info) override;
+
   void SetTiming(tasm::Timing timing) override;
 
   virtual void BindPipelineIDWithTimingFlag(
