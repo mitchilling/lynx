@@ -952,7 +952,7 @@ void ElementManager::SetConfig(const std::shared_ptr<PageConfig> &config) {
   }
 }
 
-void ElementManager::AppendTimingFlag(std::string flag) {
+void ElementManager::AppendTimingFlag(base::String flag) {
   attribute_timing_flag_list_.Push(std::move(flag));
 }
 
@@ -963,7 +963,7 @@ void ElementManager::BindTimingFlagToPipelineOptions(
     options->need_timestamps = true;
     for (const auto &attribute_timing_flag : timing_flag) {
       delegate_->BindPipelineIDWithTimingFlag(options->pipeline_id,
-                                              attribute_timing_flag);
+                                              attribute_timing_flag.str());
     }
   }
 }

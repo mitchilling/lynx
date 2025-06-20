@@ -1181,12 +1181,11 @@ void Element::CheckTimingAttribute(const lynx::base::String& key,
   if (!value.IsString()) {
     return;
   }
-  const auto& value_str = value.StdString();
-  if (value_str.empty()) {
+  if (value.String().empty()) {
     return;
   }
 
-  element_manager()->AppendTimingFlag(std::move(value_str));
+  element_manager()->AppendTimingFlag(value.String());
 }
 
 void Element::CheckGlobalBindTarget(const lynx::base::String& key,

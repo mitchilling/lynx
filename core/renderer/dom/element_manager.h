@@ -778,7 +778,7 @@ class ElementManager : public ElementContextDelegate {
   void EraseGlobalBindElementId(const EventMap &global_event_map,
                                 const int node_id);
 
-  void AppendTimingFlag(std::string flag);
+  void AppendTimingFlag(base::String flag);
 
   auto ObtainTimingFlagList() { return attribute_timing_flag_list_.PopAll(); }
 
@@ -1288,7 +1288,7 @@ class ElementManager : public ElementContextDelegate {
   std::list<base::OnceTaskRefptr<ParallelFlushReturn>>
       parallel_resolve_tree_tasks_queue_;
 
-  base::ConcurrentQueue<std::string> attribute_timing_flag_list_;
+  base::ConcurrentQueue<base::String> attribute_timing_flag_list_;
 
   std::shared_ptr<tasm::TasmWorkerTaskRunner> task_runner_;
 
