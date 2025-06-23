@@ -6,6 +6,7 @@ package com.lynx.tasm.behavior.ui.frame;
 
 import android.content.Context;
 import androidx.annotation.RestrictTo;
+import com.lynx.tasm.TemplateBundle;
 import com.lynx.tasm.behavior.LynxContext;
 import com.lynx.tasm.behavior.ui.LynxUI;
 
@@ -17,7 +18,25 @@ public final class UIFrame extends LynxUI<LynxFrameView> {
 
   @Override
   protected LynxFrameView createView(Context context) {
-    LynxFrameView view = new LynxFrameView(context);
-    return view;
+    return new LynxFrameView(mContext);
+  }
+
+  @Override
+  public void updateExtraData(Object data) {
+    if (data instanceof TemplateBundle) {
+      LynxFrameView view = getView();
+      if (view != null) {
+        view.loadBundle((TemplateBundle) data);
+      }
+    }
+  }
+
+  @Override
+  public void onNodeRemoved() {
+    super.onNodeRemoved();
+    LynxFrameView view = getView();
+    if (view != null) {
+      view.destroy();
+    }
   }
 }

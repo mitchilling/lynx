@@ -11,18 +11,28 @@ import com.lynx.tasm.LynxError;
 import com.lynx.tasm.LynxLoadMeta;
 import com.lynx.tasm.LynxUpdateMeta;
 import com.lynx.tasm.behavior.ILynxUIRenderer;
+import com.lynx.tasm.behavior.LynxContext;
 
 @RestrictTo(RestrictTo.Scope.LIBRARY)
 public final class LynxFrameRender implements ILynxEngine, ILynxErrorReceiver {
   private ILynxUIRenderer mLynxUIRender;
+  private long mNativePtr = 0;
 
-  public void loadTemplate(final LynxLoadMeta metaData) {}
+  LynxFrameRender(LynxContext context, LynxFrameView view) {
+    // TODO(zhoupeng.z): init render with context and view
+  }
+
+  public void loadTemplate(final LynxLoadMeta metaData) {
+    // TODO(zhoupeng.z): load app bundle with mNativePtr
+  }
 
   public void updateMetaData(LynxUpdateMeta meta) {}
 
   public void updateViewport(int widthMeasureSpec, int heightMeasureSpec) {}
 
-  public void destroy() {}
+  public void destroy() {
+    // TODO(zhoupeng.z): destroy mNativePtr
+  }
 
   public void onErrorOccurred(LynxError error) {}
 }

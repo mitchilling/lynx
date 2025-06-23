@@ -1877,7 +1877,8 @@ public class LynxUIOwner {
 
   @RestrictTo(RestrictTo.Scope.LIBRARY)
   void setFrameAppBundle(int tag, TemplateBundle bundle) {
-    // TODO(zhoupeng.z): post to frame ui
+    // TODO(zhoupeng.z): use `updateViewExtraData` directly on native
+    updateViewExtraData(tag, bundle);
   }
 
   public float[] measureText(int sign, ReadableCompactArrayBuffer valueArray, float width,

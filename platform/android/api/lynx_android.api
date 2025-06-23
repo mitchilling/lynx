@@ -9046,6 +9046,8 @@ public class com::lynx::tasm::behavior::ui::UIExposure : com.lynx.tasm.behavior.
 
 public class com::lynx::tasm::behavior::ui::frame::UIFrame : com::lynx::tasm::behavior::ui::LynxUI< LynxFrameView > {
   public com.lynx.tasm.behavior.ui.frame.UIFrame.UIFrame(LynxContext context);
+  public void com.lynx.tasm.behavior.ui.frame.UIFrame.updateExtraData(Object data);
+  public void com.lynx.tasm.behavior.ui.frame.UIFrame.onNodeRemoved();
 }
 
 public class abstract com::lynx::tasm::behavior::ui::UIGroup : com.lynx.tasm.behavior.ui.LynxUI< T >, com.lynx.tasm.behavior.ui.UIParent, com.lynx.tasm.behavior.ui.IDrawChildHook {
