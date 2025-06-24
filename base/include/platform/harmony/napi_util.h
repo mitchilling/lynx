@@ -108,10 +108,6 @@ class NapiUtil {
                               const std::unordered_map<int32_t, double> map);
   static napi_value CreateMap(
       napi_env env, const std::unordered_map<std::string, std::string> map);
-  static napi_value CreateMap(
-      napi_env env,
-      const std::unordered_map<std::string, std::variant<std::string, double>>
-          map);
 
   static napi_value CreatePtrArray(napi_env env, uint64_t ptr);
 

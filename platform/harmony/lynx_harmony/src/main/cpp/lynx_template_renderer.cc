@@ -403,34 +403,6 @@ void LynxTemplateRenderer::OnPageChanged(bool is_first_screen) {
   base::NapiUtil::AsyncInvokeJsMethod(env_, template_renderer_ref_,
                                       "onPageChanged", 1, param);
 }
-
-void LynxTemplateRenderer::OnPerformanceEvent(const lepus::Value& entry) {
-  if (!entry.IsTable() || entry.Table()->size() == 0) {
-    return;
-  }
-
-  std::unordered_map<std::string, std::variant<std::string, double>> entry_map;
-  for (const auto& prop : *(entry.Table())) {
-    if (prop.second.IsString()) {
-      entry_map.emplace(prop.first.str(), prop.second.StdString());
-    } else if (prop.second.IsNumber()) {
-      entry_map.emplace(prop.first.str(), prop.second.Number());
-    }
-  }
-
-  // napi must be executed on the main thread
-  fml::TaskRunner::RunNowOrPostTask(
-      shell_->GetRunners()->GetUITaskRunner(),
-      base::MoveOnlyClosure([env = env_,
-                             template_renderer_ref = template_renderer_ref_,
-                             entry_map = std::move(entry_map)] {
-        napi_value param[1];
-        param[0] = base::NapiUtil::CreateMap(env, entry_map);
-        base::NapiUtil::AsyncInvokeJsMethod(env, template_renderer_ref,
-                                            "onPerformanceEvent", 1, param);
-      }));
-}
-
 void LynxTemplateRenderer::OnFirstLoadPerfReady(
     const std::unordered_map<int32_t, double>& perf,
     const std::unordered_map<int32_t, std::string>& perf_timing) {

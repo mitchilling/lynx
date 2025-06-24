@@ -355,31 +355,6 @@ napi_value NapiUtil::CreateMap(
   return result;
 }
 
-napi_value NapiUtil::CreateMap(
-    napi_env env,
-    const std::unordered_map<std::string, std::variant<std::string, double>>
-        map) {
-  napi_value result;
-  napi_create_object(env, &result);
-  for (const auto& pair : map) {
-    napi_value key, value;
-    napi_create_string_utf8(env, pair.first.c_str(), pair.first.length(), &key);
-    if (std::holds_alternative<std::string>(pair.second)) {
-      std::string str_value = std::get<std::string>(pair.second);
-      napi_create_string_utf8(env, str_value.c_str(), str_value.length(),
-                              &value);
-    } else if (std::holds_alternative<double>(pair.second)) {
-      double double_value = std::get<double>(pair.second);
-      napi_create_double(env, double_value, &value);
-    } else {
-      continue;
-    }
-
-    napi_set_property(env, result, key, value);
-  }
-  return result;
-}
-
 napi_value NapiUtil::CreateMap(napi_env env,
                                const std::unordered_map<int32_t, double> map) {
   napi_value result;

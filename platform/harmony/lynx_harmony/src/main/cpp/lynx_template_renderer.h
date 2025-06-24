@@ -106,7 +106,6 @@ class LynxTemplateRenderer : public devtool::LynxDevToolProxy {
                         const std::vector<uint8_t>& source,
                         const std::shared_ptr<tasm::TemplateData>& data);
   void OnTemplateBundleReady(const tasm::LynxTemplateBundle& bundle);
-  void OnPerformanceEvent(const lepus::Value& entry);
   void OnPageConfigDecoded(const std::shared_ptr<tasm::PageConfig>& config);
 
   // LynxEmbedderProxy
