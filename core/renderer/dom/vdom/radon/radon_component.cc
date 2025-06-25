@@ -857,7 +857,8 @@ void RadonComponent::SetCSSVariables(
   if (dispatch_option.has_patched_) {
     page_proxy_->element_manager()->SetNeedsLayout();
   };
-  page_proxy_->element_manager()->OnPatchFinish(pipeline_options);
+
+  page_proxy_->RequestResolve(pipeline_options);
 }
 
 void RadonComponent::Refresh(

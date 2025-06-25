@@ -743,7 +743,8 @@ void RadonPage::Refresh(const DispatchOption &option,
   RadonMyersDiff(original_radon_children, option);
   // TODO(kechenglong): SetNeedsLayout if and only if needed.
   page_proxy_->element_manager()->SetNeedsLayout();
-  page_proxy_->element_manager()->OnPatchFinish(pipeline_options);
+
+  page_proxy_->RequestResolve(pipeline_options);
 }
 
 void RadonPage::SetCSSVariables(

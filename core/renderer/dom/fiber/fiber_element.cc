@@ -2877,7 +2877,9 @@ bool FiberElement::IsRelatedCSSVariableUpdated(
   return changed;
 }
 
-void FiberElement::UpdateCSSVariable(const lepus::Value &css_variable_updated) {
+void FiberElement::UpdateCSSVariable(
+    const lepus::Value &css_variable_updated,
+    std::shared_ptr<PipelineOptions> &pipeline_option) {
   TRACE_EVENT(LYNX_TRACE_CATEGORY, FIBER_ELEMENT_UPDATE_CSS_VARIABLE,
               [this](lynx::perfetto::EventContext ctx) {
                 UpdateTraceDebugInfo(ctx.event());
@@ -2895,8 +2897,16 @@ void FiberElement::UpdateCSSVariable(const lepus::Value &css_variable_updated) {
     MarkStyleDirty(false);
   }
   RecursivelyMarkChildrenCSSVariableDirty(css_variable_updated);
-  auto option = std::make_shared<PipelineOptions>();
-  element_manager()->OnPatchFinish(option, this);
+
+  // TODO(nihao.royal): use `enable_unified_pixel_pipeline` to switch multi
+  // behaviours. After `RunPixelPipeline` is unified, we may remove the
+  // redundant logic here.
+  if (pipeline_option->enable_unified_pixel_pipeline) {
+    pipeline_option->resolve_requested = true;
+    pipeline_option->target_node = this;
+  } else {
+    element_manager()->OnPatchFinish(pipeline_option, this);
+  }
 }
 
 bool FiberElement::ResolveStyleValue(CSSPropertyID id,

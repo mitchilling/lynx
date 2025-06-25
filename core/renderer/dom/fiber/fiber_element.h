@@ -389,7 +389,8 @@ class FiberElement : public Element,
    * Element API for updating css variables
    * @param variables the css variables to be updated from JS.
    */
-  void UpdateCSSVariable(const lepus::Value& variables);
+  void UpdateCSSVariable(const lepus::Value& variables,
+                         std::shared_ptr<PipelineOptions>& pipeline_option);
 
   /**
    * Element API for removing all inline styles.

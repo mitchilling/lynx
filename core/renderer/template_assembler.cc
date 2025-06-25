@@ -2823,8 +2823,11 @@ void TemplateAssembler::SetCSSVariables(
     const std::string& component_id, const std::string& id_selector,
     const lepus::Value& properties,
     std::shared_ptr<PipelineOptions>& pipeline_options) {
+  pipeline_context_manager_->CreateAndUpdateCurrentPipelineContext(
+      pipeline_options);
   page_proxy()->SetCSSVariables(component_id, id_selector, properties,
                                 pipeline_options);
+  this->RunPixelPipeline();
 }
 
 void TemplateAssembler::SetNativeProps(
@@ -3110,7 +3113,6 @@ void TemplateAssembler::RenderPageWithSSRData(
 
 Themed& TemplateAssembler::Themed() { return page_proxy_.themed(); }
 
-// For fiber
 void TemplateAssembler::CallLepusMethod(const std::string& method_name,
                                         lepus::Value args,
                                         const piper::ApiCallBack& callback,

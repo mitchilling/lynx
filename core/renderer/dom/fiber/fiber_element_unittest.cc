@@ -5807,7 +5807,8 @@ TEST_P(FiberElementTest, UpdateCSSVariables) {
 
   auto css_variable_value = lepus::Dictionary::Create();
   css_variable_value->SetValue("--main-bg-color", lepus::Value("red"));
-  fiber_element_2->UpdateCSSVariable(lepus::Value(css_variable_value));
+  auto options = std::make_shared<PipelineOptions>();
+  fiber_element_2->UpdateCSSVariable(lepus::Value(css_variable_value), options);
   painting_context->Flush();
 
   auto* painting_node_4_after_updated =
