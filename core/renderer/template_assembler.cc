@@ -3256,9 +3256,10 @@ ContextProxyInLepus* TemplateAssembler::GetContextProxy(
   return context_proxy_vector_[index].get();
 }
 
-lepus::Value TemplateAssembler::GetCustomSection(const std::string& key) {
-  // TODO(zhoupeng.z): support to get custom section from lazy bundles
-  return FindEntry(tasm::DEFAULT_ENTRY_NAME)->GetCustomSection(key);
+lepus::Value TemplateAssembler::GetCustomSection(
+    const std::string& key, const std::string& bundle_name) {
+  auto bundle = FindTemplateEntry(bundle_name);
+  return bundle ? bundle->GetCustomSection(key) : lepus::Value();
 }
 
 void TemplateAssembler::OnNativeAppReady() {

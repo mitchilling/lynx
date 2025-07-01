@@ -3501,8 +3501,17 @@ JsContent App::GetJSContent(const std::string& bundle_name,
   return delegate_->GetJSContentFromExternal(bundle_name, name, timeout);
 }
 
-lepus::Value App::GetCustomSectionSync(const std::string& key) {
-  return card_bundle_.custom_sections.GetProperty(key);
+lepus::Value App::GetCustomSectionSync(const std::string& key,
+                                       const std::string& bundle_name) {
+  if (bundle_name == tasm::DEFAULT_ENTRY_NAME) {
+    return card_bundle_.custom_sections.GetProperty(key);
+  } else {
+    auto iter = component_bundles_.find(bundle_name);
+    if (iter != component_bundles_.end()) {
+      return iter->second.custom_sections.GetProperty(key);
+    }
+    return lepus::Value();
+  }
 }
 
 void App::SetSourceMapRelease(common::JSErrorInfo error_info) {

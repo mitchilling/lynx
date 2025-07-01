@@ -207,7 +207,8 @@ class App : public std::enable_shared_from_this<App> {
 
   bool IsDestroying() { return state_ == State::kDestroying; }
 
-  lepus::Value GetCustomSectionSync(const std::string& key);
+  lepus::Value GetCustomSectionSync(const std::string& key,
+                                    const std::string& bundle_name);
 
   // For fiber
   void CallLepusMethod(const std::string& method_name, lepus::Value args,

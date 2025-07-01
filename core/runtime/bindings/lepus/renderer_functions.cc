@@ -963,10 +963,15 @@ RENDERER_FUNCTION_CC(GetEngine) {
 RENDERER_FUNCTION_CC(GetCustomSectionSync) {
   CHECK_ARGC_GE(GetCustomSectionSync, 1);
   CONVERT_ARG_AND_CHECK(arg0, 0, String, GetCustomSectionSync);
+  std::string bundle_name = tasm::DEFAULT_ENTRY_NAME;
+  if (argc > 1) {
+    CONVERT_ARG_AND_CHECK(arg1, 1, String, GetCustomSectionSync);
+    bundle_name = arg1->StdString();
+  }
 
   auto* tasm = GET_TASM_POINTER();
   if (tasm) {
-    RETURN(tasm->GetCustomSection(arg0->StdString()));
+    RETURN(tasm->GetCustomSection(arg0->StdString(), bundle_name));
   }
 
   RETURN_UNDEFINED();

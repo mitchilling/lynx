@@ -369,7 +369,7 @@ piper::Value LynxProxy::GetCustomSectionSync(Runtime &rt,
         if (count < 1) {
           return base::unexpected(BUILD_JSI_NATIVE_EXCEPTION(
               std::string(runtime::kGetCustomSectionSync) +
-              "'s args count must be 1."));
+              "'s args must has 'key' argument."));
         }
 
         auto native_app = native_app_.lock();
@@ -381,8 +381,17 @@ piper::Value LynxProxy::GetCustomSectionSync(Runtime &rt,
                 "'s first params must be String."));
           }
           auto key = args[0].getString(rt).utf8(rt);
-          piper::Value res =
-              *valueFromLepus(rt, native_app->GetCustomSectionSync(key));
+          std::string bundle_name = LEPUS_DEFAULT_CONTEXT_NAME;
+          if (count > 1) {
+            if (!args[1].isString()) {
+              return base::unexpected(BUILD_JSI_NATIVE_EXCEPTION(
+                  std::string(runtime::kGetCustomSectionSync) +
+                  "'s second params must be String."));
+            }
+            bundle_name = args[1].getString(rt).utf8(rt);
+          }
+          piper::Value res = *valueFromLepus(
+              rt, native_app->GetCustomSectionSync(key, bundle_name));
           return res;
         }
 

@@ -883,15 +883,27 @@ function reportException(nativeApp, message, stack, errorCode, errorLevel) {
 TEST_P(AppTest, GetCustomSectionSyncTest) {
   EXPECT_TRUE(app);
 
+  constexpr char kExceptRes1[] = "Hello world";
   // add custom sections : { "s": "Hello world"}
   tasm::TasmRuntimeBundle card_bundle;
-  constexpr char kExceptRes[] = "Hello world";
   card_bundle.custom_sections = lepus::Value{lepus::Dictionary::Create({
-      {base::String("s"), lepus::Value{kExceptRes}},
+      {base::String("s"), lepus::Value{kExceptRes1}},
   })};
+
   app->loadApp(std::move(card_bundle), lepus::Value(),
                tasm::PackageInstanceDSL::TT,
                tasm::PackageInstanceBundleModuleMode::EVAL_REQUIRE_MODE, "url");
+
+  constexpr char kExceptRes2[] = "Hello s1";
+  {
+    // add custom sections : { "s1": "Hello s1"}
+    tasm::TasmRuntimeBundle bundle;
+    bundle.name = "s1_entry";
+    bundle.custom_sections = lepus::Value{lepus::Dictionary::Create({
+        {base::String("s1"), lepus::Value{kExceptRes2}},
+    })};
+    app->OnComponentDecoded(std::move(bundle));
+  }
 
   // `lynx.getCustomSectionSync` func
   auto lynx_proxy = std::make_shared<piper::LynxProxy>(app);
@@ -909,7 +921,7 @@ TEST_P(AppTest, GetCustomSectionSyncTest) {
     EXPECT_TRUE(res->isString());
     auto res_str = res->asString(rt);
     ASSERT_TRUE(res_str);
-    EXPECT_EQ(res_str->utf8(rt), kExceptRes);
+    EXPECT_EQ(res_str->utf8(rt), kExceptRes1);
   }
 
   // lynx.getCustomSectionSync("n_s") -> null
@@ -928,6 +940,21 @@ TEST_P(AppTest, GetCustomSectionSyncTest) {
   {
     auto res = get_custom_section_sync(R"((0))");
     EXPECT_TRUE(res->isUndefined());
+  }
+
+  // lynx.getCustomSectionSync("s1", "s1_entry") -> "Hello s1"
+  {
+    auto res = get_custom_section_sync(R"(("s1", "s1_entry"))");
+    EXPECT_TRUE(res->isString());
+    auto res_str = res->asString(rt);
+    ASSERT_TRUE(res_str);
+    EXPECT_EQ(res_str->utf8(rt), kExceptRes2);
+  }
+
+  // lynx.getCustomSectionSync("n_s", "s1_entry") -> null
+  {
+    auto res = get_custom_section_sync(R"(("n_s", "s1_entry"))");
+    EXPECT_TRUE(res->isNull());
   }
 }
 
