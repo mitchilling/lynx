@@ -150,14 +150,13 @@ jobs:
         run: |-
           cd $GITHUB_WORKSPACE/lynx
           source tools/envsetup.sh
-          cd $GITHUB_WORKSPACE
-          python3 lynx/tools/ios_tools/cocoapods_publish_helper.py --prepare-source --tag ${{ inputs.version }} --component all
+          python3 tools/ios_tools/cocoapods_publish_helper.py --prepare-source --tag ${{ inputs.version }} --component all
       - name: Push iOS SDK to release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ inputs.version }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          artifacts: '*.zip'
+          artifacts: '${{ github.workspace }}/lynx/*.zip'
           replacesArtifacts: true
           allowUpdates: true
       - name: Publish to CocoaPods Repo
@@ -166,8 +165,7 @@ jobs:
         run: |-
           cd $GITHUB_WORKSPACE/lynx
           source tools/envsetup.sh
-          cd $GITHUB_WORKSPACE
           git config --global user.name "lynx.authors"
           git config --global user.email "lynx.authors@users.noreply.github.com"
-          python3 lynx/tools/ios_tools/skip_pod_lint.py --source public
-          python3 lynx/tools/ios_tools/cocoapods_publish_helper.py --publish --component all  --tag ${{ inputs.version }}
+          python3 tools/ios_tools/skip_pod_lint.py --source public
+          python3 tools/ios_tools/cocoapods_publish_helper.py --publish --component all  --tag ${{ inputs.version }}

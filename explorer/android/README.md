@@ -146,10 +146,10 @@ pyenv global 3.9 # or higher
 
 ### Pull the Repository
 
-Pull the code from the Github repository and specify the path(`src/lynx`) to avoid contaminating the directory when installing dependencies.
+Pull the code from the Github repository.
 
 ```
-git clone https://github.com/lynx-family/lynx.git src/lynx
+git clone https://github.com/lynx-family/lynx.git
 ```
 
 ### Get the Dependent Files
@@ -159,7 +159,7 @@ After getting the project repository, execute the following commands in the root
 - MacOS and Linux
 
     ```bash
-    cd src/lynx
+    cd lynx
     source tools/envsetup.sh
     tools/hab sync .
     ```
@@ -167,7 +167,7 @@ After getting the project repository, execute the following commands in the root
 - Windows
 
     ```powershell
-    cd src\lynx
+    cd lynx
     tools\envsetup.ps1
     tools\hab.ps1 sync .
     ```

@@ -50,19 +50,6 @@ We recommend using macOS as the development operating system. Windows and Linux 
 - [Integrating Lynx with an Existing Application](https://lynxjs.org/guide/start/integrate-with-existing-apps.html)
 
 ## How to Contribute
-### Get the Code
-Instead of cloning the repository right away, please consider taking an extra step.
-
-To effectively manage dependencies using our custom tool, [Habitat](https://github.com/lynx-family/habitat), it is recommended to create an additional directory.
-For instance, you could name this directory `src`:
-
-```
-git clone https://github.com/lynx-family/lynx.git src/lynx
-```
-
-For now, `src` contains only `lynx`. However as you proceed to build Lynx, you'll notice several installed dependencies there.
-This additional `src` directory helps keep your workplace organized.
-
 ### [Code of Conduct][coc]
 We are devoted to ensuring a positive, inclusive, and safe environment for all contributors. Please find our [Code of Conduct][coc] for detailed information.
 

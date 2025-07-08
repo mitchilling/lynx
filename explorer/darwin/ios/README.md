@@ -39,10 +39,10 @@ pip3 install pyyaml
 
 ### Pull the Repository
 
-Pull the code from the Github repository and specify the path(`src/lynx`) to avoid contaminating the directory when installing dependencies.
+Pull the code from the Github repository.
 
 ```
-git clone https://github.com/lynx-family/lynx.git src/lynx
+git clone https://github.com/lynx-family/lynx.git
 ```
 
 ### Install Third-party Library
@@ -50,7 +50,7 @@ git clone https://github.com/lynx-family/lynx.git src/lynx
 Run the following commands from the root of the repository to install the dependencies.
 
 ```
-cd src/lynx
+cd lynx
 tools/hab sync .
 source tools/envsetup.sh
 ```

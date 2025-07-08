@@ -197,8 +197,8 @@ jobs:
           python3 tools/oliver/lynx-tasm/gn_to_cmake_oliver.py
           pushd oliver/lynx-tasm
           npm install
-          ../../../buildtools/cmake/bin/cmake .
-          ../../../buildtools/cmake/bin/cmake --build .
+          ../../buildtools/cmake/bin/cmake .
+          ../../buildtools/cmake/bin/cmake --build .
           ./lepus_cmd
 
           npm run build:release:darwin
