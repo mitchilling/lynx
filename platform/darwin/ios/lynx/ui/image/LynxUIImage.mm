@@ -154,6 +154,7 @@ LYNX_REGISTER_SHADOW_NODE("image")
 @property(nonatomic, assign) BOOL isDirty;
 @property(nonatomic) CGSize lastFrameSize;
 @property(nonatomic, assign) BOOL enableImageEventReport;
+@property(nonatomic, assign) BOOL enableImageAsyncLayout;
 @property(nonatomic, assign) BOOL enableGenericFetcher;
 @property(nonatomic, strong) NSDictionary* additional_custom_info;
 @property(nonatomic, strong) NSString* request_priority;
@@ -188,6 +189,7 @@ LYNX_REGISTER_UI("image")
   _lastFrameSize = CGSizeZero;
   _isDirty = YES;
   _enableImageEventReport = [LynxEnv.sharedInstance enableImageEventReport];
+  _enableImageAsyncLayout = [LynxEnv.sharedInstance enableImageAsyncLayout];
   _frameCacheAutomatically = LynxBooleanOptionUnset;
 }
 
@@ -283,6 +285,16 @@ LYNX_REGISTER_UI("image")
   }
 }
 
+- (void)justShadowNodeSize:(LynxShadowNode*)node {
+  // If the frameDidChange changes is just a flick, ignore it to avoid dead loop as the flick
+  // will constantly exists and keeps calling frameDidChange.
+  if (![self isLayoutFlick:self.prevSize withAnotherSize:self.frame.size]) {
+    [node setMeasureDelegate:self];
+    [node internalSetNeedsLayoutForce];
+    self.prevSize = self.frame.size;
+  }
+}
+
 - (void)onImageReady:(UIImage*)image withRequest:(LynxURL*)requestURL {
   __weak typeof(self) weakSelf = self;
   __block void (^ready)(UIImage*, LynxURL*) = ^(UIImage* image, LynxURL* requestURL) {
@@ -305,20 +317,27 @@ LYNX_REGISTER_UI("image")
     }
     if (strongSelf.autoSize &&
         UIEdgeInsetsEqualToEdgeInsets(strongSelf.capInsets, UIEdgeInsetsZero)) {
-      LynxShadowNodeOwner* owner = strongSelf.context.nodeOwner;
-      if (!owner) {
-        return;
-      }
-      LynxShadowNode* node = [owner nodeWithSign:strongSelf.sign];
-      if (!node) {
-        return;
-      }
-      // If the frameDidChange changes is just a flick, ignore it to avoid dead loop as the flick
-      // will constantly exists and keeps calling frameDidChange.
-      if (![strongSelf isLayoutFlick:strongSelf.prevSize withAnotherSize:strongSelf.frame.size]) {
-        [node setMeasureDelegate:strongSelf];
-        [node internalSetNeedsLayoutForce];
-        strongSelf.prevSize = strongSelf.frame.size;
+      if (strongSelf.enableImageAsyncLayout) {
+        __weak typeof(strongSelf) layoutWeakSelf = strongSelf;
+        [self.context findShadowNodeAndRunTask:strongSelf.sign
+                                          task:^(LynxShadowNode* node) {
+                                            typeof(layoutWeakSelf) layoutStrongSelf =
+                                                layoutWeakSelf;
+                                            if (!layoutStrongSelf) {
+                                              return;
+                                            }
+                                            [layoutStrongSelf justShadowNodeSize:node];
+                                          }];
+      } else {
+        LynxShadowNodeOwner* owner = strongSelf.context.nodeOwner;
+        if (!owner) {
+          return;
+        }
+        LynxShadowNode* node = [owner nodeWithSign:strongSelf.sign];
+        if (!node) {
+          return;
+        }
+        [strongSelf justShadowNodeSize:node];
       }
     }
 

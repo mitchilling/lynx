@@ -166,6 +166,8 @@ public class LynxEnv {
 
   protected boolean mEnableImageEventReport = false;
 
+  protected boolean mEnableImageAsyncLayout = true;
+
   // Whether enable reporting image memory with new protocol
   protected boolean mEnableImageMemoryReport = false;
 
@@ -1232,6 +1234,10 @@ public class LynxEnv {
     return mEnableImageAsyncRequest;
   }
 
+  public boolean enableImageAsyncLayout() {
+    return mEnableImageAsyncLayout;
+  }
+
   protected void initImageExperimentSettings() {
     mDisableImagePostProcessor =
         getBooleanFromExternalEnv(LynxEnvKey.DISABLE_POST_PROCESSOR, false);
@@ -1244,6 +1250,7 @@ public class LynxEnv {
         getBooleanFromExternalEnv(LynxEnvKey.ENABLE_IMAGE_ASYNC_REQUEST, false);
     mEnableImageEventReport =
         getBooleanFromExternalEnv(LynxEnvKey.ENABLE_IMAGE_EVENT_REPORT, false);
+    mEnableImageAsyncLayout = getBooleanFromExternalEnv(LynxEnvKey.ENABLE_IMAGE_ASYNC_LAYOUT, true);
   }
 
   /**

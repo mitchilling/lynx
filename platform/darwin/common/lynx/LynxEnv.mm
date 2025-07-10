@@ -465,6 +465,16 @@
   return enableImageEventReport;
 }
 
+- (BOOL)enableImageAsyncLayout {
+  static dispatch_once_t onceToken;
+  static BOOL enableImageAsyncLayout = YES;
+  dispatch_once(&onceToken, ^{
+    enableImageAsyncLayout = [self boolFromExternalEnv:LynxEnvEnableImageAsyncLayout
+                                          defaultValue:YES];
+  });
+  return enableImageAsyncLayout;
+}
+
 - (BOOL)enableTextContainerOpt {
   static dispatch_once_t onceToken;
   static BOOL enableTextContainerOpt = NO;
@@ -595,6 +605,7 @@
     @(LynxEnvEnableTextLayerRender) : @"enable_text_layer_render",
     @(LynxEnvEnableCreateUIAsync) : @"enable_create_ui_async",
     @(LynxEnvEnableImageEventReport) : @"enable_image_event_report",
+    @(LynxEnvEnableImageAsyncLayout) : @"enable_image_async_layout",
     @(LynxEnvEnableGenericResourceFetcher) : @"enable_generic_resource_fetcher",
     @(LynxEnvEnableAnimationSyncTimeOpt) : @"enable_animation_sync_time_opt",
     @(LynxEnvFixNewImageDownSampling) : @"fix_new_image_downsampling",

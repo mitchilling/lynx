@@ -1266,6 +1266,7 @@ public class LynxEnv : NSObject {
   public void LynxEnv::enableFluencyTracer:(BOOL value);
   public BOOL LynxEnv::enableComponentStatisticReport();
   public BOOL LynxEnv::enableImageEventReport();
+  public BOOL LynxEnv::enableImageAsyncLayout();
   public BOOL LynxEnv::enableGenericResourceFetcher();
   public BOOL LynxEnv::enableTextContainerOpt();
   public BOOL LynxEnv::enableTextStorageDeallocFix();
@@ -5572,6 +5573,7 @@ public enum LynxEnvKey {
   LynxEnvEnableTextLayerRender
   LynxEnvEnableCreateUIAsync
   LynxEnvEnableImageEventReport
+  LynxEnvEnableImageAsyncLayout
   LynxEnvEnableGenericResourceFetcher
   LynxEnvEnableAnimationSyncTimeOpt
   LynxEnvFixNewImageDownSampling
