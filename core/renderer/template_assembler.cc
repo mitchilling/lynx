@@ -1495,11 +1495,40 @@ void TemplateAssembler::ReportError(base::LynxError error) {
 }
 
 void TemplateAssembler::OnScriptingStart() {
-  // TODO(songshourui.null): impl this later
+  // Within the `OnScriptingStart` function, check if
+  // `GetCurrentPipelineContext()` returns null. If empty, this invocation of
+  // `OnScriptingStart` might be triggered by a JS API callback execution. In
+  // such cases, call `CreateAndUpdateCurrentPipelineContext()` to construct a
+  // context for the current pipeline, and set `created_in_on_scripting_start_ =
+  // true` to indicate that this pipeline was initiated by the
+  // `OnScriptingStart` marker.
+  auto* context = pipeline_context_manager_->GetCurrentPipelineContext();
+  if (context != nullptr) {
+    return;
+  }
+
+  if (execute_on_layout_ready_hooks_ != nullptr) {
+    return;
+  }
+
+  std::shared_ptr<PipelineOptions> current_option =
+      std::make_shared<PipelineOptions>();
+  current_option->created_in_on_scripting_start_ = true;
+  pipeline_context_manager_->CreateAndUpdateCurrentPipelineContext(
+      current_option);
 }
 
 void TemplateAssembler::OnScriptingEnd() {
-  // TODO(songshourui.null): impl this later
+  // If the current pipeline was initiated during the OnScriptingStart phase,
+  // invoke RunPixelPipeline to trigger subsequent processes.
+  auto* context = pipeline_context_manager_->GetCurrentPipelineContext();
+  if (context == nullptr) {
+    return;
+  }
+
+  if (context->GetOptions()->created_in_on_scripting_start_) {
+    RunPixelPipeline();
+  }
 }
 
 void TemplateAssembler::ReportGCTimingEvent(const char* start,

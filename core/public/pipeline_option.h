@@ -92,6 +92,9 @@ struct PipelineOptions {
   bool force_resolve_style_ = false;
   // Whether mark entire tree dirty and reset style sheet or not.
   bool force_update_style_sheet_ = false;
+  // indicate this option is created in on scripting start
+  bool created_in_on_scripting_start_ = false;
+
   // This variable records the order of native update data. Used for syncFlush
   // only.
   uint32_t native_update_data_order_ = 0;
