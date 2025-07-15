@@ -165,80 +165,78 @@ Value Cast(size_t v) {
 }
 }  // namespace
 
-#define TEST_FUNC_SET_INSERT(TYPE, DATA_COUNT, SET, ...)                   \
-  static void BM_##SET##_insert_##DATA_COUNT##_##TYPE(                     \
-      benchmark::State& state) {                                           \
-    state.SetLabel(STRINGIFY(SET) "<" FOREACH_STRINGIFY(__VA_ARGS__) ">"); \
-    using SetType = SET<__VA_ARGS__>;                                      \
-    constexpr size_t kDataCount = DATA_COUNT;                              \
-    constexpr size_t kDestructionBatchCount = 50;                          \
-    vector<SetType::key_type> data;                                        \
-                                                                           \
-    /* Generate data. Keys should not be ordered. */                       \
-    int data_index = 0;                                                    \
-    data.resize(kDataCount);                                               \
-    for (size_t i = 0; i < kDataCount / 2; i++) {                          \
-      data[data_index++] = Cast<SetType::key_type>(i);                     \
-    }                                                                      \
-    for (size_t i = kDataCount - 1; i >= kDataCount / 2; i--) {            \
-      data[data_index++] = Cast<SetType::key_type>(i);                     \
-    }                                                                      \
-                                                                           \
-    size_t total = 0;                                                      \
-    for (auto _ : state) {                                                 \
-      SetType* sets[kDestructionBatchCount];                               \
-      for (size_t i = 0; i < kDestructionBatchCount; i++) {                \
-        sets[i] = new SetType();                                           \
-        for (const auto& key : data) {                                     \
-          sets[i]->insert(key);                                            \
-        }                                                                  \
-        total += sets[i]->size();                                          \
-      }                                                                    \
-      state.PauseTiming();                                                 \
-      for (size_t i = 0; i < kDestructionBatchCount; i++) {                \
-        delete sets[i]; /* destruction time not measured */                \
-      }                                                                    \
-      state.ResumeTiming();                                                \
-    }                                                                      \
+#define TEST_FUNC_SET_INSERT(TYPE, DATA_COUNT, SET, ...)        \
+  static void BM_##SET##_insert_##DATA_COUNT##_##TYPE(          \
+      benchmark::State& state) {                                \
+    using SetType = SET<__VA_ARGS__>;                           \
+    constexpr size_t kDataCount = DATA_COUNT;                   \
+    constexpr size_t kDestructionBatchCount = 50;               \
+    vector<SetType::key_type> data;                             \
+                                                                \
+    /* Generate data. Keys should not be ordered. */            \
+    int data_index = 0;                                         \
+    data.resize(kDataCount);                                    \
+    for (size_t i = 0; i < kDataCount / 2; i++) {               \
+      data[data_index++] = Cast<SetType::key_type>(i);          \
+    }                                                           \
+    for (size_t i = kDataCount - 1; i >= kDataCount / 2; i--) { \
+      data[data_index++] = Cast<SetType::key_type>(i);          \
+    }                                                           \
+                                                                \
+    size_t total = 0;                                           \
+    for (auto _ : state) {                                      \
+      SetType* sets[kDestructionBatchCount];                    \
+      for (size_t i = 0; i < kDestructionBatchCount; i++) {     \
+        sets[i] = new SetType();                                \
+        for (const auto& key : data) {                          \
+          sets[i]->insert(key);                                 \
+        }                                                       \
+        total += sets[i]->size();                               \
+      }                                                         \
+      state.PauseTiming();                                      \
+      for (size_t i = 0; i < kDestructionBatchCount; i++) {     \
+        delete sets[i]; /* destruction time not measured */     \
+      }                                                         \
+      state.ResumeTiming();                                     \
+    }                                                           \
   }
 
-#define TEST_FUNC_MAP_INSERT(TYPE, DATA_COUNT, MAP, ...)                   \
-  static void BM_##MAP##_insert_##DATA_COUNT##_##TYPE(                     \
-      benchmark::State& state) {                                           \
-    state.SetLabel(STRINGIFY(MAP) "<" FOREACH_STRINGIFY(__VA_ARGS__) ">"); \
-    using MapType = MAP<__VA_ARGS__>;                                      \
-    constexpr size_t kDataCount = DATA_COUNT;                              \
-    constexpr size_t kDestructionBatchCount = 50;                          \
-    vector<pair<MapType::key_type, MapType::mapped_type>> data;            \
-                                                                           \
-    /* Generate data. Keys should not be ordered. */                       \
-    int data_index = 0;                                                    \
-    data.resize(kDataCount);                                               \
-    for (size_t i = 0; i < kDataCount / 2; i++) {                          \
-      data[data_index].first = Cast<MapType::key_type>(i);                 \
-      data[data_index++].second = Cast<MapType::mapped_type>(i);           \
-    }                                                                      \
-    for (size_t i = kDataCount - 1; i >= kDataCount / 2; i--) {            \
-      data[data_index].first = Cast<MapType::key_type>(i);                 \
-      data[data_index++].second = Cast<MapType::mapped_type>(i);           \
-    }                                                                      \
-                                                                           \
-    size_t total = 0;                                                      \
-    for (auto _ : state) {                                                 \
-      MapType* maps[kDestructionBatchCount];                               \
-      for (size_t i = 0; i < kDestructionBatchCount; i++) {                \
-        maps[i] = new MapType();                                           \
-        for (auto it = data.begin(); it != data.end(); it++) {             \
-          (*maps[i])[it->first] = it->second;                              \
-        }                                                                  \
-        total += maps[i]->size();                                          \
-      }                                                                    \
-      state.PauseTiming();                                                 \
-      for (size_t i = 0; i < kDestructionBatchCount; i++) {                \
-        delete maps[i]; /* destruction time not measured */                \
-      }                                                                    \
-      state.ResumeTiming();                                                \
-    }                                                                      \
+#define TEST_FUNC_MAP_INSERT(TYPE, DATA_COUNT, MAP, ...)         \
+  static void BM_##MAP##_insert_##DATA_COUNT##_##TYPE(           \
+      benchmark::State& state) {                                 \
+    using MapType = MAP<__VA_ARGS__>;                            \
+    constexpr size_t kDataCount = DATA_COUNT;                    \
+    constexpr size_t kDestructionBatchCount = 50;                \
+    vector<pair<MapType::key_type, MapType::mapped_type>> data;  \
+                                                                 \
+    /* Generate data. Keys should not be ordered. */             \
+    int data_index = 0;                                          \
+    data.resize(kDataCount);                                     \
+    for (size_t i = 0; i < kDataCount / 2; i++) {                \
+      data[data_index].first = Cast<MapType::key_type>(i);       \
+      data[data_index++].second = Cast<MapType::mapped_type>(i); \
+    }                                                            \
+    for (size_t i = kDataCount - 1; i >= kDataCount / 2; i--) {  \
+      data[data_index].first = Cast<MapType::key_type>(i);       \
+      data[data_index++].second = Cast<MapType::mapped_type>(i); \
+    }                                                            \
+                                                                 \
+    size_t total = 0;                                            \
+    for (auto _ : state) {                                       \
+      MapType* maps[kDestructionBatchCount];                     \
+      for (size_t i = 0; i < kDestructionBatchCount; i++) {      \
+        maps[i] = new MapType();                                 \
+        for (auto it = data.begin(); it != data.end(); it++) {   \
+          (*maps[i])[it->first] = it->second;                    \
+        }                                                        \
+        total += maps[i]->size();                                \
+      }                                                          \
+      state.PauseTiming();                                       \
+      for (size_t i = 0; i < kDestructionBatchCount; i++) {      \
+        delete maps[i]; /* destruction time not measured */      \
+      }                                                          \
+      state.ResumeTiming();                                      \
+    }                                                            \
   }
 
 #define TEST_SET_INSERT_S(DATA_COUNT, SET, ...)         \
