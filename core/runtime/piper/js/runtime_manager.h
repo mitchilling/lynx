@@ -46,7 +46,8 @@ class BASE_EXPORT_FOR_DEVTOOL RuntimeManagerDelegate {
   // LynxDevtool will use the switch "enable_v8" together with this parameter to
   // determine the type.
   virtual std::shared_ptr<piper::Runtime> MakeRuntime(
-      bool force_use_lightweight_js_engine) = 0;
+      bool force_use_lightweight_js_engine,
+      bool use_shared_context = false) = 0;
 #if ENABLE_TRACE_PERFETTO
   virtual std::shared_ptr<profile::RuntimeProfiler> MakeRuntimeProfiler(
       std::shared_ptr<piper::JSIContext> js_context,
@@ -99,7 +100,7 @@ class BASE_EXPORT_FOR_DEVTOOL RuntimeManager
       std::shared_ptr<piper::JSIExceptionHandler> exception_handler,
       bool force_use_lightweight_js_engine, int64_t rt_id, bool enable_bytecode,
       const std::string& bytecode_source_url,
-      piper::BytecodeGetter bytecode_getter);
+      piper::BytecodeGetter bytecode_getter, bool use_shared_context = false);
 
   std::shared_ptr<piper::JSIContext> GetSharedJSContext(
       const std::string& group_id);
@@ -108,7 +109,7 @@ class BASE_EXPORT_FOR_DEVTOOL RuntimeManager
       std::shared_ptr<piper::Runtime>& rt, const std::string& group_id);
 
   std::shared_ptr<piper::Runtime> MakeRuntime(
-      bool force_use_lightweight_js_engine);
+      bool force_use_lightweight_js_engine, bool use_shared_context = false);
 #if ENABLE_TRACE_PERFETTO
   std::shared_ptr<profile::RuntimeProfiler> MakeRuntimeProfiler(
       std::shared_ptr<piper::JSIContext> js_context,

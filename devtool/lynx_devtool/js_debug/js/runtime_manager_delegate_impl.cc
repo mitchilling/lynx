@@ -12,6 +12,9 @@
 #include "core/runtime/profile/v8/v8_runtime_profiler.h"
 #endif
 #include "core/runtime/jsi/quickjs/quickjs_api.h"
+#if JS_ENGINE_TYPE == 1
+#include "core/runtime/jsi/jsc/jsc_api.h"
+#endif
 
 #if ENABLE_NAPI_BINDING
 #include "core/runtime/bindings/napi/napi_runtime_proxy_v8.h"
@@ -67,8 +70,13 @@ void RuntimeManagerDelegateImpl::OnRelease(const std::string& group_id) {
 }
 
 std::shared_ptr<piper::Runtime> RuntimeManagerDelegateImpl::MakeRuntime(
-    bool force_use_lightweight_js_engine) {
+    bool force_use_lightweight_js_engine, bool use_shared_context) {
 #if !ENABLE_UNITTESTS
+  // When using a shared js context, create a runtime of the same type as the
+  // context.
+  if (use_shared_context) {
+    return MakeRuntimeForSharedContext(force_use_lightweight_js_engine);
+  }
   long v8_enable = tasm::LynxEnv::GetInstance().GetV8Enabled();
   switch (v8_enable) {
     case 0:
@@ -97,6 +105,29 @@ std::shared_ptr<piper::Runtime> RuntimeManagerDelegateImpl::MakeRuntime(
   }
   LOGF("js debug: MakeRuntime fail! v8_enable: "
        << v8_enable << ", force_use_lightweight_js_engine: "
+       << force_use_lightweight_js_engine);
+#endif
+  return nullptr;
+}
+
+std::shared_ptr<piper::Runtime>
+RuntimeManagerDelegateImpl::MakeRuntimeForSharedContext(
+    bool force_use_lightweight_js_engine) {
+#if !ENABLE_UNITTESTS
+  LOGI("js debug: create runtime for shared js context!")
+  if (force_use_lightweight_js_engine) {
+    LOGI("js debug: make Quickjs runtime");
+    return piper::makeQuickJsRuntime();
+  } else {
+#if JS_ENGINE_TYPE == 1
+    LOGI("js debug: make JSC runtime");
+    return piper::makeJSCRuntime();
+#elif JS_ENGINE_TYPE == 0 || OS_ANDROID
+    LOGI("js debug: make V8 runtime");
+    return piper::makeV8Runtime();
+#endif
+  }
+  LOGF("js debug: failed to create runtime! force_use_lightweight_js_engine: "
        << force_use_lightweight_js_engine);
 #endif
   return nullptr;

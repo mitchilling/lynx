@@ -233,8 +233,6 @@ enum KeyType { NORMAL_KEY, ERROR_KEY, CDP_DOMAIN_KEY };
            forKey:(NSString *)key
       needPersist:(BOOL)persist
      syncToNative:(BOOL)sync {
-  BOOL curValue = [self getSwitch:key withDefaultValue:[self getDefaultValue:key]];
-
   if (persist) {
     NSUserDefaults *preference = [NSUserDefaults standardUserDefaults];
     [preference setBool:value forKey:key];
@@ -245,8 +243,6 @@ enum KeyType { NORMAL_KEY, ERROR_KEY, CDP_DOMAIN_KEY };
   if (sync) {
     [self syncToNative:value forKey:key];
   }
-
-  [self killAppIfChangeJsEngine:key withValue:curValue];
 }
 
 - (BOOL)getSwitch:(NSString *)key withDefaultValue:(BOOL)value {
@@ -449,44 +445,6 @@ enum KeyType { NORMAL_KEY, ERROR_KEY, CDP_DOMAIN_KEY };
 
 - (BOOL)quickjsDebugEnabled {
   return [self get:SP_KEY_ENABLE_QUICKJS_DEBUG withDefaultValue:YES];
-}
-
-- (void)killAppIfChangeJsEngine:(NSString *)key withValue:(BOOL)value {
-#if OS_IOS
-  if ([key isEqualToString:SP_KEY_ENABLE_DEVTOOL]) {
-    BOOL curValue = [self get:SP_KEY_ENABLE_DEVTOOL withDefaultValue:NO];
-    if (curValue != value) {
-      dispatch_async(dispatch_get_main_queue(), ^{
-        UIAlertController *alert = [UIAlertController
-            alertControllerWithTitle:@""
-                             message:@"JS engine has changed, app needs to be restarted!"
-                      preferredStyle:UIAlertControllerStyleAlert];
-        [alert addAction:[UIAlertAction actionWithTitle:@"Confirm"
-                                                  style:UIAlertActionStyleDefault
-                                                handler:^(UIAlertAction *action) {
-                                                  [self KillApp];
-                                                }]];
-        UIViewController *controller = [LynxUIKitAPIAdapter getKeyWindow].rootViewController;
-        UIViewController *presentedController = controller.presentedViewController;
-        while (presentedController && ![presentedController isBeingDismissed]) {
-          controller = presentedController;
-          presentedController = controller.presentedViewController;
-        }
-        [controller presentViewController:alert animated:YES completion:nil];
-      });
-    }
-  }
-#endif
-}
-
-- (void)KillApp {
-#if OS_IOS
-  dispatch_async(dispatch_get_main_queue(), ^{
-    UIApplication *app = [UIApplication sharedApplication];
-    [app performSelector:@selector(suspend)];
-    exit(0);
-  });
-#endif
 }
 
 - (void)setPerfMetricsEnabled:(BOOL)enable {

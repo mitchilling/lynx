@@ -248,9 +248,10 @@ std::shared_ptr<piper::Runtime> RuntimeManager::CreateJSRuntime(
         }
       }
       need_create_context_wrapper = false;
-      js_runtime = CreateRuntime(
-          group_id, exception_handler, force_use_lightweight_js_engine, rt_id,
-          enable_bytecode, bytecode_source_url, std::move(bytecode_getter));
+      js_runtime =
+          CreateRuntime(group_id, exception_handler,
+                        force_use_lightweight_js_engine, rt_id, enable_bytecode,
+                        bytecode_source_url, std::move(bytecode_getter), true);
       js_runtime->setCreatedType(
           piper::JSRuntimeCreatedType::none_vm_none_context);
       LOGI("get shared_context success, context:" << js_context.get()
@@ -329,8 +330,9 @@ std::shared_ptr<piper::Runtime> RuntimeManager::CreateRuntime(
     std::shared_ptr<piper::JSIExceptionHandler> exception_handler,
     bool force_use_lightweight_js_engine, int64_t rt_id, bool enable_bytecode,
     const std::string& bytecode_source_url,
-    piper::BytecodeGetter bytecode_getter) {
-  auto js_runtime = MakeRuntime(force_use_lightweight_js_engine);
+    piper::BytecodeGetter bytecode_getter, bool use_shared_context) {
+  auto js_runtime =
+      MakeRuntime(force_use_lightweight_js_engine, use_shared_context);
   js_runtime->setRuntimeId(rt_id);
   js_runtime->SetEnableUserBytecode(enable_bytecode);
   js_runtime->SetBytecodeSourceUrl(bytecode_source_url);
@@ -424,10 +426,10 @@ void RuntimeManager::EnsureConsolePostMan(
 }
 
 std::shared_ptr<piper::Runtime> RuntimeManager::MakeRuntime(
-    bool force_use_lightweight_js_engine) {
+    bool force_use_lightweight_js_engine, bool use_shared_context) {
   if (IsInspectEnabled(force_use_lightweight_js_engine)) {
     return runtime_manager_delegate_->MakeRuntime(
-        force_use_lightweight_js_engine);
+        force_use_lightweight_js_engine, use_shared_context);
   }
 
 #ifdef __APPLE__
