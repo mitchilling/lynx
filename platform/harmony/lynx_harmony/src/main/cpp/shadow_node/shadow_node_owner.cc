@@ -469,6 +469,7 @@ void ShadowNodeOwner::UpdateRootSize(float width, float height) {
     context_->RunOnUIThread([weak_owner = weak_from_this(), width, height] {
       auto strong_owner = weak_owner.lock();
       if (strong_owner && strong_owner->js_) {
+        base::NapiHandleScope scope(strong_owner->env_);
         napi_value args[2];
         napi_create_double(strong_owner->env_, width, &args[0]);
         napi_create_double(strong_owner->env_, height, &args[1]);

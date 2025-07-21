@@ -75,6 +75,7 @@ void LynxInfoReporterHelper::ReportTemplateInfo(const std::string& url) {
   if (!info_reporter_) {
     return;
   }
+  base::NapiHandleScope scope(env_);
   // report last_async_component_url
   // assign LynxTemplateType.ASYNC_COMPONENT
   constexpr int32_t kAsyncComponentType = 1;
@@ -83,7 +84,7 @@ void LynxInfoReporterHelper::ReportTemplateInfo(const std::string& url) {
   napi_create_int32(env_, kAsyncComponentType, &call_args[0]);
   napi_create_string_utf8(env_, url.c_str(), NAPI_AUTO_LENGTH, &call_args[1]);
   base::NapiUtil::InvokeJsMethod(env_, info_reporter_, kReportLynxTemplateEvent,
-                                 2, call_args);
+                                 2, call_args, nullptr);
 }
 
 }  // namespace harmony

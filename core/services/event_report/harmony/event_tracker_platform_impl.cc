@@ -68,6 +68,7 @@ napi_status CallJSUpdateGenericInfo(int32_t instance_id,
         "env_, js_self_ref_ or js_update_generic_info_func_ not found.");
     return napi_invalid_arg;
   }
+  base::NapiHandleScope scope(env_);
   /**
    * LynxEventReporter.updateGenericInfoCallByNative(instanceId, genericInfo);
    *
@@ -132,6 +133,7 @@ void EventTrackerPlatformImpl::OnEvent(int32_t instance_id,
                        "env_, js_self_ref_ or js_on_event_func_ not found.");
       return;
     }
+    base::NapiHandleScope scope(harmony::env_);
 
     napi_value instance_id_napi_value =
         base::NapiUtil::CreateInt32(harmony::env_, instance_id);
@@ -227,6 +229,7 @@ void EventTrackerPlatformImpl::ClearCache(int32_t instance_id) {
       LOGI("env_, js_self_ref_ or js_clear_cache_func_ not found.");
       return;
     }
+    base::NapiHandleScope scope(harmony::env_);
     /**
      * LynxEventReporter.clearCacheCallByNative(instanceId);
      *

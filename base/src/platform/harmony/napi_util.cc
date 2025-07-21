@@ -434,26 +434,10 @@ uint64_t NapiUtil::ConvertToPtr(napi_env env, napi_value arr) {
   return (static_cast<uint64_t>(ptr_high) << 32) + ptr_low;
 }
 
-static napi_status InvokerJsMethodInternal(napi_env env, napi_value napi_obj,
-                                           const char* method_name, size_t argc,
-                                           const napi_value* argv,
-                                           napi_value* result) {
-  static const char* const kGetPropertyFailed =
-      "napi_get_named_property fail: %s";
-  static const char* const kCallFunctionFailed = "napi_call_function fail: %s";
-  napi_value fn;
-  napi_status status = napi_get_named_property(env, napi_obj, method_name, &fn);
-  NAPI_THROW_IF_FAILED_STATUS(env, status, kGetPropertyFailed, method_name);
-  status = napi_call_function(env, napi_obj, fn, argc, argv, result);
-  NAPI_THROW_IF_FAILED_STATUS(env, status, kCallFunctionFailed, method_name);
-  return napi_ok;
-}
-
 napi_status NapiUtil::InvokeJsMethod(napi_env env, napi_ref ref_napi_obj,
                                      napi_ref ref_napi_method, size_t argc,
                                      const napi_value* argv,
                                      napi_value* result) {
-  NapiHandleScope scope(env);
   napi_value napi_obj;
   napi_get_reference_value(env, ref_napi_obj, &napi_obj);
   napi_value napi_method;
@@ -465,19 +449,9 @@ napi_status NapiUtil::InvokeJsMethod(napi_env env, napi_ref ref_napi_obj,
   return napi_call_function(env, napi_obj, napi_method, argc, argv, result);
 }
 
-napi_status NapiUtil::InvokeJsMethod(napi_env env, napi_ref ref_napi_obj,
-                                     const char* method_name, size_t argc,
-                                     const napi_value* argv,
-                                     napi_value* result) {
-  NapiHandleScope scope(env);
-  return InvokeJsMethodNoScope(env, ref_napi_obj, method_name, argc, argv,
-                               result);
-}
-
 napi_status NapiUtil::AsyncInvokeJsMethod(napi_env env, napi_ref ref_napi_obj,
                                           const char* method_name, size_t argc,
                                           const napi_value* argv) {
-  NapiHandleScope scope(env);
   napi_value work_name;
   napi_create_string_utf8(env, "NapiUtil::AsyncInvokeJsMethod",
                           NAPI_AUTO_LENGTH, &work_name);
@@ -512,9 +486,8 @@ napi_status NapiUtil::AsyncInvokeJsMethod(napi_env env, napi_ref ref_napi_obj,
                          napi_delete_reference(context->env, ref);
                          return value;
                        });
-        InvokeJsMethodNoScope(env, context->ref_napi_obj,
-                              context->method_name.c_str(),
-                              context->args.size(), argv.data(), nullptr);
+        InvokeJsMethod(env, context->ref_napi_obj, context->method_name.c_str(),
+                       context->args.size(), argv.data(), nullptr);
         napi_delete_reference(env, context->ref_napi_obj);
         napi_delete_async_work(env, context->async_work);
         delete context;
@@ -523,27 +496,32 @@ napi_status NapiUtil::AsyncInvokeJsMethod(napi_env env, napi_ref ref_napi_obj,
   return napi_queue_async_work(env, context->async_work);
 }
 
-napi_status NapiUtil::InvokeJsMethod(napi_env env, napi_value napi_obj,
+napi_status NapiUtil::InvokeJsMethod(napi_env env, napi_ref ref_napi_obj,
                                      const char* method_name, size_t argc,
                                      const napi_value* argv,
                                      napi_value* result) {
-  NapiHandleScope scope(env);
-  return InvokerJsMethodInternal(env, napi_obj, method_name, argc, argv,
-                                 result);
-}
-
-napi_status NapiUtil::InvokeJsMethodNoScope(napi_env env, napi_ref ref_napi_obj,
-                                            const char* method_name,
-                                            size_t argc, const napi_value* argv,
-                                            napi_value* result) {
   napi_value napi_obj = nullptr;
   napi_status status = napi_get_reference_value(env, ref_napi_obj, &napi_obj);
   if (status != napi_ok || napi_obj == nullptr) {
     LOGE("napi_get_reference_value fail: " << method_name);
     return status;
   }
-  return InvokerJsMethodInternal(env, napi_obj, method_name, argc, argv,
-                                 result);
+  return InvokeJsMethod(env, napi_obj, method_name, argc, argv, result);
+}
+
+napi_status NapiUtil::InvokeJsMethod(napi_env env, napi_value napi_obj,
+                                     const char* method_name, size_t argc,
+                                     const napi_value* argv,
+                                     napi_value* result) {
+  static const char* const kGetPropertyFailed =
+      "napi_get_named_property fail: %s";
+  static const char* const kCallFunctionFailed = "napi_call_function fail: %s";
+  napi_value fn;
+  napi_status status = napi_get_named_property(env, napi_obj, method_name, &fn);
+  NAPI_THROW_IF_FAILED_STATUS(env, status, kGetPropertyFailed, method_name);
+  status = napi_call_function(env, napi_obj, fn, argc, argv, result);
+  NAPI_THROW_IF_FAILED_STATUS(env, status, kCallFunctionFailed, method_name);
+  return napi_ok;
 }
 
 const std::string& NapiUtil::StatusToString(napi_status status) {

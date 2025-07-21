@@ -189,6 +189,7 @@ void EmbedderPlatformHarmony::TakeSnapshot(
 void EmbedderPlatformHarmony::TakeScreenShot(
     size_t max_width, size_t max_height, int32_t quality,
     base::MoveOnlyClosure<void, CallbackHandler::ScreenShotResponse> callback) {
+  base::NapiHandleScope scope(env_);
   napi_value call_args[4];
   auto* callback_handler = new CallbackHandler(std::move(callback));
   napi_create_int32(env_, quality, &call_args[1]);
@@ -198,7 +199,7 @@ void EmbedderPlatformHarmony::TakeScreenShot(
                        CallbackHandler::HandleScreenShotCallback,
                        callback_handler, &call_args[0]);
   base::NapiUtil::InvokeJsMethod(env_, capi_embedder_ref_, "takeScreenShot", 4,
-                                 call_args);
+                                 call_args, nullptr);
 }
 
 }  // namespace shell

@@ -132,24 +132,19 @@ class NapiUtil {
                                     const napi_value* argv,
                                     napi_value* result = nullptr);
 
+  static napi_status AsyncInvokeJsMethod(napi_env env, napi_ref ref_napi_obj,
+                                         const char* method_name, size_t argc,
+                                         const napi_value* argv);
+
   static napi_status InvokeJsMethod(napi_env env, napi_ref ref_napi_obj,
                                     const char* method_name, size_t argc,
                                     const napi_value* argv,
                                     napi_value* result = nullptr);
 
-  static napi_status AsyncInvokeJsMethod(napi_env env, napi_ref ref_napi_obj,
-                                         const char* method_name, size_t argc,
-                                         const napi_value* argv);
-
   static napi_status InvokeJsMethod(napi_env env, napi_value napi_obj,
                                     const char* method_name, size_t argc,
                                     const napi_value* argv,
                                     napi_value* result = nullptr);
-
-  static napi_status InvokeJsMethodNoScope(napi_env env, napi_ref ref_napi_obj,
-                                           const char* method_name, size_t argc,
-                                           const napi_value* argv,
-                                           napi_value* result);
 
   static const std::string& StatusToString(napi_status status);
 

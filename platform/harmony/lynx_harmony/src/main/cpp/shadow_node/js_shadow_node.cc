@@ -163,12 +163,14 @@ void JSShadowNode::UpdateProps(PropBundleHarmony* props) {
     return;
   }
   context_->PostSyncTaskOnUIThread([this, props] {
+    base::NapiHandleScope scope(env_);
     napi_value prop_bundle = props->GetJSProps();
     size_t argc = 1;
     napi_value argv[argc];
     argv[0] = prop_bundle;
     // todo(renzhognyue): retain ref to the method.
-    base::NapiUtil::InvokeJsMethod(env_, js_ref_, "updateProps", argc, argv);
+    base::NapiUtil::InvokeJsMethod(env_, js_ref_, "updateProps", argc, argv,
+                                   nullptr);
   });
 }
 
