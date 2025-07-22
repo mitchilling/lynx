@@ -373,8 +373,7 @@ bool LynxShell::IsDestroyed() { return is_destroyed_; }
 void LynxShell::LoadTemplate(
     const std::string& url, std::vector<uint8_t> source,
     std::shared_ptr<tasm::PipelineOptions> pipeline_options,
-    const std::shared_ptr<tasm::TemplateData>& template_data,
-    const bool enable_pre_painting, bool enable_recycle_template_bundle) {
+    const std::shared_ptr<tasm::TemplateData>& template_data) {
   // TODO(zhangkaijie.9): remove pipeline_option and create it in TemplateRender
   if (!pipeline_options) {
     pipeline_options = std::make_shared<tasm::PipelineOptions>();
@@ -402,7 +401,6 @@ void LynxShell::LoadTemplate(
   });
   engine_actor_->Act([url, source = std::move(source), template_data,
                       pipeline_options = std::move(pipeline_options),
-                      enable_pre_painting, enable_recycle_template_bundle,
                       need_to_merge_back,
                       tasm_runner = runners_.GetTASMTaskRunner().get(),
                       weak_ui_queue =
@@ -412,8 +410,7 @@ void LynxShell::LoadTemplate(
                       &need_wait_for_merge = need_wait_for_merge_,
                       &tasm_merge_cv = tasm_merge_cv_](auto& engine) mutable {
     engine->LoadTemplate(url, std::move(source), template_data,
-                         std::move(pipeline_options), enable_pre_painting,
-                         enable_recycle_template_bundle);
+                         std::move(pipeline_options));
     if (need_to_merge_back) {
       // FIXME(heshan,zhixuan,liting):After each engine_actor's task is
       // completed, the afterInvoke() is executed.Within this
@@ -453,8 +450,7 @@ void LynxShell::LoadTemplate(
 void LynxShell::LoadTemplateBundle(
     const std::string& url, tasm::LynxTemplateBundle template_bundle,
     std::shared_ptr<tasm::PipelineOptions> pipeline_options,
-    const std::shared_ptr<tasm::TemplateData>& template_data,
-    const bool enable_pre_painting, bool enable_dump_element_tree) {
+    const std::shared_ptr<tasm::TemplateData>& template_data) {
   // TODO(zhangkaijie.9): remove pipeline_option and create it in TemplateRender
   if (!pipeline_options) {
     pipeline_options = std::make_shared<tasm::PipelineOptions>();
@@ -469,12 +465,9 @@ void LynxShell::LoadTemplateBundle(
   EnsureTemplateDataThreadSafe(template_data);
   engine_actor_->Act(
       [url, template_bundle = std::move(template_bundle), template_data,
-       pipeline_options = std::move(pipeline_options), enable_pre_painting,
-       enable_dump_element_tree](auto& engine) mutable {
+       pipeline_options = std::move(pipeline_options)](auto& engine) mutable {
         engine->LoadTemplateBundle(url, std::move(template_bundle),
-                                   template_data, std::move(pipeline_options),
-                                   enable_pre_painting,
-                                   enable_dump_element_tree);
+                                   template_data, std::move(pipeline_options));
       });
 }
 

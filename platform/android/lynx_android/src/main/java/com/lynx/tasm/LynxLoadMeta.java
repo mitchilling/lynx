@@ -17,12 +17,12 @@ public final class LynxLoadMeta {
   TemplateData initialData;
   TemplateData globalProps;
   LynxLoadMode loadMode;
-  EnumSet<LynxLoadOption> loadOptions;
+  int loadOptions;
   Map<String, String> lynxViewConfig;
 
   private LynxLoadMeta(String url, byte[] binaryData, TemplateBundle bundle,
-      TemplateData initialData, TemplateData globalProps, LynxLoadMode loadMode,
-      EnumSet<LynxLoadOption> loadOptions, Map<String, String> lynxViewConfig) {
+      TemplateData initialData, TemplateData globalProps, LynxLoadMode loadMode, int loadOptions,
+      Map<String, String> lynxViewConfig) {
     this.url = url;
     this.binaryData = binaryData;
     this.bundle = bundle;
@@ -76,19 +76,36 @@ public final class LynxLoadMeta {
   }
 
   public EnumSet<LynxLoadOption> getLoadOption() {
-    return this.loadOptions;
+    EnumSet<LynxLoadOption> set = EnumSet.noneOf(LynxLoadOption.class);
+    if (enableDumpElementTree()) {
+      set.add(LynxLoadOption.DUMP_ELEMENT);
+    }
+    if (enableRecycleTemplateBundle()) {
+      set.add(LynxLoadOption.RECYCLE_TEMPLATE_BUNDLE);
+    }
+    if (enableProcessLayout()) {
+      set.add(LynxLoadOption.PROCESS_LAYOUT_WITHOUT_UI_FLUSH);
+    }
+    if (renderForRecreateEngine()) {
+      set.add(LynxLoadOption.RENDER_FOR_RECREATE_ENGINE);
+    }
+    return set;
   }
 
   public boolean enableDumpElementTree() {
-    return this.loadOptions.contains(LynxLoadOption.DUMP_ELEMENT);
+    return (this.loadOptions & LynxLoadOption.DUMP_ELEMENT.id()) != 0;
   }
 
   public boolean enableRecycleTemplateBundle() {
-    return this.loadOptions.contains(LynxLoadOption.RECYCLE_TEMPLATE_BUNDLE);
+    return (this.loadOptions & LynxLoadOption.RECYCLE_TEMPLATE_BUNDLE.id()) != 0;
   }
 
   public boolean enableProcessLayout() {
-    return this.loadOptions.contains(LynxLoadOption.PROCESS_LAYOUT_WITHOUT_UI_FLUSH);
+    return (this.loadOptions & LynxLoadOption.PROCESS_LAYOUT_WITHOUT_UI_FLUSH.id()) != 0;
+  }
+
+  private boolean renderForRecreateEngine() {
+    return (this.loadOptions & LynxLoadOption.RENDER_FOR_RECREATE_ENGINE.id()) != 0;
   }
 
   public static class Builder {
@@ -98,7 +115,7 @@ public final class LynxLoadMeta {
     private TemplateData initialData;
     private TemplateData globalProps;
     private LynxLoadMode loadMode;
-    private EnumSet<LynxLoadOption> loadOptions = EnumSet.noneOf(LynxLoadOption.class);
+    private int loadOptions = 0;
 
     private Map<String, String> lynxViewConfig;
 
@@ -126,7 +143,7 @@ public final class LynxLoadMeta {
     }
 
     public void addLoadOption(LynxLoadOption loadOption) {
-      this.loadOptions.add(loadOption);
+      this.loadOptions |= loadOption.id();
     }
 
     public void setLynxViewConfig(Map<String, String> lynxViewConfig) {

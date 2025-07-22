@@ -264,16 +264,12 @@ class TemplateAssembler final : public TemplateEntryHolder,
 
   void LoadTemplate(const std::string& url, std::vector<uint8_t> source,
                     const std::shared_ptr<TemplateData>& template_data,
-                    std::shared_ptr<PipelineOptions>& pipeline_options,
-                    const bool enable_pre_painting = false,
-                    bool enable_recycle_template_bundle = false);
+                    std::shared_ptr<PipelineOptions>& pipeline_options);
 
   void LoadTemplateBundle(const std::string& url,
                           LynxTemplateBundle template_bundle,
                           const std::shared_ptr<TemplateData>& template_data,
-                          std::shared_ptr<PipelineOptions>& pipeline_options,
-                          const bool enable_pre_painting = false,
-                          bool enable_dump_element_tree = false);
+                          std::shared_ptr<PipelineOptions>& pipeline_options);
 
   // Diff the entire tree using the new template_data.
   // Refresh the card and component's lifecycle like a new loaded template.
