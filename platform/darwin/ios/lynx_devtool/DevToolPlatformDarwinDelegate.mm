@@ -43,7 +43,9 @@ class DevToolPlatformDarwin : public DevToolPlatformFacade {
     __strong typeof(_darwin) darwin = _darwin;
     if (darwin) {
       NSString* debugInfo = [darwin getDebugInfoByUrl:[NSString stringWithCString:url.c_str()]];
-      return [debugInfo UTF8String];
+      if (debugInfo) {
+        return [debugInfo UTF8String];
+      }
     }
     return DevToolStatus::NO_DEBUG_INFO_FOUND_BY_URL;
   }

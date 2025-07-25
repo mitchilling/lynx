@@ -92,7 +92,10 @@ public class DevToolPlatformAndroidDelegate {
   @CalledByNative
   public String getDebugInfoByUrl(String url) {
     if (mDebugInfoRecorder != null) {
-      return mDebugInfoRecorder.getDebugInfo(url);
+      String debugInfo = mDebugInfoRecorder.getDebugInfo(url);
+      if (debugInfo != null) {
+        return debugInfo;
+      }
     }
     return NO_DEBUG_INFO_FOUND_BY_URL;
   }
