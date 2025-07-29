@@ -56,6 +56,14 @@ class PerformanceController : public PerformanceEventSender {
     return value_factory_;
   }
 
+  inline void SetEnableMainThreadCallback(bool enable) override {
+    enable_main_thread_engine_callback_ = enable;
+    if (delegate_) {
+      delegate_->SetEnableMainThreadCallback(enable);
+    }
+    timing_handler_.SetEnableAirStrictMode(enable);
+  };
+
   MemoryMonitor& GetMemoryMonitor() { return memory_monitor_; }
   timing::TimingHandler& GetTimingHandler() { return timing_handler_; }
 

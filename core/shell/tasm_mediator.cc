@@ -124,7 +124,7 @@ void TasmMediator::OnPageConfigDecoded(
   // avoid using post task to send duplicate false value
   if (config->GetEnableLynxAir()) {
     perf_actor_->ActAsync([](auto& performance) mutable {
-      performance->GetTimingHandler().SetEnableAirStrictMode(true);
+      performance->SetEnableMainThreadCallback(true);
     });
   }
 }

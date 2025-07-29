@@ -43,8 +43,17 @@ class PerformanceEventSender {
     return value_factory_;
   };
 
+  virtual void SetEnableMainThreadCallback(bool enable) {
+    enable_main_thread_engine_callback_ = enable;
+  };
+
+  virtual bool GetEnableMainThreadCallback() const {
+    return enable_main_thread_engine_callback_;
+  };
+
  protected:
   std::shared_ptr<pub::PubValueFactory> value_factory_;
+  bool enable_main_thread_engine_callback_{false};
 };
 
 }  // namespace performance

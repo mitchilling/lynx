@@ -192,24 +192,34 @@ std::unique_ptr<lynx::pub::Value> TimingInfoNg::GetPipelineEntry(
   // check special pipeline is ready
   if (pipeline_origin == kLoadBundle) {
     // check loadBundle is ready
-    static const std::initializer_list<std::string> check_keys =
-        enable_background_runtime_
-            ? std::initializer_list<std::string>{kLoadBundleEnd,
-                                                 kLoadBackgroundEnd}
-            : std::initializer_list<std::string>{kLoadBundleEnd};
-    bool ready = timing_map.CheckAllKeysExist(check_keys);
+    bool ready = false;
+    if (enable_background_runtime_) {
+      static const std::initializer_list<std::string> check_keys =
+          std::initializer_list<std::string>{kLoadBundleEnd,
+                                             kLoadBackgroundEnd};
+      ready = timing_map.CheckAllKeysExist(check_keys);
+    } else {
+      static const std::initializer_list<std::string> check_keys =
+          std::initializer_list<std::string>{kLoadBundleEnd};
+      ready = timing_map.CheckAllKeysExist(check_keys);
+    }
     if (!ready) {
       return nullptr;
     }
   } else if (pipeline_origin == kReloadBundleFromBts ||
              pipeline_origin == kReloadBundleFromNative) {
     // check reloadBundle is ready
-    static const std::initializer_list<std::string> check_keys =
-        enable_background_runtime_
-            ? std::initializer_list<std::string>{kReloadBundleEnd,
-                                                 kReloadBackgroundEnd}
-            : std::initializer_list<std::string>{kReloadBundleEnd};
-    bool ready = timing_map.CheckAllKeysExist(check_keys);
+    bool ready = false;
+    if (enable_background_runtime_) {
+      static const std::initializer_list<std::string> check_keys =
+          std::initializer_list<std::string>{kReloadBundleEnd,
+                                             kReloadBackgroundEnd};
+      ready = timing_map.CheckAllKeysExist(check_keys);
+    } else {
+      static const std::initializer_list<std::string> check_keys =
+          std::initializer_list<std::string>{kReloadBundleEnd};
+      ready = timing_map.CheckAllKeysExist(check_keys);
+    }
     if (!ready) {
       return nullptr;
     }

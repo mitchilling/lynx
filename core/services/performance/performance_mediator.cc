@@ -46,7 +46,8 @@ void PerformanceMediator::OnPerformanceEvent(
       runtime->OnReceiveMessageEvent(std::move(event));
     });
   }
-  if ((type & kEventTypeMTSEngine) && engine_actor_) {
+  if (GetEnableMainThreadCallback() && (type & kEventTypeMTSEngine) &&
+      engine_actor_) {
     engine_actor_->ActAsync(
         [entry = std::move(lepus_entry)](auto& engine) mutable {
           TRACE_EVENT(LYNX_TRACE_CATEGORY,

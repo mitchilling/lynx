@@ -297,6 +297,9 @@ LynxShell* LynxShellBuilder::build() {
   if (shell->perf_mediator_) {
     shell->perf_mediator_->SetEngineActor(shell->engine_actor_);
   }
+  if (shell->timing_mediator_) {
+    shell->timing_mediator_->SetEngineActor(shell->engine_actor_);
+  }
   // after set shell members
   shell->engine_actor_->Impl()->SetOperationQueue(shell->tasm_operation_queue_);
   shell->layout_actor_->Impl()->SetRequestLayoutCallback(
