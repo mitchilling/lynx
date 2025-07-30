@@ -186,6 +186,8 @@ static const char* const IMAGE_FETCHER_LOAD_IMAGE = "LynxImageFetcher::loadImage
 
 static const char* const LYNX_ENGINE_POOL_REGISTER_ENGINE = "LynxEnginePool::registerReuseEngine";
 static const char* const LYNX_ENGINE_POOL_POLL_ENGINE = "LynxEnginePool::pollEngineWithRender";
+
+static const char* const UI_IMAGE_REQUEST_IMAGE = "LynxUIImage::requestImage";
 #endif
 
 NS_ASSUME_NONNULL_END

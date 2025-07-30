@@ -16,6 +16,8 @@
 #import <Lynx/LynxService.h>
 #import <Lynx/LynxServiceTrailProtocol.h>
 #import <Lynx/LynxShadowNodeOwner.h>
+#import <Lynx/LynxTraceEvent.h>
+#import <Lynx/LynxTraceEventDef.h>
 #import <Lynx/LynxUI+Internal.h>
 #import <Lynx/LynxUIImage.h>
 #import <Lynx/LynxUIUnitUtils.h>
@@ -576,6 +578,8 @@ UIEdgeInsets LynxRoundInsetsToPixel(UIEdgeInsets edgeInsets) {
   if (_autoSize && self.frame.size.width <= 0 && self.frame.size.height <= 0) {
     return;
   }
+  TRACE_EVENT(LYNX_TRACE_CATEGORY, UI_IMAGE_REQUEST_IMAGE, "url", [url.absoluteString UTF8String],
+              "useNewImage", [self shouldUseNewImage]);
   NSMutableArray* processors = [NSMutableArray new];
   if (!UIEdgeInsetsEqualToEdgeInsets(_capInsets, UIEdgeInsetsZero)) {
     [processors addObject:[[LynxNinePatchImageProcessor alloc] initWithCapInsets:_capInsets
