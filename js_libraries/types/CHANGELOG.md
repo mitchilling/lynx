@@ -21,24 +21,18 @@
 
 - Introduce <input> and <textarea>
 
-## 3.3.4
-
+## 3.3.2
+- Revert automatically generated cssTypes
 - Add typing for the runtime interfaces.
-
-## 3.3.3
-
-- [Infra][Types] Codegen longhand and shorthand properties from css_defines
+- Codegen longhand and shorthand properties from css_defines
 - Add `experimental-recycle-sticky-item` and `sticky-buffer-count` for list
 - Add `experimental-update-sticky-for-diff` for list
 - Add ReloadBundleEntry to standardize the timing of reload behavior.
-
-## 3.3.2
-
 - Add typing for MessageEvent.
 
 ## 3.3.1
 
-- [Infra][Types] Codegen csstype.d.ts from css_defines
+- Codegen csstype.d.ts from css_defines
 - Rename `visibleCellsAfterUpdate` to `visibleItemAfterUpdate` for `list`
 - Rename `visibleCellsBeforeUpdate` to `visibleItemBeforeUpdate` for `list`
 
