@@ -143,14 +143,5 @@ std::shared_ptr<style::StyleObject *> &LynxTemplateBundle::InitStyleObjectList(
   return style_object_list_;
 }
 
-base::LinearFlatMap<base::String, fml::RefPtr<CSSKeyframesToken>> &
-LynxTemplateBundle::InitKeyframesMap(size_t size) {
-  if (!keyframes_.empty()) {
-    return keyframes_;
-  }
-  keyframes_.reserve(size);
-  return keyframes_;
-}
-
 }  // namespace tasm
 }  // namespace lynx
