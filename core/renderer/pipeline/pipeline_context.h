@@ -5,10 +5,14 @@
 #ifndef CORE_RENDERER_PIPELINE_PIPELINE_CONTEXT_H_
 #define CORE_RENDERER_PIPELINE_PIPELINE_CONTEXT_H_
 
+#include <list>
 #include <memory>
 #include <utility>
 
+#include "base/include/fml/memory/weak_ptr.h"
 #include "core/public/pipeline_option.h"
+#include "core/renderer/pipeline/pipeline_lifecycle.h"
+#include "core/renderer/pipeline/pipeline_lifecycle_observer.h"
 #include "core/renderer/pipeline/pipeline_version.h"
 
 namespace lynx {
@@ -26,6 +30,8 @@ class PipelineContext {
 
   void SetOptions(const std::shared_ptr<PipelineOptions>& options) {
     options_ = options;
+    observer_data_.pipeline_id = options_->pipeline_id;
+    observer_data_.pipeline_origin = options_->pipeline_origin;
   }
   const std::shared_ptr<PipelineOptions> GetOptions() const { return options_; }
   const PipelineVersion& GetVersion() const { return version_; }
@@ -47,12 +53,24 @@ class PipelineContext {
   void ResetLayoutRequested();
   void ResetFlushUIOperationRequested();
 
+  // Pipeline lifecycle management.
+  bool AdvanceLifecycleTo(LifecycleState state);
+  LifecycleState GetLifecycleState() const { return lifecycle_.GetState(); };
+
+  void AddObserver(PipelineLifecycleObserver* observer);
+  void RemoveObserver(PipelineLifecycleObserver* observer);
+  void NotifyLifecycleChanged(LifecycleState prev_state,
+                              LifecycleState cur_state);
+
  private:
   explicit PipelineContext(const PipelineVersion& version);
 
   std::shared_ptr<PipelineOptions> options_{nullptr};
   PipelineVersion version_;
   std::size_t hash_{0};
+  PipelineLifecycle lifecycle_{};
+  std::list<fml::WeakPtr<PipelineLifecycleObserver>> observers_{};
+  PipelineLifecycleObserver::Data observer_data_{};
 };
 }  // namespace tasm
 }  // namespace lynx
