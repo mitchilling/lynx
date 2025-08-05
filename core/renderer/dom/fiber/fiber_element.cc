@@ -4128,6 +4128,7 @@ void FiberElement::UpdateTraceDebugInfo(TraceEvent *event) {
 
 bool FiberElement::IsEventPathCatch() {
   if (IsDetached()) {
+    LOGE("FiberElement::IsEventPathCatch error: the target is detached.");
     return true;
   }
   // Compatible with the previous logic that position:fixed will modify
@@ -4137,6 +4138,7 @@ bool FiberElement::IsEventPathCatch() {
   if (enable_fiber_element_for_radon_diff && IsRadonArch() && is_fixed()) {
     auto root = element_manager()->root();
     if (this != root) {
+      LOGI("FiberElement::IsEventPathCatch fixed target.");
       return true;
     }
   }
