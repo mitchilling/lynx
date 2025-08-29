@@ -274,11 +274,6 @@ open class LynxUIBaseInput(context: LynxContext, params: Any?) : LynxUI<LynxEdit
         mPlaceholderFontSize = size
     }
 
-    @LynxProp(name = "-x-placeholder-font-size", defaultFloat = UNDEFINED_FLOAT)
-    fun setXPlaceholderTextSize(size: Float) {
-        setPlaceholderTextSize(size)
-    }
-  
     @LynxProp(name = PropsConstants.FONT_WEIGHT, defaultInt = StyleConstants.FONTWEIGHT_NORMAL)
     fun setFontWeight(fontWeightNumerical: Int?) {
        fontWeightNumerical?.let{
@@ -320,11 +315,6 @@ open class LynxUIBaseInput(context: LynxContext, params: Any?) : LynxUI<LynxEdit
         }
     }
 
-    @LynxProp(name = "-x-placeholder-font-weight")
-    fun setXPlaceholderTextWeight(weight: Dynamic?) {
-        setPlaceholderTextWeight(weight)
-    }
-
     @LynxProp(name = PropsConstants.FONT_STYLE, defaultInt = StyleConstants.FONTSTYLE_NORMAL)
     open fun setFontStyle(fontStyle: Int) {
         mFontStyle = when(fontStyle) {
@@ -345,11 +335,6 @@ open class LynxUIBaseInput(context: LynxContext, params: Any?) : LynxUI<LynxEdit
         }
     }
 
-    @LynxProp(name = "-x-placeholder-font-style")
-    fun setXPlaceholderFontStyle(fontStyle: Int) {
-        setPlaceholderFontStyle(fontStyle)
-    }
-
     @LynxProp(name = PropsConstants.FONT_FAMILY)
     open fun setFontFamily(fontFamily: String?) {
         fontFamily?.let {
@@ -360,11 +345,6 @@ open class LynxUIBaseInput(context: LynxContext, params: Any?) : LynxUI<LynxEdit
     @LynxProp(name = "placeholder-font-family")
     fun setPlaceholderFontFamily(fontFamilyName: String?) {
         mPlaceholderFontFamilyName = fontFamilyName
-    }
-
-    @LynxProp(name = "-x-placeholder-font-family")
-    fun setXPlaceholderFontFamily(fontFamilyName: String?) {
-        setPlaceholderFontFamily(fontFamilyName)
     }
 
     @LynxProp(name = PropsConstants.COLOR, defaultInt = Color.BLACK)
@@ -385,11 +365,6 @@ open class LynxUIBaseInput(context: LynxContext, params: Any?) : LynxUI<LynxEdit
                 ColorUtils.parse("#3c433c")
             }
         }
-    }
-
-    @LynxProp(name = "-x-placeholder-color")
-    fun setXPlaceholderColor(color: Dynamic) {
-        setPlaceholderColor(color)
     }
 
     @LynxProp(name = PropsConstants.CARET_COLOR)

@@ -179,8 +179,7 @@ void UIBaseInput::OnPropUpdate(const std::string& name,
     } else {
       font_size_ = value.Number();
     }
-  } else if (name == "placeholder-font-size" ||
-             name == "-x-placeholder-font-size") {
+  } else if (name == "placeholder-font-size") {
     if (value.IsNil()) {
       placeholder_font_size_ = INPUT_UNDEFINED_FLOAT;
     } else {
@@ -201,8 +200,7 @@ void UIBaseInput::OnPropUpdate(const std::string& name,
     } else {
       font_style_ = intValue;
     }
-  } else if (name == "placeholder-font-style" ||
-             name == "-x-placeholder-font-style") {
+  } else if (name == "placeholder-font-style") {
     int32_t intValue = static_cast<int32_t>(value.Number());
     if (intValue != 0 && intValue != 1) {
       placeholder_font_style_ = INPUT_UNDEFINED_INT;
@@ -222,8 +220,7 @@ void UIBaseInput::OnPropUpdate(const std::string& name,
       ark_ui_font_weight = INPUT_UNDEFINED_INT;
     }
     font_weight_ = ark_ui_font_weight;
-  } else if (name == "placeholder-font-weight" ||
-             name == "-x-placeholder-font-weight") {
+  } else if (name == "placeholder-font-weight") {
     int32_t font_weight = static_cast<int32_t>(value.Number());
     int32_t ark_ui_font_weight = ARKUI_FONT_WEIGHT_NORMAL;
     if (font_weight == 0) {
@@ -238,8 +235,7 @@ void UIBaseInput::OnPropUpdate(const std::string& name,
     placeholder_font_weight_ = ark_ui_font_weight;
   } else if (name == "font-family") {
     font_family_ = value.StdString();
-  } else if (name == "placeholder-font-family" ||
-             name == "-x-placeholder-font-family") {
+  } else if (name == "placeholder-font-family") {
     placeholder_font_family_ = value.StdString();
   } else if (name == "placeholder") {
     if (value.IsNil()) {
