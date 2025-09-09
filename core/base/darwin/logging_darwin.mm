@@ -2,7 +2,7 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-#include "base/include/log/logging_darwin.h"
+#include "core/base/darwin/logging_darwin.h"
 #import <Lynx/LynxService.h>             // nogncheck
 #import <Lynx/LynxServiceLogProtocol.h>  // nogncheck
 #include "base/include/log/alog_wrapper.h"
@@ -29,9 +29,9 @@ void InternalLogNative(const char *file, int32_t line, int level, const char *me
   lynx::base::logging::PrintLogToLynxLogging(level, kTag, message);
 }
 
-void InitLynxLoggingNative(bool print_logs_to_all_channels) {
+void InitLynxLoggingNative(bool enable_devtool) {
   lynx::base::logging::InitLynxLogging(GetAlogWriteFuncAddr, PrintLogMessageByLogDelegate,
-                                       print_logs_to_all_channels);
+                                       enable_devtool);
 }
 
 }  // namespace logging

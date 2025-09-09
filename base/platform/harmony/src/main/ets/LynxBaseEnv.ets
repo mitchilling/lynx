@@ -2,16 +2,14 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { LynxLog } from './log/LynxLog';
-
 const TAG = 'LynxBaseEnv';
 class LynxBaseEnvironment {
   private initialized = false;
-  public initialize(printLogsToAllChannels: boolean) {
+  public initialize() {
     if (this.initialized) {
       return;
     }
-    LynxLog.initLynxLog(printLogsToAllChannels);
+    // do something.
     this.initialized = true;
   }
 }

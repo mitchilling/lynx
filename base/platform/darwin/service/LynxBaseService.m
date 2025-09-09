@@ -4,8 +4,6 @@
 #import <LynxBase/LynxBaseService.h>
 #import <LynxBase/LynxBaseServiceLogProtocol.h>
 #import <LynxBase/LynxBaseServiceTraceProtocol.h>
-// TODO(yongjie): enable this when lynx base standalone.
-// #import <LynxBase/LynxLog.h>
 
 #import <objc/runtime.h>
 
@@ -37,9 +35,6 @@
   Protocol *protocol = [self getProtocolByServiceType:[cls getServiceType]];
   if (protocol != nil) {
     [[self sharedInstance] bindClass:cls toProtocol:protocol];
-  } else {
-    // TODO(yongjie): enable this when lynx base standalone.
-    // LLogInfo(@"Unknow lynx service type - %lu", [cls getServiceType]);
   }
 }
 

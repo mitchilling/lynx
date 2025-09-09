@@ -38,7 +38,4 @@
     native <methods>;
 }
 
--keepclasseswithmembers class * {
-    @com.lynx.base.CalledByNative <methods>;
-}
 

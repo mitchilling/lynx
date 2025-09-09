@@ -3,8 +3,6 @@
 // LICENSE file in the root directory of this source tree.
 
 #import <LynxBase/LynxBaseEnv.h>
-// TODO(yongjie): enable this when lynx base standalone.
-// #import <LynxBase/LynxLog.h>
 
 @implementation LynxBaseEnv
 
@@ -18,9 +16,8 @@
   return _instance;
 }
 
-- (bool)initialize:(bool)print_logs_to_all_channels {
-  // TODO(yongjie): enable this when lynx base standalone.
-  // InitLynxLog(print_logs_to_all_channels);
+- (bool)initialize {
+  // TODO(yongjie): do something here.
   return true;
 }
 

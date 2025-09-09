@@ -2,6 +2,8 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
+#include "core/base/android/logging_android.h"
+
 #include <android/api-level.h>
 #include <android/log.h>
 #include <jni.h>

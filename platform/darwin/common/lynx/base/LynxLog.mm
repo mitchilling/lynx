@@ -9,8 +9,8 @@
 #include <map>
 
 #include "base/include/debug/lynx_assert.h"
-#include "base/include/log/logging_darwin.h"
 #include "base/trace/native/trace_event.h"
+#include "core/base/darwin/logging_darwin.h"
 #include "core/base/lynx_trace_categories.h"
 
 #define LOCKED(...)             \
@@ -74,7 +74,7 @@ bool IsExternalChannel(lynx::base::logging::LogChannel channelType) {
          channelType == lynx::base::logging::LOG_CHANNEL_LYNX_EXTERNAL;
 }
 
-// Implementation of this function in the <base/include/log/logging_darwin.h> file.
+// Implementation of this function in the <base/Darwin/logging_darwin.h> file.
 void PrintLogMessageByLogDelegate(LogMessage *msg, const char *tag) {
   LynxLogLevel level = (LynxLogLevel)msg->severity();
   NSString *message = gDebugLoggingDelegate.shouldFormatMessage
