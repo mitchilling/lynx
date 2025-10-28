@@ -127,7 +127,7 @@ void LynxTemplateRenderer::SetUpLynxShell(
   shell_option.enable_js_group_thread_ = enable_js_group_thread;
   shell_option.enable_js_ = enable_js;
   shell_option.instance_id_ =
-      runtime_wrapper ? runtime_wrapper->GetRuntimeActor()->GetInstanceId()
+      runtime_wrapper ? runtime_wrapper->RuntimeStandalone().GetRuntimeId()
                       : -1;
 
   auto invoker = std::make_unique<TasmPlatformInvokerHarmony>(
@@ -157,13 +157,14 @@ void LynxTemplateRenderer::SetUpLynxShell(
                   std::shared_ptr<
                       tasm::performance::PerformanceControllerHarmonyJSWrapper>(
                       js_perf_controller_wrapper)))
-          .SetRuntimeActor((runtime_wrapper != nullptr)
-                               ? runtime_wrapper->GetRuntimeActor()
-                               : nullptr)
-          .SetPerfControllerActor(
+          .SetRuntimeActor(
               (runtime_wrapper != nullptr)
-                  ? runtime_wrapper->GetPerfControllerActor()
+                  ? runtime_wrapper->RuntimeStandalone().GetRuntimeActor()
                   : nullptr)
+          .SetPerfControllerActor((runtime_wrapper != nullptr)
+                                      ? runtime_wrapper->RuntimeStandalone()
+                                            .GetPerfControllerActor()
+                                      : nullptr)
           .build());
   invoker_ptr->SetUITaskRunner(shell_->GetRunners()->GetUITaskRunner());
 
