@@ -23,6 +23,7 @@ import com.lynx.BuildConfig;
 import com.lynx.base.IBaseNativeLibraryLoader;
 import com.lynx.base.LynxBaseEnv;
 import com.lynx.config.LynxLiteConfigs;
+import com.lynx.devtoolwrapper.DevToolLifecycle;
 import com.lynx.devtoolwrapper.LynxDevToolUtils;
 import com.lynx.jsbridge.LynxBytecodeCallback;
 import com.lynx.jsbridge.LynxModule;
@@ -95,6 +96,7 @@ public class LynxEnv {
   protected BehaviorBundle mViewManagerBundle;
   protected final AtomicBoolean hasInit = new AtomicBoolean(false);
   /**
+   * TODO(mitchilling): Remove this comment block after DevToolLifecycle is refactored.
    * mDevToolComponentAttach: indicates whether DevTool Component is attached to
    * the host.
    * mDevToolEnabled: control whether to enable DevTool Debug
@@ -115,7 +117,6 @@ public class LynxEnv {
    * enable/disable
    * DevTool Debug, and useless is host doesn't attach DevTool
    */
-  protected boolean mDevToolComponentAttach = false;
   protected boolean mDebugModeEnabled = false;
   protected boolean mLayoutOnlyEnabled = true;
   protected boolean mRecordEnable = false;
@@ -189,6 +190,7 @@ public class LynxEnv {
 
   protected final Object mLazyInitLock = new Object();
 
+  // FIXME(mitchilling): devtoolService is retrieved every time when it's about to be used.
   private static ILynxDevToolService devtoolService = null;
 
   private Boolean mHasV8BridgeLoadSuccess = false;
@@ -751,13 +753,14 @@ public class LynxEnv {
   // otherwise will cause endless loop.
   // Because this method used by LLog.
   //------------warning----------------
+  /*
+   * Deprecated. Use `DevToolLifecycle.getInstance().isEnabled()` instead.
+   */
+  @Deprecated
   public boolean isLynxDebugEnabled() {
     // Return true only if the DevTool Component is attached and the `lynxDebugPresetValue` is true.
     // It avoids unnecessary reflection calls.
-    ILynxDevToolService devtoolService =
-        LynxServiceCenter.inst().getService(ILynxDevToolService.class);
-    return mDevToolComponentAttach
-        && (devtoolService != null && devtoolService.getLynxDebugPresetValue());
+    return DevToolLifecycle.getInstance().isEnabled();
   }
 
   // Provided for hosts that load the DevTool component after initializing
@@ -774,14 +777,35 @@ public class LynxEnv {
     syncDevtoolComponentAttachSwitch();
   }
 
+  /*
+   * This method could be called before or after `LynxEnv.init()`
+   * In order to make it work as expected in both usages:
+   * - if before, we preset value for later use;
+   * - if after, we change the state of `DevToolLifecycle` directly,
+   *     and call `initDevtoolEnv()` if the parameter is true.
+   */
   public void enableLynxDebug(boolean enableLynxDebug) {
     LLog.i(TAG, enableLynxDebug ? "enable lynx debug" : "disable lynx debug");
-    ILynxDevToolService devtoolService =
-        LynxServiceCenter.inst().getService(ILynxDevToolService.class);
-    if (devtoolService != null) {
-      devtoolService.setLynxDebugPresetValue(enableLynxDebug);
+    if (!DevToolLifecycle.getInstance().isAttached()) {
+      // DevTool is UNAVAILABLE (i.e. before ATTACHED)
+      // We need to take advantage of preset value.
+      ILynxDevToolService devtoolService =
+          LynxServiceCenter.inst().getService(ILynxDevToolService.class);
+      if (devtoolService != null) {
+        devtoolService.setLynxDebugPresetValue(enableLynxDebug);
+      }
+      // No further action required
+      return;
     }
-    initDevtoolEnv();
+
+    // DevTool is at least ATTACHED
+    if (enableLynxDebug) {
+      DevToolLifecycle.getInstance().onEnabled();
+      initDevtoolEnv();
+    } else {
+      DevToolLifecycle.getInstance().onDisabled();
+    }
+
     if (mIsNativeLibraryLoaded) {
       setBooleanLocalEnv(LynxEnvKey.LYNX_DEBUG_ENABLED, isLynxDebugEnabled());
     }
@@ -789,27 +813,54 @@ public class LynxEnv {
 
   protected void initDevtoolComponentAttachSwitch() {
     devtoolService = LynxServiceCenter.inst().getService(ILynxDevToolService.class);
+    boolean attached = false;
     if (devtoolService != null) {
-      mDevToolComponentAttach = devtoolService.isDevtoolAttached();
-    } else {
-      mDevToolComponentAttach = false;
+      attached = devtoolService.isDevtoolAttached();
     }
-    LLog.i(TAG,
-        "The current application has embedded the DevTool Component: " + mDevToolComponentAttach);
+    if (attached) {
+      DevToolLifecycle.getInstance().onAttached();
+      enableDevToolIfPreset();
+    }
+    LLog.i(TAG, "The current application has embedded the DevTool Component: " + attached);
   }
 
+  /*
+   * In some cases, e.g. DevTool working as a plugin,
+   * callers would enable DevTool via presetting before attaching.
+   * So we ought to check the preset value and change to state `ENABLED`.
+   */
+  private void enableDevToolIfPreset() {
+    if (!DevToolLifecycle.getInstance().isAttached()) {
+      // Wrong state, shortcut.
+      return;
+    }
+    if (devtoolService == null) {
+      devtoolService = LynxServiceCenter.inst().getService(ILynxDevToolService.class);
+    }
+    if (devtoolService == null) {
+      // service not registered, thus there won't be preset value. We'll just ignore it.
+      return;
+    }
+    if (devtoolService.getLynxDebugPresetValue()) {
+      DevToolLifecycle.getInstance().onEnabled();
+    }
+  }
+
+  // TODO(mitchilling): Remove this method after DevToolLifecycle is refactored.
   protected void syncDevtoolComponentAttachSwitch() {
     // Since the default value in native is false, we only sync to native when the
     // value is true,
     // which can reduce native calls.
-    if (isNativeLibraryLoaded() && mDevToolComponentAttach) {
+    if (isNativeLibraryLoaded() && isDevtoolComponentAttach()) {
       setBooleanLocalEnv(LynxEnvKey.DEVTOOL_COMPONENT_ATTACH, true);
       setBooleanLocalEnv(LynxEnvKey.LYNX_DEBUG_ENABLED, isLynxDebugEnabled());
     }
   }
 
+  // TODO(mitchilling): Remove this method after DevToolLifecycle is refactored.
+  @Deprecated
   public boolean isDevtoolComponentAttach() {
-    return mDevToolComponentAttach;
+    return DevToolLifecycle.getInstance().isAttached();
   }
 
   public boolean isDevtoolEnabled() {

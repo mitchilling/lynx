@@ -11,6 +11,7 @@ import androidx.annotation.Keep;
 import com.example.lynxdevtool.BuildConfig;
 import com.lynx.config.LynxLiteConfigs;
 import com.lynx.devtool.memory.MemoryController;
+import com.lynx.devtoolwrapper.DevToolLifecycle;
 import com.lynx.tasm.INativeLibraryLoader;
 import com.lynx.tasm.LynxEnv;
 import com.lynx.tasm.LynxEnvKey;
@@ -108,6 +109,11 @@ public class LynxDevtoolEnv {
     } catch (Throwable t) {
       LLog.e(TAG, t.toString());
       throw t;
+    }
+    // All initializations are done. Let's notify DevToolLifecycle.
+    DevToolLifecycle.getInstance().onInitialized();
+    if (LynxGlobalDebugBridge.getInstance().isEnabled()) {
+      DevToolLifecycle.getInstance().onConnected();
     }
   }
 

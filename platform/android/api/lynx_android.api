@@ -1432,11 +1432,34 @@ public class com::lynx::tasm::utils::DeviceUtils :  {
   public static float com.lynx.tasm.utils.DeviceUtils.getRefreshRate(Context context);
 }
 
+public class com::lynx::devtoolwrapper::DevToolLifecycle :  {
+  public static DevToolLifecycle com.lynx.devtoolwrapper.DevToolLifecycle.getInstance();
+  public DevToolState com.lynx.devtoolwrapper.DevToolLifecycle.getState();
+  public boolean com.lynx.devtoolwrapper.DevToolLifecycle.isAttached();
+  public boolean com.lynx.devtoolwrapper.DevToolLifecycle.isInitialized();
+  public boolean com.lynx.devtoolwrapper.DevToolLifecycle.isEnabled();
+  public boolean com.lynx.devtoolwrapper.DevToolLifecycle.isConnected();
+  public synchronized void com.lynx.devtoolwrapper.DevToolLifecycle.onAttached();
+  public synchronized void com.lynx.devtoolwrapper.DevToolLifecycle.onEnabled();
+  public synchronized void com.lynx.devtoolwrapper.DevToolLifecycle.onDisabled();
+  public synchronized void com.lynx.devtoolwrapper.DevToolLifecycle.onInitialized();
+  public synchronized void com.lynx.devtoolwrapper.DevToolLifecycle.onConnected();
+  public synchronized void com.lynx.devtoolwrapper.DevToolLifecycle.onDisconnected();
+}
+
 public class com::lynx::devtoolwrapper::DevToolOverlayDelegate :  {
   public static DevToolOverlayDelegate com.lynx.devtoolwrapper.DevToolOverlayDelegate.getInstance();
   public ArrayList< Dialog > com.lynx.devtoolwrapper.DevToolOverlayDelegate.getGlobalOverlayView();
   public ArrayList< Integer > com.lynx.devtoolwrapper.DevToolOverlayDelegate.getAllVisibleOverlaySign();
   public void com.lynx.devtoolwrapper.DevToolOverlayDelegate.init(OverlayService service);
+}
+
+public enum com::lynx::devtoolwrapper::DevToolState {
+  public com.lynx.devtoolwrapper.DevToolState.UNAVAILABLE UNAVAILABLE;
+  public com.lynx.devtoolwrapper.DevToolState.ATTACHED ATTACHED;
+  public com.lynx.devtoolwrapper.DevToolState.ENABLED ENABLED;
+  public com.lynx.devtoolwrapper.DevToolState.INITIALIZED INITIALIZED;
+  public com.lynx.devtoolwrapper.DevToolState.CONNECTED CONNECTED;
 }
 
 public interface com::lynx::tasm::image::model::DiskCacheChoice {

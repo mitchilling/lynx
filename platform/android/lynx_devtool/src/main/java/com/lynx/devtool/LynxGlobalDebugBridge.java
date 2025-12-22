@@ -15,6 +15,7 @@ import com.lynx.debugrouter.ConnectionType;
 import com.lynx.debugrouter.DebugRouter;
 import com.lynx.debugrouter.DebugRouterGlobalHandler;
 import com.lynx.debugrouter.StateListener;
+import com.lynx.devtoolwrapper.DevToolLifecycle;
 import com.lynx.devtoolwrapper.LynxDevtoolCardListener;
 import com.lynx.tasm.LynxEnv;
 import com.lynx.tasm.LynxEnvKey;
@@ -131,6 +132,11 @@ public class LynxGlobalDebugBridge
   @Override
   public void onClose(int code, String reason) {
     enableTraceMode(false);
+    // FIXME(mitchilling): Theoretically, we should notify the DevToolLifecycle
+    // to update the state to DISCONNECTED.
+    // However, at the moment onClose() and onOpen() are called multiple times back and forth.
+    // I need to look into debug router to find out the root cause.
+    // For now, let's not update the state yet.
   }
 
   private void enableTraceMode(boolean enable) {
@@ -149,6 +155,7 @@ public class LynxGlobalDebugBridge
   @Override
   public void onOpen(ConnectionType type) {
     LynxDevtoolEnv.inst().setDevtoolEnv(LynxEnvKey.SP_KEY_DEVTOOL_CONNECTED, true);
+    DevToolLifecycle.getInstance().onConnected();
   }
 
   @Override
