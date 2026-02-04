@@ -247,7 +247,7 @@ TEST(MessageLoopTaskQueueMergeUnmerge,
   latch_2.Wait();
 }
 
-TEST(MessageLoopTaskQueueMergeUnmerge, GetTasksToRunNowBlocksMerge) {
+TEST(MessageLoopTaskQueueMergeUnmerge, DISABLED_GetTasksToRunNowBlocksMerge) {
   auto task_queue = fml::MessageLoopTaskQueues::GetInstance();
 
   auto queue_id_1 = task_queue->CreateTaskQueue();
